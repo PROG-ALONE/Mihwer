@@ -9,6 +9,7 @@ import { mountReportsView, unmountReportsView } from "./views/reports.js";
 import { mountTasksView, unmountTasksView } from "./views/tasks.js";
 import { bindSettingsActions } from "./views/settings.js";
 import { renderHelp } from "./views/help.js";
+import { mountPeriodDashboard } from "./views/dashboard.js";
 
 const app = document.querySelector("#app");
 const navigation = document.querySelector("#primary-navigation");
@@ -31,6 +32,9 @@ let mountedRoute;
 async function render() {
   const sequence = ++renderSequence;
   const route = getRouteFromHash();
+  document.querySelector("#page-scroll-container")?.scrollTo(0, 0);
+  const periodDashboard = document.querySelector("#period-dashboard");
+  if (periodDashboard) periodDashboard.hidden = route.id !== "today";
   if (mountedRoute && mountedRoute !== route.id) {
     if (mountedRoute === "today") unmountTodayView();
     if (mountedRoute === "goals") unmountGoalsView();
@@ -153,9 +157,11 @@ if (!window.location.hash) {
   render();
 }
 
-initializeStore().catch((error) => {
-  console.error("تعذّر تهيئة قاعدة البيانات:", error);
-});
+initializeStore()
+  .then(() => mountPeriodDashboard())
+  .catch((error) => {
+    console.error("تعذّر تهيئة قاعدة البيانات أو لوحة الفترات:", error);
+  });
 
 if ("serviceWorker" in navigator && ["https:", "http:"].includes(window.location.protocol)) {
   window.addEventListener("load", () => {
