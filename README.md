@@ -4,6 +4,7 @@
 
 <h1 align="right" dir="rtl">مِحوَر — مساحة هادئة ليومك</h1>
 <p align="right" dir="rtl"><strong>نظام عربي يجمع المهام والأهداف والعادات والتركيز واليوميات والتقارير في مكان واحد.</strong></p>
+<p align="right" dir="rtl">واجهة بسيطة بقائمة مهام عادية افتراضياً، وترتيب أولويات اختياري، وخمسة مظاهر لونية.</p>
 
 <h2 align="right" dir="rtl">أقسام النظام</h2>
 <p align="right" dir="rtl">كل مساحة لها دور واضح؛ افتح الرسم لقراءة أبرز ما تقدمه البطاقات.</p>
@@ -16,7 +17,7 @@
 <p align="center">
   <img src="./assets/readme/quick-start.svg" alt="إضافة مهمة وترتيبها وتسجيل إنجازها" width="100%">
 </p>
-<p align="right" dir="rtl">اختصارات العنوان: <code dir="ltr">!1</code> أولوية مهم وعاجل · <code dir="ltr">#عمل</code> وسم · <code dir="ltr">~30د</code> مدة تركيز.</p>
+<p align="right" dir="rtl">اختصارات اختيارية للعنوان: <code dir="ltr">!1</code> أولوية مهم وعاجل · <code dir="ltr">#عمل</code> وسم · <code dir="ltr">~30د</code> مدة تركيز.</p>
 <p align="right" dir="rtl">التقارير قابلة للتصدير إلى <code dir="ltr">CSV</code> و<code dir="ltr">Excel</code> و<code dir="ltr">JSON</code> أو الحفظ بصيغة <code dir="ltr">PDF</code>.</p>
 
 <h2 align="right" dir="rtl">رحلة الاستخدام</h2>

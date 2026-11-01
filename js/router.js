@@ -17,27 +17,31 @@ export function getRouteFromHash(hash = window.location.hash) {
 
 export function renderNavigation(navigation, activeRoute) {
   const visibleRoutes = routes.filter((route) => route.id !== "focus");
+  const primaryIds = new Set(["today", "tasks", "goals", "habits"]);
+  const primaryRoutes = visibleRoutes.filter((route) => primaryIds.has(route.id));
+  const moreRoutes = visibleRoutes.filter((route) => !primaryIds.has(route.id));
   const query = new URLSearchParams(window.location.hash.split("?")[1] ?? "");
   const focusContextRoute = activeRoute.id === "focus"
     ? query.has("task") ? "tasks" : query.has("habit") ? "habits" : "today"
     : activeRoute.id;
-  navigation.innerHTML = visibleRoutes.map((route) => {
+  const renderLink = (route) => {
     const current = route.id === focusContextRoute;
     return `
       <a class="nav-link" href="#/${route.id}"${current ? ' aria-current="page"' : ""}>
         <span class="nav-icon" aria-hidden="true">${route.icon}</span>
         <span>${route.label}</span>
       </a>`;
-  }).join("");
-  if (window.matchMedia("(max-width: 720px)").matches) {
-    requestAnimationFrame(() => {
-      navigation.querySelector('[aria-current="page"]')?.scrollIntoView({
-        block: "nearest",
-        inline: "center",
-        behavior: "smooth",
-      });
-    });
-  }
+  };
+  const moreIsActive = moreRoutes.some((route) => route.id === focusContextRoute);
+  navigation.innerHTML = `
+    ${primaryRoutes.map(renderLink).join("")}
+    <details class="nav-more"${moreIsActive ? " open" : ""}>
+      <summary class="nav-link nav-more-trigger"${moreIsActive ? ' aria-current="page"' : ""}>
+        <span class="nav-icon" aria-hidden="true">⋯</span>
+        <span>المزيد</span>
+      </summary>
+      <div class="nav-submenu">${moreRoutes.map(renderLink).join("")}</div>
+    </details>`;
 }
 
 export function renderRoute(route, app, title) {

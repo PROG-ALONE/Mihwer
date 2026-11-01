@@ -14,6 +14,14 @@ const app = document.querySelector("#app");
 const navigation = document.querySelector("#primary-navigation");
 const pageTitle = document.querySelector("#page-title");
 const themeToggle = document.querySelector("#theme-toggle");
+const themeDialog = document.querySelector("#theme-dialog");
+const themes = {
+  dark: { label: "ليلي", color: "#11101e" },
+  light: { label: "فاتح", color: "#f5f3fc" },
+  sage: { label: "نعناعي", color: "#edf4ee" },
+  ocean: { label: "بحري", color: "#eef5f8" },
+  rose: { label: "وردي", color: "#fbf0f3" },
+};
 
 let renderSequence = 0;
 let mountedRoute;
@@ -66,17 +74,31 @@ async function render() {
 }
 
 function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  themeToggle.setAttribute("aria-pressed", String(theme === "dark"));
-  localStorage.setItem("mihwar-theme", theme);
+  const selectedTheme = Object.hasOwn(themes, theme) ? theme : "dark";
+  document.documentElement.dataset.theme = selectedTheme;
+  themeToggle.setAttribute("aria-label", `اختيار المظهر، الحالي: ${themes[selectedTheme].label}`);
+  document.querySelector('meta[name="theme-color"]').content = themes[selectedTheme].color;
+  document.querySelectorAll("[data-theme-choice]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.themeChoice === selectedTheme));
+  });
+  localStorage.setItem("mihwar-theme", selectedTheme);
 }
 
 const storedTheme = localStorage.getItem("mihwar-theme");
 const initialTheme = storedTheme ?? "dark";
 applyTheme(initialTheme);
 
-themeToggle.addEventListener("click", () => {
-  applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+themeToggle.addEventListener("click", () => themeDialog.showModal());
+themeDialog.addEventListener("click", (event) => {
+  const choice = event.target.closest("[data-theme-choice]");
+  if (choice) {
+    applyTheme(choice.dataset.themeChoice);
+    themeDialog.close();
+    return;
+  }
+  if (event.target.closest("[data-theme-close]") || event.target === themeDialog) {
+    themeDialog.close();
+  }
 });
 
 window.addEventListener("hashchange", render);

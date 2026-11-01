@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <meta name="theme-color" content="#f4f5f2">
     <meta name="description" content="مِحوَر — مساحة عربية لتنظيم يومك وأهدافك.">
     <title>مِحوَر</title>
@@ -33,7 +33,7 @@
             <h1 id="page-title">اليوم</h1>
           </div>
           <div class="topbar-actions">
-            <button class="theme-toggle" id="theme-toggle" type="button" aria-label="تبديل المظهر">
+            <button class="theme-toggle" id="theme-toggle" type="button" aria-label="اختيار المظهر" aria-haspopup="dialog">
               <span aria-hidden="true">◐</span>
               <span class="theme-toggle-label">المظهر</span>
             </button>
@@ -42,6 +42,31 @@
         <section class="page-content" id="app" aria-live="polite"></section>
       </main>
     </div>
+    <dialog class="theme-dialog" id="theme-dialog" aria-labelledby="theme-dialog-title">
+      <div class="theme-dialog-content">
+        <div class="dialog-heading">
+          <div><p class="goals-kicker">خصص مِحوَر</p><h2 id="theme-dialog-title">اختر المظهر</h2></div>
+          <button class="icon-button" type="button" data-theme-close aria-label="إغلاق">×</button>
+        </div>
+        <div class="theme-options" role="group" aria-label="المظاهر المتاحة">
+          <button class="theme-option" type="button" data-theme-choice="dark" aria-pressed="false">
+            <span class="theme-swatch" style="--theme-swatch:#17142c"></span><span>ليلي</span>
+          </button>
+          <button class="theme-option" type="button" data-theme-choice="light" aria-pressed="false">
+            <span class="theme-swatch" style="--theme-swatch:#7354e8"></span><span>فاتح</span>
+          </button>
+          <button class="theme-option" type="button" data-theme-choice="sage" aria-pressed="false">
+            <span class="theme-swatch" style="--theme-swatch:#487c5c"></span><span>نعناعي</span>
+          </button>
+          <button class="theme-option" type="button" data-theme-choice="ocean" aria-pressed="false">
+            <span class="theme-swatch" style="--theme-swatch:#28779a"></span><span>بحري</span>
+          </button>
+          <button class="theme-option" type="button" data-theme-choice="rose" aria-pressed="false">
+            <span class="theme-swatch" style="--theme-swatch:#b55377"></span><span>وردي</span>
+          </button>
+        </div>
+      </div>
+    </dialog>
     <div class="app-toast" id="app-toast" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true">
       <span class="app-toast-icon" aria-hidden="true"></span>
       <span class="app-toast-message"></span>

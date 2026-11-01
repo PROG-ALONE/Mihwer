@@ -31,11 +31,17 @@ function priorityIndex(task) {
   return 3;
 }
 
+function priorityModeEnabled() {
+  return localStorage.getItem("mihwar-task-priority-mode") === "true";
+}
+
 function tasksScheduledToday() {
   const today = localDateString();
+  const usePriorities = priorityModeEnabled();
   return records.tasks
     .filter((task) => task.scheduled === today || task.due === today)
-    .sort((first, second) => priorityIndex(first) - priorityIndex(second) || (first.order ?? 0) - (second.order ?? 0));
+    .sort((first, second) => (usePriorities ? priorityIndex(first) - priorityIndex(second) : 0) ||
+      (first.order ?? 0) - (second.order ?? 0));
 }
 
 function todayTasks() {
@@ -241,25 +247,29 @@ function objectiveCard() {
 
 function renderTasks(tasks, emptyMessage = "لا توجد مهام مجدولة لهذا اليوم. يمكنك ترك المساحة فارغة أو إضافة مهمة من <a href=\"#/tasks\">قسم المهام</a>.") {
   if (!tasks.length) return `<p class="today-empty">${emptyMessage}</p>`;
+  const renderTask = (task) => {
+    const done = task.status === "done";
+    return `<article class="today-task${done ? " is-done" : ""}" data-priority="${priorityIndex(task)}" data-task-id="${escapeHtml(task.id)}">
+      <label class="today-checkbox" aria-label="${done ? "إعادة فتح" : "إنجاز"} ${escapeHtml(task.title)}">
+        <input type="checkbox" data-action="complete-task" ${done ? "checked" : ""}>
+        <span aria-hidden="true"></span>
+      </label>
+      <div class="today-task-copy">
+        <span class="today-task-title">${escapeHtml(task.title)}</span>
+        <span class="today-task-meta">${task.due ? escapeHtml(formatDate(task.due)) : ""}${task.dueTime ? ` · ${escapeHtml(task.dueTime)}` : ""}${task.estimateMin ? ` · ${task.estimateMin} دقيقة` : ""}</span>
+      </div>
+      <a class="today-task-open" href="#/tasks" aria-label="فتح المهام">↗</a>
+    </article>`;
+  };
+  if (!priorityModeEnabled()) {
+    return `<section class="today-task-group today-task-queue">${tasks.map(renderTask).join("")}</section>`;
+  }
   return PRIORITIES.map((priority, index) => {
     const group = tasks.filter((task) => priorityIndex(task) === index);
     if (!group.length) return "";
     return `<section class="today-task-group">
       <h3><span class="today-priority-dot priority-dot-${index}" aria-hidden="true"></span>${priority.label} <span class="today-muted">${index === 0 ? "مهم وعاجل" : index === 1 ? "مهم" : index === 2 ? "عاجل" : "بلا استعجال"}</span></h3>
-      ${group.map((task) => {
-        const done = task.status === "done";
-        return `<article class="today-task${done ? " is-done" : ""}" data-priority="${priorityIndex(task)}" data-task-id="${escapeHtml(task.id)}">
-        <label class="today-checkbox" aria-label="${done ? "إعادة فتح" : "إنجاز"} ${escapeHtml(task.title)}">
-          <input type="checkbox" data-action="complete-task" ${done ? "checked" : ""}>
-          <span aria-hidden="true"></span>
-        </label>
-        <div class="today-task-copy">
-          <span class="today-task-title">${escapeHtml(task.title)}</span>
-          <span class="today-task-meta">${task.due ? escapeHtml(formatDate(task.due)) : ""}${task.dueTime ? ` · ${escapeHtml(task.dueTime)}` : ""}${task.estimateMin ? ` · ${task.estimateMin} دقيقة` : ""}</span>
-        </div>
-        <a class="today-task-open" href="#/tasks" aria-label="فتح المهام">↗</a>
-      </article>`;
-      }).join("")}
+      ${group.map(renderTask).join("")}
     </section>`;
   }).join("");
 }

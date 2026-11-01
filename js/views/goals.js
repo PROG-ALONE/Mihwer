@@ -11,7 +11,14 @@ const STATUS_LABELS = {
 };
 
 const STATUS_OPTIONS = ["on-track", "at-risk", "blocked", "done"];
-const COLORS = ["#6258d9", "#16a889", "#d28a36", "#4d84c4", "#c05d7a", "#75854e"];
+const DEFAULT_LIFE_AREAS = [
+  { id: "mihwar-area-health", name: "الصحة", color: "#16a889" },
+  { id: "mihwar-area-work", name: "العمل", color: "#6258d9" },
+  { id: "mihwar-area-relationships", name: "العائلة والعلاقات", color: "#c05d7a" },
+  { id: "mihwar-area-finances", name: "المال", color: "#d28a36" },
+  { id: "mihwar-area-learning", name: "التعلّم", color: "#4d84c4" },
+  { id: "mihwar-area-growth", name: "النمو الشخصي", color: "#75854e" },
+];
 
 let unsubscribe;
 let eventController;
@@ -33,12 +40,17 @@ function objectiveStatus(objective) {
 }
 
 function areaColor(area) {
-  return /^#[0-9a-f]{6}$/i.test(area.color ?? "") ? area.color : COLORS[0];
+  return /^#[0-9a-f]{6}$/i.test(area.color ?? "") ? area.color : "#6258d9";
 }
 
 function renderLifeAreas() {
-  const areas = records.lifeAreas.filter((area) => !area.archived).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  if (!areas.length) return `<div class="goals-empty">أنشئ مجال حياة أولاً، مثل الصحة أو العمل أو التعلّم.</div>`;
+  const areas = records.lifeAreas
+    .filter((area) => !area.archived && records.objectives.some((objective) =>
+      objective.lifeAreaId === area.id &&
+      Number(objective.year) === selectedYear &&
+      objective.status !== "archived"))
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  if (!areas.length) return `<div class="goals-empty">أضف هدفك الأول واختر المجال المناسب؛ ستظهر أهدافك هنا.</div>`;
   return areas.map((area) => `
     <section class="life-area-row">
       <div class="life-area-heading">
@@ -48,8 +60,6 @@ function renderLifeAreas() {
           objective.lifeAreaId === area.id &&
           Number(objective.year) === selectedYear &&
           objective.status !== "archived").length}</span>
-        <button class="button button-secondary area-add-objective" type="button" data-action="new-objective" data-area-id="${escapeHtml(area.id)}">إضافة هدف</button>
-        <button class="icon-button area-archive" type="button" data-action="archive-area" data-area-id="${escapeHtml(area.id)}" aria-label="أرشفة المجال ${escapeHtml(area.name)}">⋯</button>
       </div>
       <div class="goal-objectives">
         ${records.objectives
@@ -141,16 +151,10 @@ function render() {
         <div class="goals-heading-actions">
           <label class="visually-hidden" for="goals-year">السنة</label>
           <select id="goals-year" aria-label="السنة">${years.map((year) => `<option value="${year}"${year === selectedYear ? " selected" : ""}>${year}</option>`).join("")}</select>
-          <button class="button button-secondary" type="button" data-action="new-area">مجال جديد</button>
           <button class="button button-primary" type="button" data-action="new-objective">هدف جديد</button>
         </div>
       </div>
-      <div class="section-summary-grid goals-summary-grid" aria-label="ملخص الأهداف">
-        <article class="section-summary-card" data-tone="primary"><span>أهداف ${selectedYear}</span><strong>${yearObjectives.length}</strong><small>ضمن مجالات حياتك</small></article>
-        <article class="section-summary-card" data-tone="success"><span>قيد التقدّم</span><strong>${yearObjectives.length - completedObjectives}</strong><small>خطوات نحو ما يهمك</small></article>
-        <article class="section-summary-card" data-tone="focus"><span>مكتملة</span><strong>${completedObjectives}</strong><small>نتائج رئيسية: ${keyResultCount}</small></article>
-      </div>
-      <div class="goals-plan-note">أهداف ${selectedYear} مرتبة حسب مجال الحياة والفترة المحددة في خطتك. اضغط على بطاقة الهدف لعرض النتائج والتفاصيل.</div>
+      <p class="goals-overview">${yearObjectives.length} هدف · ${yearObjectives.length - completedObjectives} قيد التقدّم · ${completedObjectives} مكتمل · ${keyResultCount} نتيجة رئيسية</p>
       ${areas.length ? `<div class="goal-areas">
         ${renderLifeAreas()}
       </div>` : `<div class="goals-empty-state">${renderLifeAreas()}</div>`}
@@ -183,14 +187,6 @@ function render() {
             <label>الوحدة<input name="unit" maxlength="30" placeholder="مشروع، ساعة…"></label>
           </div>
           <div class="dialog-actions"><button class="button button-secondary" type="button" data-action="close-dialog">إلغاء</button><button class="button button-primary" type="submit">حفظ النتيجة</button></div>
-        </form>
-      </dialog>
-      <dialog class="goal-dialog" id="area-dialog">
-        <form id="area-form">
-          <div class="dialog-heading"><h2>مجال حياة جديد</h2><button class="icon-button" type="button" data-action="close-dialog" aria-label="إغلاق">×</button></div>
-          <label>اسم المجال<input name="name" required maxlength="80"></label>
-          <label>اللون<select name="color">${COLORS.map((color, index) => `<option value="${color}">${["بنفسجي", "أخضر", "برتقالي", "أزرق", "وردي", "زيتي"][index]}</option>`).join("")}</select></label>
-          <div class="dialog-actions"><button class="button button-secondary" type="button" data-action="close-dialog">إلغاء</button><button class="button button-primary" type="submit">إضافة المجال</button></div>
         </form>
       </dialog>
     </section>`;
@@ -267,11 +263,6 @@ function bindEvents(app) {
     const button = event.target.closest("[data-action]");
     if (!button) return;
     const action = button.dataset.action;
-    if (action === "new-area") {
-      app.querySelector("#area-form").reset();
-      app.querySelector("#area-dialog").showModal();
-      return;
-    }
     if (action === "new-objective") {
       openObjectiveDialog(null, button.dataset.areaId, button.dataset.period);
       return;
@@ -307,18 +298,6 @@ function bindEvents(app) {
       }
       return;
     }
-    if (action === "archive-area") {
-      const area = records.lifeAreas.find((item) => item.id === button.dataset.areaId);
-      if (!area) return;
-      if (!window.confirm(`أرشفة مجال «${area.name}»؟ ستبقى أهدافه محفوظة.`)) return;
-      try {
-        await update("lifeAreas", { ...area, archived: true, updatedAt: new Date().toISOString() });
-        setStatus("أُرشف مجال الحياة.");
-      } catch (error) {
-        console.error("تعذّرت أرشفة مجال الحياة:", error);
-        setStatus(error.message, true);
-      }
-    }
   }, { signal });
 
   app.addEventListener("change", async (event) => {
@@ -338,8 +317,7 @@ function bindEvents(app) {
   app.addEventListener("submit", async (event) => {
     const goalForm = event.target.closest("#goal-form");
     const resultForm = event.target.closest("#key-result-form");
-    const areaForm = event.target.closest("#area-form");
-    if (!goalForm && !resultForm && !areaForm) return;
+    if (!goalForm && !resultForm) return;
     event.preventDefault();
     try {
       const now = new Date().toISOString();
@@ -382,23 +360,6 @@ function bindEvents(app) {
         else await add("keyResults", result);
         resultForm.closest("dialog").close();
         setStatus(existing ? "حُفظت تعديلات النتيجة الرئيسية." : "أُضيفت النتيجة الرئيسية.");
-      } else {
-        const name = areaForm.elements.name.value.trim();
-        if (records.lifeAreas.some((area) => area.name.toLocaleLowerCase("ar") === name.toLocaleLowerCase("ar") && !area.archived)) {
-          throw new Error("يوجد مجال حياة بهذا الاسم بالفعل.");
-        }
-        await add("lifeAreas", {
-          id: crypto.randomUUID(),
-          name,
-          color: areaForm.elements.color.value,
-          icon: "◎",
-          order: records.lifeAreas.length,
-          archived: false,
-          createdAt: now,
-          updatedAt: now,
-        });
-        areaForm.closest("dialog").close();
-        setStatus("أُضيف مجال الحياة.");
       }
     } catch (error) {
       console.error("تعذّر حفظ بيانات الأهداف:", error);
@@ -409,6 +370,7 @@ function bindEvents(app) {
 
 export async function mountGoalsView(isCurrent = () => true) {
   unsubscribe?.();
+  await ensureDefaultLifeAreas();
   await refreshRecords();
   if (!isCurrent()) return;
   document.querySelector("#page-title").textContent = "الأهداف";
@@ -424,6 +386,23 @@ export async function mountGoalsView(isCurrent = () => true) {
       }
     }
   });
+}
+
+async function ensureDefaultLifeAreas() {
+  const areas = await getRecords("lifeAreas");
+  const missingAreas = DEFAULT_LIFE_AREAS.filter((area) => !areas.some((existing) => existing.id === area.id));
+  if (!missingAreas.length) return;
+  const now = new Date().toISOString();
+  await Promise.all(missingAreas.map((area, index) => {
+    return update("lifeAreas", {
+      ...area,
+      icon: "◎",
+      order: areas.length + index,
+      archived: false,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }));
 }
 
 export function unmountGoalsView() {

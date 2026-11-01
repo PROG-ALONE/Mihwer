@@ -20,10 +20,10 @@ let searchText = "";
 let statusFilter = "active";
 let projectFilter = "";
 let priorityFilter = null;
+let priorityModeEnabled = localStorage.getItem("mihwar-task-priority-mode") === "true";
 let priorityCardsOpen = false;
 let advancedToolsOpen = false;
 let dragTaskId = null;
-let swipeGesture;
 let eventController;
 const expandedTaskSubtasks = new Set();
 
@@ -45,7 +45,7 @@ function currentTasks() {
   return records.tasks.filter((task) => {
     if (statusFilter === "active" && task.status === "done") return false;
     if (statusFilter === "done" && task.status !== "done") return false;
-    if (priorityFilter !== null && priorityIndex(task) !== priorityFilter) return false;
+    if (priorityModeEnabled && priorityFilter !== null && priorityIndex(task) !== priorityFilter) return false;
     if (projectFilter && task.projectId !== projectFilter) return false;
     if (!query) return true;
     const project = records.projects.find((item) => item.id === task.projectId)?.name ?? "";
@@ -96,8 +96,6 @@ function taskCard(task) {
   const objective = records.objectives.find((item) => item.id === task.objectiveId);
   const done = task.status === "done";
   return `
-    <div class="task-card-swipe-wrap">
-      <span class="task-swipe-hint" aria-hidden="true">✓ إكمال</span>
       <article class="task-card${done ? " is-done" : ""}" data-priority="${priorityIndex(task)}" draggable="${activeView === "matrix" && !done}" data-task-id="${escapeHtml(task.id)}">
       <label class="task-check" aria-label="${done ? "إعادة فتح المهمة" : "إنجاز المهمة"}">
         <input type="checkbox" data-action="toggle" ${done ? "checked" : ""}>
@@ -118,13 +116,13 @@ function taskCard(task) {
         ${subtasksBlock(task)}
       </div>
       <div class="task-actions">
-        <span class="priority-indicator priority-${priorityIndex(task)}" title="${PRIORITY_LABELS[priorityIndex(task)]}">${PRIORITY_LABELS[priorityIndex(task)]}</span>
+        ${priorityModeEnabled ? `<span class="priority-indicator priority-${priorityIndex(task)}" title="${PRIORITY_LABELS[priorityIndex(task)]}">${PRIORITY_LABELS[priorityIndex(task)]}</span>` : ""}
         ${!done ? `<a class="icon-button task-focus" href="#/focus?task=${encodeURIComponent(task.id)}" aria-label="ابدأ التركيز على ${escapeHtml(task.title)}" title="ابدأ التركيز">◉</a>` : ""}
         <button class="icon-button task-edit" type="button" data-action="edit" aria-label="تعديل المهمة">✎</button>
         <button class="icon-button task-delete" type="button" data-action="delete" aria-label="حذف المهمة">×</button>
       </div>
       </article>
-    </div>`;
+    `;
 }
 
 function renderList(tasks) {
@@ -137,17 +135,7 @@ function renderList(tasks) {
         : "لا توجد مهام قيد الإنجاز. يمكنك مراجعة المنجزة أو إضافة مهمة جديدة.";
     return `<div class="tasks-empty">${emptyMessage}</div>`;
   }
-  const groups = new Map();
-  for (const task of tasks) {
-    const key = task.projectId || "__inbox__";
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(task);
-  }
-  return [...groups.entries()].map(([key, grouped]) => `
-    <section class="task-group">
-      <h3>${key === "__inbox__" ? "الوارد" : escapeHtml(projectName(key) || "مشروع")}</h3>
-      <div class="task-list">${grouped.map(taskCard).join("")}</div>
-    </section>`).join("");
+  return `<div class="task-list">${tasks.map(taskCard).join("")}</div>`;
 }
 
 function renderUpcoming(tasks) {
@@ -224,7 +212,11 @@ function renderTaskDaySummary() {
 function render() {
   const app = document.querySelector("#app");
   if (!app) return;
-  const tasks = currentTasks();
+  const tasks = currentTasks().sort((first, second) => {
+    const firstOrder = Number.isFinite(first.order) ? first.order : Date.parse(first.createdAt ?? "") || 0;
+    const secondOrder = Number.isFinite(second.order) ? second.order : Date.parse(second.createdAt ?? "") || 0;
+    return firstOrder - secondOrder;
+  });
   const activeCount = records.tasks.filter((task) => task.status !== "done").length;
   const doneCount = records.tasks.filter((task) => task.status === "done").length;
   const visibleTasks = activeView === "someday"
@@ -244,8 +236,9 @@ function render() {
         <button type="button" class="${statusFilter === "active" ? "is-active" : ""}" data-status="active" aria-pressed="${statusFilter === "active"}">قيد الإنجاز <strong>${activeCount}</strong></button>
         <button type="button" class="${statusFilter === "done" ? "is-active" : ""}" data-status="done" aria-pressed="${statusFilter === "done"}">المنجزة <strong>${doneCount}</strong></button>
         <button type="button" class="${statusFilter === "all" ? "is-active" : ""}" data-status="all" aria-pressed="${statusFilter === "all"}">الكل <strong>${records.tasks.length}</strong></button>
+        <button class="task-priority-toggle${priorityModeEnabled ? " is-active" : ""}" type="button" data-action="toggle-priority-mode" aria-pressed="${priorityModeEnabled}">ترتيب الأولويات</button>
       </nav>
-      ${renderPriorityCards()}
+      ${priorityModeEnabled ? renderPriorityCards() : ""}
       <details class="task-tools"${advancedToolsOpen ? " open" : ""}>
         <summary>بحث وعروض متقدمة</summary>
         <div class="task-toolbar">
@@ -273,12 +266,7 @@ function render() {
         <form class="quick-add-form task-add-form" id="quick-add-form">
           <label class="task-add-title-label" for="quick-add-input">ماذا تريد أن تنجز؟</label>
           <input id="quick-add-input" name="task" autocomplete="off" placeholder="اكتب المهمة هنا…" required maxlength="240">
-          <div class="quick-add-schedule">
-            <label><span>اليوم</span><input id="quick-add-date" name="date" type="date" aria-label="موعد المهمة"></label>
-            <label><span>الوقت</span><input id="quick-add-time" name="time" type="time" aria-label="وقت المهمة"></label>
-            <label><span>تركيز (د)</span><input id="quick-add-estimate" name="estimateMin" type="number" min="1" max="180" step="1" aria-label="مدة التركيز بالدقائق"></label>
-          </div>
-          <p class="quick-add-hint">يمكنك إضافة التفاصيل والأولوية بعد الحفظ.</p>
+          <p class="quick-add-hint">أضف التفاصيل لاحقاً إذا احتجت.</p>
           <button class="button button-primary task-add-submit" type="submit">إضافة للمهمات</button>
         </form>
       </dialog>
@@ -295,7 +283,9 @@ function render() {
             <label>تاريخ الجدولة<input name="scheduled" type="date"></label>
             <label>تاريخ الاستحقاق<input name="due" type="date"></label>
             <label>وقت التنفيذ<input name="dueTime" type="time"></label>
-            <label>الأولوية<select name="priority">${PRIORITY_LABELS.map((label, index) => `<option value="${index}">${label}</option>`).join("")}</select></label>
+            ${priorityModeEnabled
+              ? `<label>الأولوية<select name="priority">${PRIORITY_LABELS.map((label, index) => `<option value="${index}">${label}</option>`).join("")}</select></label>`
+              : '<input type="hidden" name="priority" value="3">'}
             <label>مدة التركيز المستهدفة بالدقائق<input name="estimateMin" type="number" min="1" max="180" step="1"></label>
             <label>المشروع<select name="projectId"><option value="">الوارد</option>${records.projects.filter((project) => !project.archived).map((project) => `<option value="${escapeHtml(project.id)}">${escapeHtml(project.name)}</option>`).join("")}</select></label>
             <label>الهدف<select name="objectiveId"><option value="">بلا هدف</option>${records.objectives.map((objective) => `<option value="${escapeHtml(objective.id)}">${escapeHtml(objective.title)}</option>`).join("")}</select></label>
@@ -324,7 +314,7 @@ function setStatus(message, isError = false) {
   showToast(message, { isError });
 }
 
-async function createTask(input, dueDate, dueTime, focusDuration) {
+async function createTask(input, dueDate = "", dueTime = "", focusDuration = "") {
   const parsed = parseQuickAdd(input);
   if (!parsed) throw new Error("اكتب عنواناً للمهمة أولاً.");
   const focusDurationMin = focusDuration === "" ? parsed.estimateMin : Number(focusDuration);
@@ -404,70 +394,9 @@ function bindEvents(app) {
   app.querySelector(".task-tools").addEventListener("toggle", (event) => {
     advancedToolsOpen = event.currentTarget.open;
   });
-  app.querySelector(".task-priority-panel").addEventListener("toggle", (event) => {
+  app.querySelector(".task-priority-panel")?.addEventListener("toggle", (event) => {
     priorityCardsOpen = event.currentTarget.open;
   });
-
-  app.addEventListener("pointerdown", (event) => {
-    if (activeView === "matrix" || (event.pointerType !== "touch" && event.button !== 0)) return;
-    const card = event.target.closest(".task-card");
-    if (!card || event.target.closest("button, a, input, select, textarea, summary, details, .task-check")) return;
-    const task = records.tasks.find((item) => item.id === card.dataset.taskId);
-    if (!task || task.status === "done") return;
-    swipeGesture = {
-      card,
-      wrapper: card.closest(".task-card-swipe-wrap"),
-      taskId: task.id,
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-    };
-    card.setPointerCapture(event.pointerId);
-  }, { signal });
-
-  app.addEventListener("pointermove", (event) => {
-    if (!swipeGesture || event.pointerId !== swipeGesture.pointerId) return;
-    const distanceX = event.clientX - swipeGesture.startX;
-    const distanceY = event.clientY - swipeGesture.startY;
-    if (Math.abs(distanceY) > Math.abs(distanceX) && Math.abs(distanceY) > 12) {
-      swipeGesture.card.releasePointerCapture(event.pointerId);
-      swipeGesture = undefined;
-      return;
-    }
-    if (distanceX <= 0) return;
-    swipeGesture.card.classList.add("is-swiping");
-    swipeGesture.card.style.setProperty("--task-swipe-offset", `${Math.min(distanceX, 112)}px`);
-    swipeGesture.wrapper?.style.setProperty("--task-swipe-progress", String(Math.min(1, distanceX / 88)));
-  }, { signal });
-
-  const finishSwipe = async (event) => {
-    if (!swipeGesture || event.pointerId !== swipeGesture.pointerId) return;
-    const gesture = swipeGesture;
-    swipeGesture = undefined;
-    const distanceX = event.clientX - gesture.startX;
-    const distanceY = event.clientY - gesture.startY;
-    gesture.card.classList.remove("is-swiping");
-    gesture.card.style.removeProperty("--task-swipe-offset");
-    gesture.wrapper?.style.removeProperty("--task-swipe-progress");
-    if (distanceX < 88 || Math.abs(distanceY) >= distanceX) return;
-    const task = records.tasks.find((item) => item.id === gesture.taskId);
-    if (!task || task.status === "done") return;
-    try {
-      await toggleTask(task);
-      setStatus("أُنجزت المهمة بالسحب، وتجدها في قائمة المنجزة.");
-    } catch (error) {
-      console.error("تعذّر إنجاز المهمة بالسحب:", error);
-      setStatus(error.message, true);
-    }
-  };
-  app.addEventListener("pointerup", finishSwipe, { signal });
-  app.addEventListener("pointercancel", (event) => {
-    if (!swipeGesture || event.pointerId !== swipeGesture.pointerId) return;
-    swipeGesture.card.classList.remove("is-swiping");
-    swipeGesture.card.style.removeProperty("--task-swipe-offset");
-    swipeGesture.wrapper?.style.removeProperty("--task-swipe-progress");
-    swipeGesture = undefined;
-  }, { signal });
 
   app.addEventListener("click", (event) => {
     const summary = event.target.closest(".subtasks > summary");
@@ -482,14 +411,11 @@ function bindEvents(app) {
   app.querySelector("#quick-add-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const input = app.querySelector("#quick-add-input");
-    const dateInput = app.querySelector("#quick-add-date");
-    const timeInput = app.querySelector("#quick-add-time");
-    const focusDurationInput = app.querySelector("#quick-add-estimate");
     try {
       statusFilter = "active";
       priorityFilter = null;
       activeView = "list";
-      await createTask(input.value, dateInput.value, timeInput.value, focusDurationInput.value);
+      await createTask(input.value);
       app.querySelector("#quick-add-form")?.reset();
       app.querySelector("#task-add-dialog")?.close();
       setStatus("أُضيفت المهمة.");
@@ -579,6 +505,14 @@ function bindEvents(app) {
   app.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-action]");
     if (!button) return;
+    if (button.dataset.action === "toggle-priority-mode") {
+      priorityModeEnabled = !priorityModeEnabled;
+      priorityFilter = null;
+      priorityCardsOpen = priorityModeEnabled;
+      localStorage.setItem("mihwar-task-priority-mode", String(priorityModeEnabled));
+      render();
+      return;
+    }
     if (button.dataset.action === "new-task") {
       const form = app.querySelector("#quick-add-form");
       form.reset();
