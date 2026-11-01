@@ -15,7 +15,7 @@ export function getRouteFromHash(hash = window.location.hash) {
   return routes.find((route) => route.id === routeId) ?? routes[0];
 }
 
-export function renderNavigation(navigation, activeRoute) {
+export function renderNavigation(navigation, moreNavigation, activeRoute) {
   const visibleRoutes = routes.filter((route) => route.id !== "focus");
   const primaryIds = new Set(["today", "tasks", "goals", "habits"]);
   const primaryRoutes = visibleRoutes.filter((route) => primaryIds.has(route.id));
@@ -32,16 +32,15 @@ export function renderNavigation(navigation, activeRoute) {
         <span>${route.label}</span>
       </a>`;
   };
-  const moreIsActive = moreRoutes.some((route) => route.id === focusContextRoute);
+  const activeMoreRoute = moreRoutes.find((route) => route.id === focusContextRoute);
   navigation.innerHTML = `
     ${primaryRoutes.map(renderLink).join("")}
-    <details class="nav-more"${moreIsActive ? " open" : ""}>
-      <summary class="nav-link nav-more-trigger"${moreIsActive ? ' aria-current="page"' : ""}>
-        <span class="nav-icon" aria-hidden="true">⋯</span>
-        <span>المزيد</span>
-      </summary>
-      <div class="nav-submenu">${moreRoutes.map(renderLink).join("")}</div>
-    </details>`;
+    <button class="nav-link nav-more-trigger${activeMoreRoute ? " is-active" : ""}" type="button" data-open-more
+      aria-haspopup="dialog" aria-controls="more-dialog" aria-expanded="false"${activeMoreRoute ? ` aria-label="المزيد، القسم الحالي: ${activeMoreRoute.label}"` : ""}>
+      <span class="nav-icon" aria-hidden="true">⋯</span>
+      <span>المزيد</span>
+    </button>`;
+  moreNavigation.innerHTML = moreRoutes.map(renderLink).join("");
 }
 
 export function renderRoute(route, app, title) {

@@ -12,6 +12,8 @@ import { renderHelp } from "./views/help.js";
 
 const app = document.querySelector("#app");
 const navigation = document.querySelector("#primary-navigation");
+const moreNavigation = document.querySelector("#more-navigation");
+const moreDialog = document.querySelector("#more-dialog");
 const pageTitle = document.querySelector("#page-title");
 const themeToggle = document.querySelector("#theme-toggle");
 const themeDialog = document.querySelector("#theme-dialog");
@@ -39,7 +41,7 @@ async function render() {
     if (mountedRoute === "tasks") unmountTasksView();
     mountedRoute = undefined;
   }
-  renderNavigation(navigation, route);
+  renderNavigation(navigation, moreNavigation, route);
   renderRoute(route, app, pageTitle);
   if (route.id === "settings") bindSettingsActions();
   if (route.id === "help") renderHelp(app);
@@ -101,7 +103,42 @@ themeDialog.addEventListener("click", (event) => {
   }
 });
 
-window.addEventListener("hashchange", render);
+navigation.addEventListener("click", (event) => {
+  const trigger = event.target.closest("[data-open-more]");
+  if (!trigger) return;
+  moreDialog.showModal();
+  trigger.setAttribute("aria-expanded", "true");
+});
+app.addEventListener("click", (event) => {
+  if (!event.target.closest("[data-open-more]")) return;
+  moreDialog.showModal();
+  navigation.querySelector("[data-open-more]")?.setAttribute("aria-expanded", "true");
+});
+moreNavigation.addEventListener("click", (event) => {
+  if (event.target.closest("a.nav-link")) closeMoreDialog();
+});
+moreDialog.addEventListener("click", (event) => {
+  if (event.target.closest("[data-more-close]") || event.target === moreDialog) closeMoreDialog();
+});
+function closeMoreDialog() {
+  if (moreDialog.open) moreDialog.close();
+  navigation.querySelector("[data-open-more]")?.setAttribute("aria-expanded", "false");
+}
+moreDialog.addEventListener("close", closeMoreDialog);
+moreDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeMoreDialog();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || !moreDialog.open) return;
+  event.preventDefault();
+  closeMoreDialog();
+});
+
+window.addEventListener("hashchange", () => {
+  closeMoreDialog();
+  render();
+});
 window.addEventListener("mihwar:data-imported", () => window.location.reload());
 const onboarding = document.querySelector("#onboarding-dialog");
 if (!localStorage.getItem("mihwar-onboarding-complete")) {

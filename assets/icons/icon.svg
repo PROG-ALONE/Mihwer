@@ -1,4 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="120" fill="#6258d9"/>
-  <path d="M143 132h58v79c18-22 42-34 73-34 59 0 98 42 98 104v99h-59v-91c0-37-18-58-49-58-32 0-55 24-55 60v89h-58V132z" fill="#fff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">شعار مِحوَر</title>
+  <desc id="description">نقطة مركزية تدور حولها حلقة ومحور، رمزاً للتوازن والتقدّم.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#293b3e"/>
+      <stop offset="1" stop-color="#17282e"/>
+    </linearGradient>
+    <linearGradient id="orbit" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#b6dfbc"/>
+      <stop offset="1" stop-color="#63b89c"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop stop-color="#4f8275" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#4f8275" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#background)"/>
+  <circle cx="256" cy="256" r="205" fill="url(#glow)"/>
+  <path d="M108 256h296" fill="none" stroke="#f1e9d4" stroke-linecap="round" stroke-opacity=".38" stroke-width="14"/>
+  <ellipse cx="256" cy="256" rx="151" ry="94" transform="rotate(-34 256 256)" fill="none" stroke="url(#orbit)" stroke-linecap="round" stroke-width="22"/>
+  <circle cx="381" cy="172" r="19" fill="#ebc47e"/>
+  <circle cx="256" cy="256" r="39" fill="#f1e9d4"/>
+  <circle cx="256" cy="256" r="12" fill="#477665"/>
 </svg>

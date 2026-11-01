@@ -117,19 +117,6 @@ function renderTodayHabitItems(habit) {
   }).join("");
 }
 
-function todaySessions() {
-  const today = localDateString();
-  return records.sessions.filter((session) => session.start?.slice(0, 10) === today);
-}
-
-function focusMinutes() {
-  return todaySessions().reduce((sum, session) => {
-    if (session.status !== "completed" || session.type === "break") return sum;
-    const duration = Number(session.durationMin);
-    return sum + (Number.isFinite(duration) ? Math.max(0, duration) : 0);
-  }, 0);
-}
-
 function monthlySummary(today = new Date()) {
   const monthStart = localDateString(new Date(today.getFullYear(), today.getMonth(), 1));
   const monthEnd = localDateString(today);
@@ -295,23 +282,17 @@ function renderHabits(habits) {
 
 function renderFocusCard() {
   const active = records.sessions.find((session) => session.status === "active");
+  if (!active) return "";
   const activeTask = active?.taskId ? records.tasks.find((task) => task.id === active.taskId) : null;
   const activeHabit = active?.habitId ? records.habits.find((habit) => habit.id === active.habitId) : null;
   const activeTarget = activeTask ?? activeHabit;
   const activeRoute = active?.taskId
     ? `#/focus?task=${encodeURIComponent(active.taskId)}`
     : active?.habitId ? `#/focus?habit=${encodeURIComponent(active.habitId)}` : "#/focus";
-  if (active) {
-    return `<article class="focus-card is-running">
-      <span class="focus-card-icon" aria-hidden="true">◉</span>
-      <div class="focus-card-copy"><p class="today-kicker">جلسة تركيز نشطة</p><h2>${activeTarget ? escapeHtml(activeTarget.title) : "وقت للمهمة الواحدة"}</h2><p>بدأت ${escapeHtml(new Intl.DateTimeFormat("ar", { hour: "numeric", minute: "2-digit" }).format(new Date(active.start)))}</p></div>
-      <a class="button button-secondary" href="${activeRoute}">متابعة الجلسة</a>
-    </article>`;
-  }
-  return `<article class="focus-card">
+  return `<article class="focus-card is-running">
     <span class="focus-card-icon" aria-hidden="true">◉</span>
-    <div class="focus-card-copy"><p class="today-kicker">التركيز ضمن خطتك</p><h2>ابدأ من مهمة أو عادة</h2><p>سجّل مدة التركيز مباشرة على العنصر الذي تعمل عليه.</p></div>
-    <div class="focus-card-actions"><a class="button button-secondary" href="#/tasks">اختر مهمة</a><a class="button button-secondary" href="#/habits">اختر عادة</a></div>
+    <div class="focus-card-copy"><p class="today-kicker">جلسة تركيز نشطة</p><h2>${activeTarget ? escapeHtml(activeTarget.title) : "وقت للمهمة الواحدة"}</h2><p>بدأت ${escapeHtml(new Intl.DateTimeFormat("ar", { hour: "numeric", minute: "2-digit" }).format(new Date(active.start)))}</p></div>
+    <a class="button button-secondary" href="${activeRoute}">متابعة الجلسة</a>
   </article>`;
 }
 
@@ -329,8 +310,6 @@ function render() {
   const dailyCompleted = completedCount + completedHabits;
   const dailyPercent = dailyTotal ? Math.round(dailyCompleted / dailyTotal * 100) : 0;
   const journalEntry = records.journal.find((entry) => entry.date === localDateString());
-  const sessionCount = todaySessions().length;
-
   app.innerHTML = `
     <section class="today-page" aria-label="ملخص اليوم">
       <div class="today-welcome">
@@ -362,11 +341,6 @@ function render() {
         </div>
         <aside class="today-side-column">
           ${renderFocusCard()}
-          <section class="today-panel today-stat-card">
-            <p class="today-kicker">مساحة التركيز</p>
-            <strong>${focusMinutes()} <span>دقيقة</span></strong>
-            <p class="today-muted">${sessionCount} جلسة اليوم</p>
-          </section>
           <section class="today-panel today-journal">
             <div class="today-section-heading"><div><p class="today-kicker">لحظة لك</p><h2>مذكّرة سريعة</h2></div></div>
             <form id="today-journal-form">

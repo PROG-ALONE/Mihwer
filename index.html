@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <meta name="theme-color" content="#f4f5f2">
+    <meta name="theme-color" content="#11101e">
     <meta name="description" content="مِحوَر — مساحة عربية لتنظيم يومك وأهدافك.">
     <title>مِحوَر</title>
     <link rel="manifest" href="./manifest.webmanifest">
@@ -17,7 +17,7 @@
     <div class="app-shell">
       <aside class="sidebar" aria-label="التنقّل الرئيسي">
         <a class="brand" href="#/today" aria-label="مِحوَر — اليوم">
-          <span class="brand-mark" aria-hidden="true">م</span>
+          <img class="brand-mark" src="./assets/icons/icon.svg" alt="" aria-hidden="true">
           <span>مِحوَر</span>
         </a>
         <nav class="navigation" id="primary-navigation"></nav>
@@ -42,6 +42,15 @@
         <section class="page-content" id="app" aria-live="polite"></section>
       </main>
     </div>
+    <dialog class="more-dialog" id="more-dialog" aria-labelledby="more-dialog-title">
+      <div class="more-dialog-content">
+        <div class="dialog-heading">
+          <div><p class="goals-kicker">مساحات إضافية</p><h2 id="more-dialog-title">المزيد</h2></div>
+          <button class="icon-button" type="button" data-more-close aria-label="إغلاق">×</button>
+        </div>
+        <nav class="more-navigation" id="more-navigation" aria-label="صفحات إضافية"></nav>
+      </div>
+    </dialog>
     <dialog class="theme-dialog" id="theme-dialog" aria-labelledby="theme-dialog-title">
       <div class="theme-dialog-content">
         <div class="dialog-heading">
@@ -74,7 +83,7 @@
     </div>
     <dialog class="onboarding-dialog" id="onboarding-dialog">
       <form method="dialog">
-        <span class="brand-mark" aria-hidden="true">م</span>
+        <img class="brand-mark" src="./assets/icons/icon.svg" alt="" aria-hidden="true">
         <p class="eyebrow">أهلاً بك في مِحوَر</p>
         <h2>خطط بلطف، وأنجز ما يهمك</h2>
         <p>ابدأ بخطوة واحدة. بياناتك تُحفظ على هذا الجهاز، ويمكنك أخذ نسخة احتياطية في أي وقت.</p>
