@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" role="img" aria-labelledby="title desc">
+  <title id="title">رحلة مِحوَر</title>
+  <desc id="desc">أربع محطات مترابطة: خطط، نفّذ، تابع، راجع.</desc>
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#1b1930"/>
+      <stop offset="1" stop-color="#282340"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="300" rx="26" fill="#11101e"/>
+  <g font-family="Tahoma, Arial, sans-serif" direction="rtl">
+    <text x="1140" y="52" text-anchor="end" fill="#bcaaff" font-size="18" font-weight="700">دورة بسيطة ليوم أوضح</text>
+  </g>
+
+  <g>
+    <rect x="900" y="82" width="240" height="170" rx="22" fill="url(#panel)" stroke="#7658e8" stroke-width="2"/>
+    <circle cx="1086" cy="126" r="22" fill="#30274f"/>
+    <path d="M1075 127h22M1086 116v22" stroke="#a58aff" stroke-width="3" stroke-linecap="round"/>
+    <text x="1080" y="174" text-anchor="end" direction="rtl" fill="#f7f4ff" font-family="Tahoma, Arial, sans-serif" font-size="24" font-weight="700">خطّط</text>
+    <text x="1080" y="207" text-anchor="end" direction="rtl" fill="#aaa4c1" font-family="Tahoma, Arial, sans-serif" font-size="15">اختر أهم خطوة لليوم</text>
+
+    <rect x="620" y="82" width="240" height="170" rx="22" fill="url(#panel)" stroke="#4386c8" stroke-width="2"/>
+    <circle cx="806" cy="126" r="22" fill="#1e3448"/>
+    <path d="M806 112v14l10 6" fill="none" stroke="#83b9e8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="800" y="174" text-anchor="end" direction="rtl" fill="#f7f4ff" font-family="Tahoma, Arial, sans-serif" font-size="24" font-weight="700">نفّذ</text>
+    <text x="800" y="207" text-anchor="end" direction="rtl" fill="#aaa4c1" font-family="Tahoma, Arial, sans-serif" font-size="15">ركّز على ما اخترته</text>
+
+    <rect x="340" y="82" width="240" height="170" rx="22" fill="url(#panel)" stroke="#1d9a83" stroke-width="2"/>
+    <circle cx="526" cy="126" r="22" fill="#193a35"/>
+    <path d="M516 127l7 7 14-16" fill="none" stroke="#70d7bd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="520" y="174" text-anchor="end" direction="rtl" fill="#f7f4ff" font-family="Tahoma, Arial, sans-serif" font-size="24" font-weight="700">تابع</text>
+    <text x="520" y="207" text-anchor="end" direction="rtl" fill="#aaa4c1" font-family="Tahoma, Arial, sans-serif" font-size="15">سجّل تقدمك وعاداتك</text>
+
+    <rect x="60" y="82" width="240" height="170" rx="22" fill="url(#panel)" stroke="#d18b28" stroke-width="2"/>
+    <circle cx="246" cy="126" r="22" fill="#3a2f1e"/>
+    <path d="M236 132l10-13 10 13M246 119v19" fill="none" stroke="#f1ca83" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="240" y="174" text-anchor="end" direction="rtl" fill="#f7f4ff" font-family="Tahoma, Arial, sans-serif" font-size="24" font-weight="700">راجع</text>
+    <text x="240" y="207" text-anchor="end" direction="rtl" fill="#aaa4c1" font-family="Tahoma, Arial, sans-serif" font-size="15">تعلّم من يومك وتقاريرك</text>
+  </g>
+
+  <g fill="none" stroke="#62558d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M877 166h-22m0 0 8-8m-8 8 8 8"/>
+    <path d="M597 166h-22m0 0 8-8m-8 8 8 8"/>
+    <path d="M317 166h-22m0 0 8-8m-8 8 8 8"/>
+  </g>
+</svg>
