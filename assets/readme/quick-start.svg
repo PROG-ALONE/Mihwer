@@ -20,18 +20,24 @@
     <circle cx="1090" cy="174" r="23" fill="url(#mint)"/>
     <text x="1090" y="182" text-anchor="middle" fill="#477665" font-size="19" font-weight="800">١</text>
     <text x="1090" y="229" text-anchor="start" fill="#24343a" font-size="22" font-weight="800">أضف مهمة</text>
-    <text x="1090" y="260" text-anchor="start" fill="#64736c" font-size="15">عنوان واضح يكفي الآن.</text>
+    <text x="1090" y="260" text-anchor="start" fill="#64736c" font-size="15">اكتب العنوان واختر أولوية.</text>
     <rect x="842" y="285" width="266" height="55" rx="13" fill="#f7faf7" stroke="#d7e4da"/>
     <text x="1088" y="319" text-anchor="start" fill="#8a9990" font-size="14">ماذا تريد أن تنجز؟</text>
-    <rect x="942" y="354" width="166" height="42" rx="12" fill="#477665"/>
-    <text x="1025" y="381" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">إضافة للمهمات</text>
-    <text x="1090" y="421" text-anchor="start" fill="#64736c" font-size="13">لا موعد أو تفاصيل مطلوبة.</text>
+    <rect x="842" y="346" width="126" height="31" rx="10" fill="#fff0ed" stroke="#e8b8b2"/>
+    <text x="956" y="366" text-anchor="start" fill="#a84f4a" font-size="11" font-weight="700">مهم وعاجل</text>
+    <rect x="982" y="346" width="126" height="31" rx="10" fill="#eef0ff" stroke="#c8c0eb"/>
+    <text x="1096" y="366" text-anchor="start" fill="#7354e8" font-size="11" font-weight="700">مهم وغير عاجل</text>
+    <rect x="842" y="382" width="126" height="31" rx="10" fill="#fff5e8" stroke="#ead1a8"/>
+    <text x="956" y="402" text-anchor="start" fill="#a96c19" font-size="10" font-weight="700">عاجل وغير مهم</text>
+    <rect x="982" y="382" width="126" height="31" rx="10" fill="#eaf5ee" stroke="#c2dfca"/>
+    <text x="1096" y="402" text-anchor="start" fill="#477665" font-size="10" font-weight="700">غير عاجل وغير مهم</text>
+    <text x="1090" y="434" text-anchor="start" fill="#64736c" font-size="13">تُضاف فور اختيارها.</text>
 
     <rect x="435" y="132" width="330" height="310" rx="24" fill="#fff" stroke="#c8c0eb" stroke-width="2"/>
     <circle cx="715" cy="174" r="23" fill="#eee9ff"/>
     <text x="715" y="182" text-anchor="middle" fill="#7354e8" font-size="19" font-weight="800">٢</text>
     <text x="715" y="229" text-anchor="start" fill="#24343a" font-size="22" font-weight="800">راجع خطة اليوم</text>
-    <text x="715" y="260" text-anchor="start" fill="#64736c" font-size="15">ما عليك فعله يظهر ببساطة.</text>
+    <text x="715" y="260" text-anchor="start" fill="#64736c" font-size="15">بدّل بين الطابور والأولويات.</text>
     <g font-size="14">
       <rect x="467" y="282" width="266" height="42" rx="11" fill="#f7f6fc"/>
       <circle cx="704" cy="303" r="8" fill="none" stroke="#7354e8" stroke-width="2"/>
@@ -40,7 +46,7 @@
       <circle cx="704" cy="355" r="8" fill="none" stroke="#7354e8" stroke-width="2"/>
       <text x="683" y="360" text-anchor="start" fill="#343347">خطوة صغيرة أخرى</text>
     </g>
-    <text x="715" y="421" text-anchor="start" fill="#64736c" font-size="13">الأولويات خيار عند الحاجة.</text>
+    <text x="715" y="421" text-anchor="start" fill="#64736c" font-size="13">غيّر العرض في الصفحة نفسها.</text>
 
     <rect x="60" y="132" width="330" height="310" rx="24" fill="#fff" stroke="#b8d8c2" stroke-width="2"/>
     <circle cx="340" cy="174" r="23" fill="url(#mint)"/>
@@ -58,5 +64,5 @@
     <circle cx="415" cy="288" r="15"/>
     <path d="M411 280l9 8-9 8" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
-  <text x="600" y="486" text-anchor="middle" direction="rtl" fill="#64736c" font-family="Tahoma, Arial, sans-serif" font-size="15">التفاصيل، الأهداف، العادات والتركيز إضافات اختيارية.</text>
+  <text x="600" y="486" text-anchor="middle" direction="rtl" fill="#64736c" font-family="Tahoma, Arial, sans-serif" font-size="15">المواعيد والتفاصيل، الأهداف، العادات والتركيز إضافات اختيارية.</text>
 </svg>

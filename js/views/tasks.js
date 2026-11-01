@@ -6,25 +6,13 @@ import { showToast } from "../utils/notifications.js";
 
 const PRIORITY_LABELS = ["مهم وعاجل", "مهم وغير عاجل", "عاجل وغير مهم", "غير عاجل وغير مهم"];
 const PRIORITY_GUIDANCE = ["ابدأ بها الآن", "حدّد لها وقتاً", "أنجزها بسرعة", "أجّلها أو استبعدها"];
-const VIEWS = [
-  { id: "list", label: "القائمة" },
-  { id: "upcoming", label: "قادم" },
-  { id: "matrix", label: "مصفوفة أيزنهاور" },
-  { id: "someday", label: "يوماً ما" },
-];
 
 let unsubscribe;
 let records = { tasks: [], projects: [], objectives: [], keyResults: [] };
-let activeView = "list";
-let searchText = "";
 let statusFilter = "active";
-let projectFilter = "";
-let priorityFilter = null;
 let priorityModeEnabled = localStorage.getItem("mihwar-task-priority-mode") === "true";
-let priorityCardsOpen = false;
-let advancedToolsOpen = false;
-let dragTaskId = null;
 let eventController;
+let editorSubtasksPending = false;
 const expandedTaskSubtasks = new Set();
 
 function escapeHtml(value = "") {
@@ -41,21 +29,9 @@ function priorityIndex(task) {
 }
 
 function currentTasks() {
-  const query = searchText.trim().toLocaleLowerCase("ar");
-  return records.tasks.filter((task) => {
-    if (statusFilter === "active" && task.status === "done") return false;
-    if (statusFilter === "done" && task.status !== "done") return false;
-    if (priorityModeEnabled && priorityFilter !== null && priorityIndex(task) !== priorityFilter) return false;
-    if (projectFilter && task.projectId !== projectFilter) return false;
-    if (!query) return true;
-    const project = records.projects.find((item) => item.id === task.projectId)?.name ?? "";
-    const searchable = [task.title, task.notes, project, ...(task.tags ?? [])].join(" ").toLocaleLowerCase("ar");
-    return searchable.includes(query);
-  });
-}
-
-function projectName(projectId) {
-  return records.projects.find((project) => project.id === projectId)?.name ?? "";
+  return records.tasks.filter((task) => statusFilter === "done"
+    ? task.status === "done"
+    : task.status !== "done");
 }
 
 function normalizedChecklist(task) {
@@ -87,40 +63,28 @@ function subtasksBlock(task) {
 }
 
 async function saveChecklist(task, checklist) {
-  await update("tasks", { ...task, checklist, updatedAt: new Date().toISOString() });
+  editorSubtasksPending = true;
+  try {
+    await update("tasks", { ...task, checklist, updatedAt: new Date().toISOString() });
+  } finally {
+    editorSubtasksPending = false;
+  }
 }
 
 function taskCard(task) {
-  const project = projectName(task.projectId);
-  const keyResult = records.keyResults.find((item) => item.id === task.keyResultId);
-  const objective = records.objectives.find((item) => item.id === task.objectiveId);
   const done = task.status === "done";
+  const taskDate = task.due || task.scheduled;
   return `
-      <article class="task-card${done ? " is-done" : ""}" data-priority="${priorityIndex(task)}" draggable="${activeView === "matrix" && !done}" data-task-id="${escapeHtml(task.id)}">
+      <article class="task-card${done ? " is-done" : ""}" data-priority="${priorityIndex(task)}" data-task-id="${escapeHtml(task.id)}">
       <label class="task-check" aria-label="${done ? "إعادة فتح المهمة" : "إنجاز المهمة"}">
         <input type="checkbox" data-action="toggle" ${done ? "checked" : ""}>
         <span aria-hidden="true"></span>
       </label>
-      <div class="task-main">
-        <p class="task-title">${escapeHtml(task.title)}</p>
-        <div class="task-meta">
-          ${project ? `<span class="task-project">${escapeHtml(project)}</span>` : ""}
-          ${keyResult ? `<span class="task-target">${escapeHtml(keyResult.title)}</span>` : objective ? `<span class="task-target">${escapeHtml(objective.title)}</span>` : ""}
-          ${task.due ? `<span>${escapeHtml(formatDate(task.due))}</span>` : ""}
-          ${task.dueTime ? `<span>◷ ${escapeHtml(task.dueTime)}</span>` : ""}
-          ${task.estimateMin ? `<span>تركيز مخطط ${task.estimateMin} د</span>` : ""}
-          ${task.timeSpentMin ? `<span>تركيز مسجل ${task.timeSpentMin} د</span>` : ""}
-          ${task.recurrence ? `<span>↻ ${escapeHtml(RECURRENCE_OPTIONS.find((item) => item.value === task.recurrence)?.label ?? "")}</span>` : ""}
-          ${(task.tags ?? []).map((tag) => `<span class="task-tag">#${escapeHtml(tag)}</span>`).join("")}
-        </div>
-        ${subtasksBlock(task)}
-      </div>
-      <div class="task-actions">
-        ${priorityModeEnabled ? `<span class="priority-indicator priority-${priorityIndex(task)}" title="${PRIORITY_LABELS[priorityIndex(task)]}">${PRIORITY_LABELS[priorityIndex(task)]}</span>` : ""}
-        ${!done ? `<a class="icon-button task-focus" href="#/focus?task=${encodeURIComponent(task.id)}" aria-label="ابدأ التركيز على ${escapeHtml(task.title)}" title="ابدأ التركيز">◉</a>` : ""}
-        <button class="icon-button task-edit" type="button" data-action="edit" aria-label="تعديل المهمة">✎</button>
-        <button class="icon-button task-delete" type="button" data-action="delete" aria-label="حذف المهمة">×</button>
-      </div>
+      <button class="task-card-summary" type="button" data-action="edit" aria-label="تفاصيل المهمة: ${escapeHtml(task.title)}">
+        <span class="task-title">${escapeHtml(task.title)}</span>
+        ${taskDate ? `<span class="task-card-due">${escapeHtml(formatDate(taskDate))}${task.dueTime ? ` · ${escapeHtml(task.dueTime)}` : ""}</span>` : ""}
+        <span class="task-card-open" aria-hidden="true">‹</span>
+      </button>
       </article>
     `;
 }
@@ -128,85 +92,28 @@ function taskCard(task) {
 function renderList(tasks) {
   if (!tasks.length) {
     const emptyMessage = statusFilter === "done"
-      ? priorityFilter !== null ? `لا توجد مهام منجزة ضمن «${PRIORITY_LABELS[priorityFilter]}».` : "لا توجد مهام منجزة بعد."
-      : priorityFilter !== null ? `لا توجد مهام قيد الإنجاز ضمن «${PRIORITY_LABELS[priorityFilter]}».`
-      : statusFilter === "all" || !records.tasks.length
-        ? "ابدأ بإضافة مهمتك الأولى من الزر أسفل الشاشة."
-        : "لا توجد مهام قيد الإنجاز. يمكنك مراجعة المنجزة أو إضافة مهمة جديدة.";
+      ? "لا توجد مهام منجزة بعد."
+      : "ابدأ بإضافة مهمتك الأولى من زر + أعلاه.";
     return `<div class="tasks-empty">${emptyMessage}</div>`;
   }
   return `<div class="task-list">${tasks.map(taskCard).join("")}</div>`;
 }
 
-function renderUpcoming(tasks) {
-  const datedTasks = tasks.filter((task) => task.due || task.scheduled);
-  if (!datedTasks.length) return `<div class="tasks-empty">أضف تاريخاً لمهمة لتظهر هنا ضمن القادم.</div>`;
-  const groups = new Map();
-  for (const task of datedTasks) {
-    const date = task.due || task.scheduled;
-    if (!groups.has(date)) groups.set(date, []);
-    groups.get(date).push(task);
-  }
-  return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, grouped]) => `
-    <section class="task-group">
-      <h3>${escapeHtml(formatDate(date))}</h3>
-      <div class="task-list">${grouped.map(taskCard).join("")}</div>
-    </section>`).join("");
-}
+function renderPriorityBoard(tasks) {
+  if (!tasks.length) return renderList(tasks);
+  const groups = PRIORITY_LABELS.map((label, index) => ({
+    label,
+    index,
+    tasks: tasks.filter((task) => priorityIndex(task) === index),
+  }));
 
-function renderMatrix(tasks) {
-  return `<div class="priority-matrix">${PRIORITY_LABELS.map((label, index) => `
-    <section class="matrix-quadrant quadrant-${index}" data-priority="${index}" aria-label="${label}">
-      <h3>${label}</h3>
-      <div class="matrix-dropzone" data-dropzone="${index}">
-        ${tasks.filter((task) => priorityIndex(task) === index).map(taskCard).join("") || `<p class="matrix-empty">اسحب مهمة إلى هنا</p>`}
-      </div>
-    </section>`).join("")}</div>`;
-}
-
-function renderPriorityCards() {
-  const counts = [0, 0, 0, 0];
-  for (const task of records.tasks) {
-    if (task.status !== "done") counts[priorityIndex(task)] += 1;
-  }
-  const activeCount = counts.reduce((total, count) => total + count, 0);
-  return `<details class="task-priority-panel"${priorityCardsOpen ? " open" : ""}>
-    <summary><span>ترتيب الأولوية</span><small>اختر بطاقة لعرض مهامها فقط</small></summary>
-    <div class="task-priority-grid">
-      ${PRIORITY_LABELS.map((label, index) => {
-        const percent = activeCount ? Math.round(counts[index] / activeCount * 100) : 0;
-        const selected = priorityFilter === index;
-        return `<button class="task-priority-card priority-card-${index}${selected ? " is-selected" : ""}" type="button" data-priority-filter="${index}" aria-pressed="${selected}">
-          <span>${label}</span><strong>${counts[index]}</strong><small>${PRIORITY_GUIDANCE[index]}</small>
-          <span class="task-priority-track" aria-hidden="true"><i style="width:${percent}%"></i></span>
-        </button>`;
-      }).join("")}
-    </div>
-  </details>`;
-}
-
-function renderSomeday(tasks) {
-  const someday = tasks.filter((task) => task.status !== "done" && !task.scheduled && !task.due);
-  return renderList(someday);
-}
-
-function renderTaskDaySummary() {
-  const today = localDateString();
-  const todayTasks = records.tasks.filter((task) =>
-    (task.status !== "done" && (task.scheduled === today || task.due === today)) ||
-    (task.status === "done" && task.completedAt?.slice(0, 10) === today));
-  const completed = todayTasks.filter((task) =>
-    task.status === "done" && task.completedAt?.slice(0, 10) === today).length;
-  const percent = todayTasks.length ? Math.round(completed / todayTasks.length * 100) : 0;
-  const dateLabel = new Intl.DateTimeFormat("ar", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
-  return `<section class="task-day-summary" aria-label="ملخص مهام اليوم">
-    <div class="task-day-summary-heading"><span>خطة اليوم</span><time>${escapeHtml(dateLabel)}</time></div>
-    <div class="task-day-summary-progress">
-      <strong>${completed}<small> / ${todayTasks.length} منجزة</small></strong>
-      <span>${todayTasks.length - completed ? `${todayTasks.length - completed} متبقية` : todayTasks.length ? "اكتملت مهام اليوم" : "لا توجد مهام مجدولة اليوم"}</span>
-    </div>
-    <div class="task-day-progress-track" role="progressbar" aria-label="إنجاز مهام اليوم" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><span style="width:${percent}%"></span></div>
-  </section>`;
+  return `<div class="task-priority-board">
+    ${groups.map((group) => `
+      <section class="task-priority-group priority-card-${group.index}" aria-label="${group.label}">
+        <header><h3>${group.label}</h3><span>${group.tasks.length}</span></header>
+        <div class="task-list">${group.tasks.length ? group.tasks.map(taskCard).join("") : `<p class="task-priority-empty">فارغة</p>`}</div>
+      </section>`).join("")}
+  </div>`;
 }
 
 function render() {
@@ -219,55 +126,32 @@ function render() {
   });
   const activeCount = records.tasks.filter((task) => task.status !== "done").length;
   const doneCount = records.tasks.filter((task) => task.status === "done").length;
-  const visibleTasks = activeView === "someday"
-    ? tasks.filter((task) => task.status !== "done" && !task.scheduled && !task.due)
-    : activeView === "upcoming"
-      ? tasks.filter((task) => task.due || task.scheduled)
-      : tasks;
-  const body = activeView === "upcoming" ? renderUpcoming(tasks)
-    : activeView === "matrix" ? renderMatrix(tasks)
-      : activeView === "someday" ? renderSomeday(tasks)
-        : renderList(tasks);
+  const body = priorityModeEnabled ? renderPriorityBoard(tasks) : renderList(tasks);
 
   app.innerHTML = `
     <section class="tasks-page" aria-label="إدارة المهام">
-      ${renderTaskDaySummary()}
       <nav class="task-status-tabs" aria-label="حالة المهام">
         <button type="button" class="${statusFilter === "active" ? "is-active" : ""}" data-status="active" aria-pressed="${statusFilter === "active"}">قيد الإنجاز <strong>${activeCount}</strong></button>
         <button type="button" class="${statusFilter === "done" ? "is-active" : ""}" data-status="done" aria-pressed="${statusFilter === "done"}">المنجزة <strong>${doneCount}</strong></button>
-        <button type="button" class="${statusFilter === "all" ? "is-active" : ""}" data-status="all" aria-pressed="${statusFilter === "all"}">الكل <strong>${records.tasks.length}</strong></button>
-        <button class="task-priority-toggle${priorityModeEnabled ? " is-active" : ""}" type="button" data-action="toggle-priority-mode" aria-pressed="${priorityModeEnabled}">ترتيب الأولويات</button>
       </nav>
-      ${priorityModeEnabled ? renderPriorityCards() : ""}
-      <details class="task-tools"${advancedToolsOpen ? " open" : ""}>
-        <summary>بحث وعروض متقدمة</summary>
-        <div class="task-toolbar">
-          <div class="task-view-tabs" role="tablist" aria-label="عرض المهام">
-            ${VIEWS.map((view) => `<button class="view-tab${activeView === view.id ? " is-active" : ""}" type="button" role="tab" aria-selected="${activeView === view.id}" data-view="${view.id}">${view.label}</button>`).join("")}
-          </div>
-          <div class="task-filters">
-            <label class="visually-hidden" for="task-search">ابحث في المهام</label>
-            <input id="task-search" type="search" placeholder="بحث…" value="${escapeHtml(searchText)}">
-            <label class="visually-hidden" for="task-project-filter">تصفية حسب المشروع</label>
-            <select id="task-project-filter" aria-label="تصفية حسب المشروع">
-              <option value="">كل المشاريع</option>
-              ${records.projects.filter((project) => !project.archived).map((project) => `<option value="${escapeHtml(project.id)}"${projectFilter === project.id ? " selected" : ""}>${escapeHtml(project.name)}</option>`).join("")}
-            </select>
-            <button class="button button-secondary project-create" type="button" data-action="new-project">مشروع جديد</button>
-          </div>
-        </div>
-      </details>
+      <nav class="task-layout-switch" aria-label="طريقة عرض المهام">
+        <button type="button" class="${priorityModeEnabled ? "" : "is-active"}" data-action="set-layout" data-layout="queue" aria-pressed="${!priorityModeEnabled}">طابور</button>
+        <button type="button" class="${priorityModeEnabled ? "is-active" : ""}" data-action="set-layout" data-layout="priority" aria-pressed="${priorityModeEnabled}">حسب الأولوية</button>
+      </nav>
+      <div class="tasks-add-row">
+        <button class="button button-primary tasks-add-button" type="button" data-action="new-task" aria-label="إضافة مهمة"><span aria-hidden="true">＋</span></button>
+      </div>
       <div class="tasks-content">${body}</div>
-      <p class="tasks-count">${visibleTasks.length} مهمة</p>
-      <p class="tasks-status" id="tasks-status" role="status" aria-live="polite"></p>
-      <button class="button button-primary tasks-add-button" type="button" data-action="new-task"><span aria-hidden="true">＋</span> إضافة مهمة</button>
       <dialog class="task-dialog task-add-dialog" id="task-add-dialog">
-        <div class="task-add-dialog-heading"><span class="task-add-mark" aria-hidden="true">＋</span><div><p>خطوة جديدة</p><h2>إضافة مهمة</h2></div><button class="icon-button" type="button" data-action="close-add" aria-label="إغلاق">×</button></div>
+        <div class="task-add-dialog-heading"><span class="task-add-mark" aria-hidden="true">＋</span><div><h2>إضافة مهمة</h2><p>اختر بطاقة الأولوية لإضافتها إلى طابورك</p></div><button class="icon-button" type="button" data-action="close-add" aria-label="إغلاق">×</button></div>
         <form class="quick-add-form task-add-form" id="quick-add-form">
           <label class="task-add-title-label" for="quick-add-input">ماذا تريد أن تنجز؟</label>
           <input id="quick-add-input" name="task" autocomplete="off" placeholder="اكتب المهمة هنا…" required maxlength="240">
-          <p class="quick-add-hint">أضف التفاصيل لاحقاً إذا احتجت.</p>
-          <button class="button button-primary task-add-submit" type="submit">إضافة للمهمات</button>
+          <div class="task-add-priority-grid" aria-label="اختر أولوية المهمة">
+            ${PRIORITY_LABELS.map((label, index) => `<button class="task-add-priority-card priority-card-${index}" type="button" data-action="add-task-priority" data-priority="${index}">
+              <span>${label}</span><small>${PRIORITY_GUIDANCE[index]}</small>
+            </button>`).join("")}
+          </div>
         </form>
       </dialog>
       <dialog class="task-dialog" id="task-dialog">
@@ -278,27 +162,32 @@ function render() {
           </div>
           <input type="hidden" name="id">
           <label>عنوان المهمة<input name="title" required maxlength="240"></label>
-          <label>ملاحظات<textarea name="notes" rows="3"></textarea></label>
           <div class="editor-fields">
             <label>تاريخ الجدولة<input name="scheduled" type="date"></label>
             <label>تاريخ الاستحقاق<input name="due" type="date"></label>
             <label>وقت التنفيذ<input name="dueTime" type="time"></label>
-            ${priorityModeEnabled
-              ? `<label>الأولوية<select name="priority">${PRIORITY_LABELS.map((label, index) => `<option value="${index}">${label}</option>`).join("")}</select></label>`
-              : '<input type="hidden" name="priority" value="3">'}
+            <label>الأولوية<select name="priority">${PRIORITY_LABELS.map((label, index) => `<option value="${index}">${label}</option>`).join("")}</select></label>
             <label>مدة التركيز المستهدفة بالدقائق<input name="estimateMin" type="number" min="1" max="180" step="1"></label>
-            <label>المشروع<select name="projectId"><option value="">الوارد</option>${records.projects.filter((project) => !project.archived).map((project) => `<option value="${escapeHtml(project.id)}">${escapeHtml(project.name)}</option>`).join("")}</select></label>
-            <label>الهدف<select name="objectiveId"><option value="">بلا هدف</option>${records.objectives.map((objective) => `<option value="${escapeHtml(objective.id)}">${escapeHtml(objective.title)}</option>`).join("")}</select></label>
-            <label>النتيجة الرئيسية<select name="keyResultId"><option value="">بلا نتيجة</option>${records.keyResults.map((keyResult) => `<option value="${escapeHtml(keyResult.id)}">${escapeHtml(keyResult.title)}</option>`).join("")}</select></label>
-            <label>التكرار<select name="recurrence">${RECURRENCE_OPTIONS.map((option) => `<option value="${option.value}">${option.label}</option>`).join("")}</select></label>
           </div>
-          <label>الوسوم (افصل بينها بفاصلة)<input name="tags" placeholder="عمل، دراسة"></label>
-          <label>قائمة التحقق (عنصر في كل سطر)<textarea name="checklist" rows="3"></textarea></label>
+          <details class="task-editor-extra">
+            <summary>تفاصيل إضافية</summary>
+            <label>ملاحظات<textarea name="notes" rows="3"></textarea></label>
+            <div class="editor-fields">
+              <label>المشروع<select name="projectId"><option value="">الوارد</option>${records.projects.filter((project) => !project.archived).map((project) => `<option value="${escapeHtml(project.id)}">${escapeHtml(project.name)}</option>`).join("")}</select></label>
+              <label>الهدف<select name="objectiveId"><option value="">بلا هدف</option>${records.objectives.map((objective) => `<option value="${escapeHtml(objective.id)}">${escapeHtml(objective.title)}</option>`).join("")}</select></label>
+              <label>النتيجة الرئيسية<select name="keyResultId"><option value="">بلا نتيجة</option>${records.keyResults.map((keyResult) => `<option value="${escapeHtml(keyResult.id)}">${escapeHtml(keyResult.title)}</option>`).join("")}</select></label>
+              <label>التكرار<select name="recurrence">${RECURRENCE_OPTIONS.map((option) => `<option value="${option.value}">${option.label}</option>`).join("")}</select></label>
+            </div>
+            <button class="button button-secondary project-create" type="button" data-action="new-project">إنشاء مشروع</button>
+            <label>الوسوم<input name="tags" placeholder="عمل، دراسة"></label>
+          </details>
           <div class="dialog-actions">
-            <button class="button button-secondary" type="button" data-action="close-editor">إلغاء</button>
+            <a class="button button-secondary" id="task-focus-action" href="#/focus">ابدأ التركيز</a>
+            <button class="button button-secondary" type="button" data-action="delete-current-task">حذف المهمة</button>
             <button class="button button-primary" type="submit">حفظ التعديلات</button>
           </div>
         </form>
+        <div class="task-editor-subtasks" id="task-editor-subtasks"></div>
       </dialog>
     </section>`;
 
@@ -306,17 +195,16 @@ function render() {
 }
 
 function setStatus(message, isError = false) {
-  const element = document.querySelector("#tasks-status");
-  if (element) {
-    element.textContent = message;
-    element.dataset.state = isError ? "error" : "success";
-  }
   showToast(message, { isError });
 }
 
-async function createTask(input, dueDate = "", dueTime = "", focusDuration = "") {
+async function createTask(input, priorityOverride = null, dueDate = "", dueTime = "", focusDuration = "") {
   const parsed = parseQuickAdd(input);
   if (!parsed) throw new Error("اكتب عنواناً للمهمة أولاً.");
+  if (priorityOverride !== null && (!Number.isInteger(priorityOverride) || priorityOverride < 0 || priorityOverride > 3)) {
+    throw new Error("اختر إحدى بطاقات الأولوية.");
+  }
+  const priority = priorityOverride ?? priorityIndex(parsed);
   const focusDurationMin = focusDuration === "" ? parsed.estimateMin : Number(focusDuration);
   if (focusDurationMin !== null && (!Number.isInteger(focusDurationMin) || focusDurationMin < 1 || focusDurationMin > 180)) {
     throw new Error("مدة التركيز يجب أن تكون بين دقيقة واحدة و3 ساعات.");
@@ -332,8 +220,8 @@ async function createTask(input, dueDate = "", dueTime = "", focusDuration = "")
     scheduled: taskDate,
     due: taskDate,
     dueTime: dueTime || null,
-    important: parsed.important,
-    urgent: parsed.urgent,
+    important: priority === 0 || priority === 1,
+    urgent: priority === 0 || priority === 2,
     estimateMin: focusDurationMin,
     tags: parsed.tags,
     checklist: [],
@@ -391,13 +279,6 @@ function bindEvents(app) {
   eventController = new AbortController();
   const { signal } = eventController;
 
-  app.querySelector(".task-tools").addEventListener("toggle", (event) => {
-    advancedToolsOpen = event.currentTarget.open;
-  });
-  app.querySelector(".task-priority-panel")?.addEventListener("toggle", (event) => {
-    priorityCardsOpen = event.currentTarget.open;
-  });
-
   app.addEventListener("click", (event) => {
     const summary = event.target.closest(".subtasks > summary");
     if (!summary) return;
@@ -411,47 +292,11 @@ function bindEvents(app) {
   app.querySelector("#quick-add-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const input = app.querySelector("#quick-add-input");
-    try {
-      statusFilter = "active";
-      priorityFilter = null;
-      activeView = "list";
-      await createTask(input.value);
-      app.querySelector("#quick-add-form")?.reset();
-      app.querySelector("#task-add-dialog")?.close();
-      setStatus("أُضيفت المهمة.");
-    } catch (error) {
-      console.error("تعذّرت إضافة المهمة:", error);
-      setStatus(error.message, true);
-    }
+    if (input.value.trim()) setStatus("اختر بطاقة الأولوية لإضافة المهمة.");
   });
 
-  app.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => {
-    activeView = button.dataset.view;
-    render();
-  }));
-
-  app.querySelector("#task-search").addEventListener("input", (event) => {
-    searchText = event.currentTarget.value;
-    const position = event.currentTarget.selectionStart;
-    render();
-    const input = app.querySelector("#task-search");
-    input.focus();
-    input.setSelectionRange(position, position);
-  });
-
-  app.querySelector("#task-project-filter").addEventListener("change", (event) => {
-    projectFilter = event.currentTarget.value;
-    render();
-  });
   app.querySelectorAll("[data-status]").forEach((button) => button.addEventListener("click", () => {
     statusFilter = button.dataset.status;
-    render();
-  }));
-  app.querySelectorAll("[data-priority-filter]").forEach((button) => button.addEventListener("click", () => {
-    const selected = Number(button.dataset.priorityFilter);
-    priorityFilter = priorityFilter === selected ? null : selected;
-    statusFilter = "active";
-    activeView = "list";
     render();
   }));
 
@@ -505,10 +350,8 @@ function bindEvents(app) {
   app.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-action]");
     if (!button) return;
-    if (button.dataset.action === "toggle-priority-mode") {
-      priorityModeEnabled = !priorityModeEnabled;
-      priorityFilter = null;
-      priorityCardsOpen = priorityModeEnabled;
+    if (button.dataset.layout) {
+      priorityModeEnabled = button.dataset.layout === "priority";
       localStorage.setItem("mihwar-task-priority-mode", String(priorityModeEnabled));
       render();
       return;
@@ -520,6 +363,30 @@ function bindEvents(app) {
       requestAnimationFrame(() => app.querySelector("#quick-add-input")?.focus());
       return;
     }
+    if (button.dataset.action === "add-task-priority") {
+      const input = app.querySelector("#quick-add-input");
+      const title = input.value.trim();
+      if (!title) {
+        input.reportValidity();
+        return;
+      }
+      const selectedPriority = Number(button.dataset.priority);
+      app.querySelector("#task-add-dialog")?.close();
+      statusFilter = "active";
+      try {
+        await createTask(title, selectedPriority);
+        setStatus("أُضيفت المهمة إلى طابورك.");
+      } catch (error) {
+        console.error("تعذّرت إضافة المهمة:", error);
+        const dialog = app.querySelector("#task-add-dialog");
+        const currentInput = app.querySelector("#quick-add-input");
+        if (currentInput) currentInput.value = title;
+        if (dialog && !dialog.open) dialog.showModal();
+        currentInput?.focus();
+        setStatus(error.message, true);
+      }
+      return;
+    }
     if (button.dataset.action === "close-add") {
       app.querySelector("#task-add-dialog")?.close();
       return;
@@ -528,7 +395,7 @@ function bindEvents(app) {
       const name = window.prompt("اسم المشروع الجديد:");
       if (!name?.trim()) return;
       try {
-        await add("projects", {
+        const project = {
           id: crypto.randomUUID(),
           name: name.trim(),
           color: "#6258d9",
@@ -536,7 +403,10 @@ function bindEvents(app) {
           archived: false,
           order: records.projects.length,
           createdAt: new Date().toISOString(),
-        });
+        };
+        await add("projects", project);
+        const projectSelect = app.querySelector('#task-editor-form [name="projectId"]');
+        if (projectSelect) projectSelect.value = project.id;
         setStatus("أُنشئ المشروع.");
       } catch (error) {
         console.error("تعذّر إنشاء المشروع:", error);
@@ -573,7 +443,12 @@ function bindEvents(app) {
       form.elements.keyResultId.value = task.keyResultId ?? "";
       form.elements.recurrence.value = task.recurrence ?? "";
       form.elements.tags.value = (task.tags ?? []).join("، ");
-      form.elements.checklist.value = (task.checklist ?? []).map((item) => typeof item === "string" ? item : item.text).join("\n");
+      const taskSubtasks = dialog.querySelector("#task-editor-subtasks");
+      taskSubtasks.dataset.taskId = task.id;
+      taskSubtasks.innerHTML = subtasksBlock(task);
+      const focusAction = dialog.querySelector("#task-focus-action");
+      focusAction.href = `#/focus?task=${encodeURIComponent(task.id)}`;
+      focusAction.hidden = task.status === "done";
       dialog.showModal();
       return;
     }
@@ -581,9 +456,9 @@ function bindEvents(app) {
       app.querySelector("#task-dialog")?.close();
       return;
     }
-    if (button.dataset.action === "delete") {
-      const taskElement = button.closest("[data-task-id]");
-      const task = records.tasks.find((item) => item.id === taskElement?.dataset.taskId);
+    if (button.dataset.action === "delete-current-task") {
+      const taskId = app.querySelector("#task-editor-form")?.elements.id.value;
+      const task = records.tasks.find((item) => item.id === taskId);
       if (!task || !window.confirm(`هل تريد حذف «${task.title}»؟`)) return;
       try {
         await remove("tasks", task.id);
@@ -613,8 +488,6 @@ function bindEvents(app) {
       return;
     }
     const priority = Number(form.elements.priority.value);
-    const checklist = form.elements.checklist.value.split("\n").map((line) => line.trim()).filter(Boolean);
-    const oldChecklist = Array.isArray(task.checklist) ? task.checklist : [];
     try {
       await update("tasks", {
         ...task,
@@ -631,8 +504,6 @@ function bindEvents(app) {
         keyResultId,
         recurrence: form.elements.recurrence.value || null,
         tags: form.elements.tags.value.split(/[,،]/).map((tag) => tag.trim().replace(/^#/, "")).filter(Boolean),
-        checklist: checklist.map((text) => oldChecklist.find((item) => typeof item === "object" && item.text === text)
-          ?? { id: crypto.randomUUID(), text, done: false }),
         updatedAt: new Date().toISOString(),
       });
       setStatus("حُفظت تعديلات المهمة.");
@@ -642,38 +513,6 @@ function bindEvents(app) {
     }
   }, { signal });
 
-  app.addEventListener("dragstart", (event) => {
-    const card = event.target.closest(".task-card[draggable='true']");
-    if (!card) return;
-    dragTaskId = card.dataset.taskId;
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", dragTaskId);
-  }, { signal });
-  app.addEventListener("dragover", (event) => {
-    const zone = event.target.closest("[data-dropzone]");
-    if (zone) event.preventDefault();
-  }, { signal });
-  app.addEventListener("drop", async (event) => {
-    const zone = event.target.closest("[data-dropzone]");
-    if (!zone || !dragTaskId) return;
-    event.preventDefault();
-    const task = records.tasks.find((item) => item.id === dragTaskId);
-    const index = Number(zone.dataset.dropzone);
-    dragTaskId = null;
-    if (!task || !Number.isInteger(index) || index < 0 || index > 3 || priorityIndex(task) === index) return;
-    try {
-      await update("tasks", {
-        ...task,
-        important: index === 0 || index === 1,
-        urgent: index === 0 || index === 2,
-        updatedAt: new Date().toISOString(),
-      });
-      setStatus("تحدّثت أولوية المهمة.");
-    } catch (error) {
-      console.error("تعذّر تغيير أولوية المهمة:", error);
-      setStatus(error.message, true);
-    }
-  }, { signal });
 }
 
 export async function mountTasksView(isCurrent = () => true) {
@@ -697,6 +536,25 @@ export async function mountTasksView(isCurrent = () => true) {
         objectives: state.objectives ?? records.objectives,
         keyResults: state.keyResults ?? records.keyResults,
       };
+      const editorDialog = document.querySelector("#task-dialog");
+      if (change.storeName === "projects" && editorDialog?.open) {
+        const projectSelect = editorDialog.querySelector('#task-editor-form [name="projectId"]');
+        if (projectSelect) {
+          const selectedProjectId = projectSelect.value;
+          projectSelect.innerHTML = `<option value="">الوارد</option>${records.projects.filter((project) => !project.archived).map((project) => `<option value="${escapeHtml(project.id)}">${escapeHtml(project.name)}</option>`).join("")}`;
+          projectSelect.value = selectedProjectId;
+        }
+        return;
+      }
+      if (change.storeName === "tasks" && editorDialog?.open && editorSubtasksPending) {
+        const taskId = editorDialog.querySelector('#task-editor-form [name="id"]')?.value;
+        const task = records.tasks.find((item) => item.id === taskId);
+        const subtasks = editorDialog.querySelector("#task-editor-subtasks");
+        if (task && subtasks) {
+          subtasks.innerHTML = subtasksBlock(task);
+          return;
+        }
+      }
       if (window.location.hash.startsWith("#/tasks")) render();
     }
   });

@@ -16,6 +16,7 @@ let eventController;
 let records = { tasks: [], habits: [], objectives: [], keyResults: [], lifeAreas: [], sessions: [], journal: [] };
 let statusMessage = "";
 let statusIsError = false;
+let selectedTodayPanel = "";
 const expandedTodayHabitDetails = new Set();
 
 function escapeHtml(value = "") {
@@ -261,6 +262,32 @@ function renderTasks(tasks, emptyMessage = "لا توجد مهام مجدولة 
   }).join("");
 }
 
+function renderTodayPanel(panel, tasks, habits, completedTasks) {
+  const content = {
+    tasks: {
+      title: "مهام اليوم",
+      subtitle: "المهام التي ما زالت قيد الإنجاز",
+      body: `${renderTasks(tasks)}<details class="today-completed-tasks">
+        <summary><span>المهام المنجزة اليوم</span><strong>${completedTasks.length}</strong></summary>
+        ${renderTasks(completedTasks, "لم تُنجز مهمة مجدولة اليوم بعد.")}
+      </details><a class="today-dashboard-link" href="#/tasks">فتح تبويب المهام الكامل</a>`,
+    },
+    habits: {
+      title: "عادات اليوم",
+      subtitle: "سجّل إنجاز عاداتك لهذا اليوم",
+      body: `${renderHabits(habits)}<a class="today-dashboard-link" href="#/habits">فتح تبويب العادات الكامل</a>`,
+    },
+  }[panel];
+  if (!content) return "";
+  return `<section class="today-panel today-dashboard-details" aria-label="${content.title}">
+    <header class="today-section-heading">
+      <div><p class="today-kicker">تفاصيل اليوم</p><h2>${content.title}</h2><p class="today-dashboard-subtitle">${content.subtitle}</p></div>
+      <button class="icon-button" type="button" data-action="close-today-panel" aria-label="إغلاق التفاصيل">×</button>
+    </header>
+    ${content.body}
+  </section>`;
+}
+
 function renderHabits(habits) {
   if (!habits.length) return `<p class="today-empty">أضف عادة لتظهر هنا وتتابعها خلال اليوم. <a href="#/habits">إدارة العادات</a></p>`;
   return `<div class="today-habit-list">${habits.map((habit) => {
@@ -310,37 +337,49 @@ function render() {
   const dailyCompleted = completedCount + completedHabits;
   const dailyPercent = dailyTotal ? Math.round(dailyCompleted / dailyTotal * 100) : 0;
   const journalEntry = records.journal.find((entry) => entry.date === localDateString());
+  const objective = highlightedObjective();
+  const todayFocusSessions = records.sessions.filter((session) => session.start?.slice(0, 10) === localDateString());
+  const focusMinutes = todayFocusSessions
+    .filter((session) => session.type !== "break" && session.status === "completed")
+    .reduce((total, session) => {
+      const duration = Number(session.durationMin);
+      return total + (Number.isFinite(duration) ? Math.max(0, duration) : 0);
+    }, 0);
+  const activeFocusSession = records.sessions.find((session) => session.status === "active");
+  const dashboardCards = [
+    { id: "tasks", title: "المهام", value: tasks.length, hint: `${completedTasks.length} أُنجزت اليوم`, icon: "☷" },
+    { id: "habits", title: "العادات", value: habits.length ? `${completedHabits}/${habits.length}` : "0", hint: habits.length ? "إنجاز اليوم" : "لا عادات مجدولة", icon: "✳" },
+    { href: "#/goals", title: "الأهداف", value: objective ? `${objectiveProgress(objective)}%` : "—", hint: objective?.title ?? "اختر هدفاً", icon: "◎" },
+    { href: "#/focus", title: "التركيز", value: activeFocusSession ? "نشط" : `${focusMinutes} د`, hint: activeFocusSession ? "متابعة الجلسة" : "وقت التركيز اليوم", icon: "◉" },
+  ];
   app.innerHTML = `
     <section class="today-page" aria-label="ملخص اليوم">
       <div class="today-welcome">
         <div><p class="today-kicker">خطوة هادئة تكفي</p><h2>${escapeHtml(new Intl.DateTimeFormat("ar", { weekday: "long", day: "numeric", month: "long" }).format(new Date()))}</h2></div>
-        <span class="today-progress-summary">${dailyCompleted} أُنجزت <span aria-hidden="true">·</span> ${dailyTotal} لهذا اليوم</span>
+        <span class="today-progress-summary">${dailyPercent}% من خطة اليوم</span>
       </div>
-      <section class="today-progress-hero" aria-label="إنجاز اليوم">
-        <div class="today-progress-ring" role="img" aria-label="إنجاز ${dailyPercent}% من خطة اليوم" style="--today-progress:${dailyPercent}%"><span><strong>${dailyPercent}%</strong><small>إنجاز اليوم</small></span></div>
-        <div class="today-progress-copy"><p class="today-kicker">خطتك في مكان واحد</p><h2>${dailyCompleted === dailyTotal && dailyTotal ? "أحسنت، أكملت خطتك!" : "كل خطوة تُحسب"}</h2><p>تابع مهامك وعاداتك دون أن تفقد الصورة الكاملة.</p>
-          <div class="today-progress-pills"><span>المهام <strong>${completedCount}/${plannedCount}</strong></span><span>العادات <strong>${completedHabits}/${habits.length}</strong></span></div>
-        </div>
+      <section class="today-dashboard" aria-label="لوحة اليوم">
+        ${dashboardCards.map((card) => card.href
+          ? `<a class="today-dashboard-card" href="${card.href}" aria-label="${card.title}: ${card.value}، ${escapeHtml(card.hint)}">
+              <span class="today-dashboard-card-heading"><span class="today-dashboard-icon" aria-hidden="true">${card.icon}</span><span>${card.title}</span></span>
+              <strong>${card.value}</strong>
+              <small>${escapeHtml(card.hint)}</small>
+            </a>`
+          : `<button class="today-dashboard-card${selectedTodayPanel === card.id ? " is-active" : ""}" type="button" data-action="toggle-today-panel" data-panel="${card.id}" aria-expanded="${selectedTodayPanel === card.id}" aria-controls="today-dashboard-panel">
+              <span class="today-dashboard-card-heading"><span class="today-dashboard-icon" aria-hidden="true">${card.icon}</span><span>${card.title}</span></span>
+              <strong>${card.value}</strong>
+              <small>${escapeHtml(card.hint)}</small>
+            </button>`).join("")}
       </section>
-      ${renderMonthlySummary()}
-      ${objectiveCard()}
-      <div class="today-columns">
-        <div class="today-primary-column">
-          <section class="today-panel today-section">
-            <div class="today-section-heading"><div><p class="today-kicker">خطتك اليومية</p><h2>مهام اليوم</h2></div><span class="today-section-count">${tasks.length}</span></div>
-            <div class="today-task-groups">${renderTasks(tasks)}</div>
-            <details class="today-completed-tasks">
-              <summary><span>المهام المنجزة اليوم</span><strong>${completedTasks.length}</strong></summary>
-              ${renderTasks(completedTasks, "لم تُنجز مهمة مجدولة اليوم بعد.")}
-            </details>
-          </section>
-          <section class="today-panel today-section">
-            <div class="today-section-heading"><div><p class="today-kicker">ثباتك يصنع الفرق</p><h2>عادات اليوم</h2></div><span class="today-section-count">${completedHabits}/${habits.length}</span></div>
-            ${renderHabits(habits)}
-          </section>
-        </div>
-        <aside class="today-side-column">
-          ${renderFocusCard()}
+      <div id="today-dashboard-panel" class="today-dashboard-panel"${selectedTodayPanel ? "" : " hidden"}>
+        ${renderTodayPanel(selectedTodayPanel, tasks, habits, completedTasks)}
+      </div>
+      ${renderFocusCard()}
+      <details class="today-more">
+        <summary><span>الهدف والحصاد والمذكرة</span><span class="today-more-hint">تفاصيل إضافية</span></summary>
+        <div class="today-more-content">
+          ${objectiveCard()}
+          ${renderMonthlySummary()}
           <section class="today-panel today-journal">
             <div class="today-section-heading"><div><p class="today-kicker">لحظة لك</p><h2>مذكّرة سريعة</h2></div></div>
             <form id="today-journal-form">
@@ -354,8 +393,8 @@ function render() {
               <button class="button button-secondary" type="submit">${journalEntry ? "حفظ التحديث" : "حفظ المذكرة"}</button>
             </form>
           </section>
-        </aside>
-      </div>
+        </div>
+      </details>
       <p class="today-status" role="status" aria-live="polite" data-state="${statusIsError ? "error" : "success"}">${escapeHtml(statusMessage)}</p>
     </section>`;
   bindEvents(app);
@@ -428,6 +467,17 @@ function bindEvents(app) {
   }, { signal });
 
   app.addEventListener("click", async (event) => {
+    const panelButton = event.target.closest('[data-action="toggle-today-panel"]');
+    if (panelButton) {
+      selectedTodayPanel = selectedTodayPanel === panelButton.dataset.panel ? "" : panelButton.dataset.panel;
+      render();
+      return;
+    }
+    if (event.target.closest('[data-action="close-today-panel"]')) {
+      selectedTodayPanel = "";
+      render();
+      return;
+    }
     const button = event.target.closest('[data-action="toggle-habit"], [data-action="toggle-habit-item"]');
     if (!button) return;
     try {

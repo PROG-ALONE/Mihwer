@@ -6,7 +6,7 @@ const START_STEPS = [
   },
   {
     title: "اختر ما يناسب اليوم",
-    text: "راجع مهام اليوم، وأضف عادة إذا كانت مفيدة لك.",
+    text: "تعرض بطاقات اليوم ملخص المهام والعادات والأهداف والتركيز؛ افتح التبويب لمزيد من التفاصيل.",
     icon: "◷",
   },
   {
@@ -40,7 +40,7 @@ export function renderHelp(app) {
         <aside class="guide-hero-aside" aria-label="فكرة مِحوَر">
           <img class="guide-hero-mark" src="./assets/icons/icon.svg" alt="" aria-hidden="true">
           <strong>خطوة واحدة تكفي</strong>
-          <p>الأولويات والتركيز والتفاصيل كلها اختيارية.</p>
+          <p>اختر أولوية المهمة عند إضافتها، ثم اعرضها كطابور أو حسب الأولوية.</p>
         </aside>
       </header>
 
