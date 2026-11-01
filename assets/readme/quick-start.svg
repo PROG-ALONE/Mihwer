@@ -1,62 +1,62 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" role="img" aria-labelledby="title description">
   <title id="title">ابدأ استخدام مِحوَر بثلاث خطوات</title>
-  <desc id="desc">أضف مهمة، رتّبها بالرموز السريعة، ثم سجّل إنجازك.</desc>
+  <desc id="description">أضف مهمة، راجع خطة اليوم، ثم أكملها مع بقائها محفوظة في سجلّك.</desc>
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#11101e"/>
-      <stop offset="1" stop-color="#211d37"/>
+      <stop stop-color="#f8faf8"/>
+      <stop offset="1" stop-color="#eef4ef"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
-      <stop stop-color="#8a6cff"/>
-      <stop offset="1" stop-color="#27c7a2"/>
+    <linearGradient id="mint" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#e7f4eb"/>
+      <stop offset="1" stop-color="#d4eadb"/>
     </linearGradient>
   </defs>
-  <rect width="1200" height="560" rx="28" fill="url(#background)"/>
-  <g font-family="Tahoma, Arial, sans-serif" direction="rtl">
-    <text x="1140" y="62" text-anchor="start" fill="#c6b8ff" font-size="18" font-weight="700">أول استخدام؟ الأمر بسيط</text>
-    <text x="1140" y="105" text-anchor="start" fill="#f7f4ff" font-size="30" font-weight="800">من فكرة صغيرة إلى إنجاز واضح</text>
-  </g>
+  <rect width="1200" height="520" rx="30" fill="url(#background)"/>
+  <text x="1140" y="58" text-anchor="start" direction="rtl" fill="#477665" font-family="Tahoma, Arial, sans-serif" font-size="18" font-weight="700">ابدأ من دون إعدادات معقدة</text>
+  <text x="1140" y="100" text-anchor="start" direction="rtl" fill="#24343a" font-family="Tahoma, Arial, sans-serif" font-size="30" font-weight="800">ثلاث خطوات تكفي</text>
 
   <g font-family="Tahoma, Arial, sans-serif" direction="rtl">
-    <rect x="820" y="145" width="330" height="330" rx="24" fill="#211e37" stroke="#7658e8" stroke-width="2"/>
-    <circle cx="1095" cy="190" r="25" fill="#30274f"/>
-    <text x="1095" y="198" text-anchor="middle" fill="#bba8ff" font-size="20" font-weight="800">١</text>
-    <text x="1090" y="247" text-anchor="start" fill="#bba8ff" font-size="23" font-weight="800">أضف مهمة</text>
-    <text x="1090" y="294" text-anchor="start" fill="#e9e5f7" font-size="16">من تبويب «المهام» اضغط</text>
-    <text x="1090" y="324" text-anchor="start" fill="#e9e5f7" font-size="16">زر الإضافة الثابت أسفل الشاشة.</text>
-    <text x="1090" y="368" text-anchor="start" fill="#aaa4c1" font-size="15">اكتب عنواناً واضحاً؛ الموعد</text>
-    <text x="1090" y="395" text-anchor="start" fill="#aaa4c1" font-size="15">والوقت والتركيز اختيارية.</text>
-    <rect x="868" y="425" width="242" height="32" rx="16" fill="#30274f"/>
-    <text x="989" y="447" text-anchor="middle" fill="#d9ceff" font-size="14" font-weight="700">ابدأ بما تريد إنجازه</text>
+    <rect x="810" y="132" width="330" height="310" rx="24" fill="#fff" stroke="#b8d8c2" stroke-width="2"/>
+    <circle cx="1090" cy="174" r="23" fill="url(#mint)"/>
+    <text x="1090" y="182" text-anchor="middle" fill="#477665" font-size="19" font-weight="800">١</text>
+    <text x="1090" y="229" text-anchor="start" fill="#24343a" font-size="22" font-weight="800">أضف مهمة</text>
+    <text x="1090" y="260" text-anchor="start" fill="#64736c" font-size="15">عنوان واضح يكفي الآن.</text>
+    <rect x="842" y="285" width="266" height="55" rx="13" fill="#f7faf7" stroke="#d7e4da"/>
+    <text x="1088" y="319" text-anchor="start" fill="#8a9990" font-size="14">ماذا تريد أن تنجز؟</text>
+    <rect x="942" y="354" width="166" height="42" rx="12" fill="#477665"/>
+    <text x="1025" y="381" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">إضافة للمهمات</text>
+    <text x="1090" y="421" text-anchor="start" fill="#64736c" font-size="13">لا موعد أو تفاصيل مطلوبة.</text>
 
-    <rect x="435" y="145" width="330" height="330" rx="24" fill="#211e37" stroke="#d18b28" stroke-width="2"/>
-    <circle cx="710" cy="190" r="25" fill="#3a2f1e"/>
-    <text x="710" y="198" text-anchor="middle" fill="#f1ca83" font-size="20" font-weight="800">٢</text>
-    <text x="705" y="247" text-anchor="start" fill="#f1ca83" font-size="23" font-weight="800">رتّبها بسرعة</text>
-    <text x="705" y="291" text-anchor="start" fill="#e9e5f7" font-size="16">خصّص المهمة من العنوان:</text>
-    <rect x="650" y="313" width="88" height="68" rx="14" fill="#30274f"/>
-    <text x="694" y="338" text-anchor="middle" fill="#f1ca83" font-size="12">أولوية</text>
-    <text x="694" y="363" text-anchor="middle" fill="#f7f4ff" font-size="14" font-weight="700">مهم وعاجل</text>
-    <rect x="550" y="313" width="88" height="68" rx="14" fill="#30274f"/>
-    <text x="594" y="338" text-anchor="middle" fill="#f1ca83" font-size="12">وسم</text>
-    <text x="594" y="363" text-anchor="middle" fill="#f7f4ff" font-size="14" font-weight="700">عمل</text>
-    <rect x="450" y="313" width="88" height="68" rx="14" fill="#30274f"/>
-    <text x="494" y="338" text-anchor="middle" fill="#f1ca83" font-size="12">تركيز</text>
-    <text x="494" y="363" text-anchor="middle" fill="#f7f4ff" font-size="14" font-weight="700">٣٠ دقيقة</text>
-    <text x="705" y="422" text-anchor="start" fill="#aaa4c1" font-size="14">ويمكنك إضافة بقية التفاصيل لاحقاً.</text>
+    <rect x="435" y="132" width="330" height="310" rx="24" fill="#fff" stroke="#c8c0eb" stroke-width="2"/>
+    <circle cx="715" cy="174" r="23" fill="#eee9ff"/>
+    <text x="715" y="182" text-anchor="middle" fill="#7354e8" font-size="19" font-weight="800">٢</text>
+    <text x="715" y="229" text-anchor="start" fill="#24343a" font-size="22" font-weight="800">راجع خطة اليوم</text>
+    <text x="715" y="260" text-anchor="start" fill="#64736c" font-size="15">ما عليك فعله يظهر ببساطة.</text>
+    <g font-size="14">
+      <rect x="467" y="282" width="266" height="42" rx="11" fill="#f7f6fc"/>
+      <circle cx="704" cy="303" r="8" fill="none" stroke="#7354e8" stroke-width="2"/>
+      <text x="683" y="308" text-anchor="start" fill="#343347">مهمة اليوم</text>
+      <rect x="467" y="334" width="266" height="42" rx="11" fill="#f7f6fc"/>
+      <circle cx="704" cy="355" r="8" fill="none" stroke="#7354e8" stroke-width="2"/>
+      <text x="683" y="360" text-anchor="start" fill="#343347">خطوة صغيرة أخرى</text>
+    </g>
+    <text x="715" y="421" text-anchor="start" fill="#64736c" font-size="13">الأولويات خيار عند الحاجة.</text>
 
-    <rect x="50" y="145" width="330" height="330" rx="24" fill="#211e37" stroke="#1d9a83" stroke-width="2"/>
-    <circle cx="325" cy="190" r="25" fill="#193a35"/>
-    <text x="325" y="198" text-anchor="middle" fill="#70d7bd" font-size="20" font-weight="800">٣</text>
-    <text x="320" y="247" text-anchor="start" fill="#70d7bd" font-size="23" font-weight="800">أنجز وتابع</text>
-    <text x="320" y="294" text-anchor="start" fill="#e9e5f7" font-size="16">أكمل بالتأشير أو اسحب</text>
-    <text x="320" y="324" text-anchor="start" fill="#e9e5f7" font-size="16">المهمة إلى اليمين.</text>
-    <text x="320" y="368" text-anchor="start" fill="#aaa4c1" font-size="15">ستبقى المهمة محفوظة؛ راجعها</text>
-    <text x="320" y="395" text-anchor="start" fill="#aaa4c1" font-size="15">من قائمة المنجَز وأعد فتحها.</text>
-    <rect x="98" y="425" width="242" height="32" rx="16" fill="#193a35"/>
-    <text x="219" y="447" text-anchor="middle" fill="#9be5d2" font-size="14" font-weight="700">تقدّمك يظهر في لوحة اليوم</text>
+    <rect x="60" y="132" width="330" height="310" rx="24" fill="#fff" stroke="#b8d8c2" stroke-width="2"/>
+    <circle cx="340" cy="174" r="23" fill="url(#mint)"/>
+    <text x="340" y="182" text-anchor="middle" fill="#477665" font-size="19" font-weight="800">٣</text>
+    <text x="340" y="229" text-anchor="start" fill="#24343a" font-size="22" font-weight="800">أكملها بلمسة</text>
+    <text x="340" y="260" text-anchor="start" fill="#64736c" font-size="15">إنجازك لا يعني حذف المهمة.</text>
+    <circle cx="225" cy="336" r="42" fill="#e7f4eb"/>
+    <path d="M206 336l13 13 27-29" fill="none" stroke="#168a68" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="340" y="409" text-anchor="start" fill="#477665" font-size="14" font-weight="700">تبقى محفوظة في سجلّك.</text>
   </g>
 
-  <rect x="50" y="498" width="1100" height="4" rx="2" fill="url(#accent)" opacity=".8"/>
-  <text x="600" y="535" text-anchor="middle" direction="rtl" fill="#aaa4c1" font-family="Tahoma, Arial, sans-serif" font-size="15">لا تحتاج إلى إعداد كل شيء دفعة واحدة — ابدأ بخطوة واحدة.</text>
+  <g fill="#a58aff">
+    <circle cx="790" cy="288" r="15"/>
+    <path d="M786 280l9 8-9 8" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="415" cy="288" r="15"/>
+    <path d="M411 280l9 8-9 8" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="600" y="486" text-anchor="middle" direction="rtl" fill="#64736c" font-family="Tahoma, Arial, sans-serif" font-size="15">التفاصيل، الأهداف، العادات والتركيز إضافات اختيارية.</text>
 </svg>

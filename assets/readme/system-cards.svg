@@ -1,95 +1,56 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1120" role="img" aria-labelledby="title desc">
-  <title id="title">أقسام نظام مِحوَر</title>
-  <desc id="desc">ثماني بطاقات ملونة تلخص لوحة اليوم والمهام والأهداف والعادات والتركيز واليوميات والتقارير والإعدادات.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title description">
+  <title id="title">مساحات مِحوَر</title>
+  <desc id="description">أربع بطاقات توضح اليوم والمهام والأهداف والعادات والصفحات الإضافية.</desc>
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
       <stop stop-color="#11101e"/>
-      <stop offset="1" stop-color="#211d37"/>
+      <stop offset="1" stop-color="#25213b"/>
     </linearGradient>
-    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
-      <stop stop-color="#211e37"/>
-      <stop offset="1" stop-color="#19172b"/>
+    <linearGradient id="mint" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#b6dfbc"/>
+      <stop offset="1" stop-color="#63b89c"/>
     </linearGradient>
   </defs>
-  <rect width="1200" height="1120" rx="28" fill="url(#background)"/>
-  <g font-family="Tahoma, Arial, sans-serif" direction="rtl">
-    <text x="1140" y="58" text-anchor="start" fill="#c6b8ff" font-size="18" font-weight="700">مساحات متكاملة، من دون تعقيد</text>
-    <text x="1140" y="98" text-anchor="start" fill="#f7f4ff" font-size="30" font-weight="800">كل ما تحتاجه ليومك في بطاقات واضحة</text>
-  </g>
+  <rect width="1200" height="620" rx="30" fill="url(#background)"/>
+  <text x="1140" y="58" text-anchor="start" direction="rtl" fill="#b6dfbc" font-family="Tahoma, Arial, sans-serif" font-size="18" font-weight="700">مساحات بسيطة، تختار منها ما تحتاج</text>
+  <text x="1140" y="100" text-anchor="start" direction="rtl" fill="#f3f0ff" font-family="Tahoma, Arial, sans-serif" font-size="30" font-weight="800">كل شيء في مكانه</text>
 
   <g font-family="Tahoma, Arial, sans-serif" direction="rtl">
     <g>
-      <rect x="620" y="132" width="535" height="218" rx="22" fill="url(#card)" stroke="#7658e8" stroke-width="2"/>
-      <rect x="1082" y="154" width="48" height="48" rx="15" fill="#30274f"/>
-      <text x="1106" y="187" text-anchor="middle" fill="#bba8ff" font-size="25" font-weight="800">◷</text>
-      <text x="1065" y="178" text-anchor="start" fill="#bba8ff" font-size="22" font-weight="800">لوحة اليوم</text>
-      <text x="1110" y="238" text-anchor="start" fill="#e9e5f7" font-size="16">• إنجاز المهام والعادات المخططة</text>
-      <text x="1110" y="274" text-anchor="start" fill="#e9e5f7" font-size="16">• الجلسة النشطة والمهام المكتملة</text>
-      <text x="1110" y="310" text-anchor="start" fill="#aaa4c1" font-size="15">• حصاد شهري للتقدم والاستمرارية</text>
+      <rect x="625" y="132" width="530" height="205" rx="22" fill="#1b1930" stroke="#27d0aa" stroke-opacity=".65" stroke-width="2"/>
+      <rect x="1080" y="155" width="48" height="48" rx="15" fill="#193a35"/>
+      <path d="M1092 179l7 7 15-17" fill="none" stroke="#58dfb3" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="1063" y="184" text-anchor="start" fill="#9be5d2" font-size="22" font-weight="800">اليوم</text>
+      <text x="1110" y="247" text-anchor="start" fill="#f3f0ff" font-size="17">ابدأ بما خُطّط له اليوم.</text>
+      <text x="1110" y="282" text-anchor="start" fill="#aaa5c1" font-size="15">إنجاز سريع من دون تفاصيل زائدة.</text>
     </g>
     <g>
-      <rect x="45" y="132" width="535" height="218" rx="22" fill="url(#card)" stroke="#1d9a83" stroke-width="2"/>
-      <rect x="507" y="154" width="48" height="48" rx="15" fill="#193a35"/>
-      <text x="531" y="187" text-anchor="middle" fill="#70d7bd" font-size="25" font-weight="800">☷</text>
-      <text x="490" y="178" text-anchor="start" fill="#70d7bd" font-size="22" font-weight="800">المهام</text>
-      <text x="535" y="238" text-anchor="start" fill="#e9e5f7" font-size="16">• إضافة سريعة ومواعيد اختيارية</text>
-      <text x="535" y="274" text-anchor="start" fill="#e9e5f7" font-size="16">• أولويات ومشاريع ومهام فرعية</text>
-      <text x="535" y="310" text-anchor="start" fill="#aaa4c1" font-size="15">• إنجاز محفوظ يمكن مراجعته وإعادته</text>
-    </g>
-
-    <g>
-      <rect x="620" y="382" width="535" height="218" rx="22" fill="url(#card)" stroke="#d18b28" stroke-width="2"/>
-      <rect x="1082" y="404" width="48" height="48" rx="15" fill="#3a2f1e"/>
-      <text x="1106" y="437" text-anchor="middle" fill="#f1ca83" font-size="25" font-weight="800">◎</text>
-      <text x="1065" y="428" text-anchor="start" fill="#f1ca83" font-size="22" font-weight="800">الأهداف والنتائج</text>
-      <text x="1110" y="488" text-anchor="start" fill="#e9e5f7" font-size="16">• تنظيم حسب مجالات الحياة والخطة</text>
-      <text x="1110" y="524" text-anchor="start" fill="#e9e5f7" font-size="16">• نتائج رئيسية بقيم قابلة للقياس</text>
-      <text x="1110" y="560" text-anchor="start" fill="#aaa4c1" font-size="15">• ربط المهام ومتابعة التقدم</text>
+      <rect x="45" y="132" width="530" height="205" rx="22" fill="#1b1930" stroke="#a58aff" stroke-opacity=".7" stroke-width="2"/>
+      <rect x="500" y="155" width="48" height="48" rx="15" fill="#30274f"/>
+      <circle cx="524" cy="179" r="13" fill="none" stroke="#c6b8ff" stroke-width="3"/>
+      <text x="483" y="184" text-anchor="start" fill="#c6b8ff" font-size="22" font-weight="800">المهام</text>
+      <text x="530" y="247" text-anchor="start" fill="#f3f0ff" font-size="17">قائمة عادية وسريعة.</text>
+      <text x="530" y="282" text-anchor="start" fill="#aaa5c1" font-size="15">الموعد والأولوية اختياريان.</text>
     </g>
     <g>
-      <rect x="45" y="382" width="535" height="218" rx="22" fill="url(#card)" stroke="#d35d7b" stroke-width="2"/>
-      <rect x="507" y="404" width="48" height="48" rx="15" fill="#402333"/>
-      <text x="531" y="437" text-anchor="middle" fill="#f39ab0" font-size="25" font-weight="800">✳</text>
-      <text x="490" y="428" text-anchor="start" fill="#f39ab0" font-size="22" font-weight="800">العادات</text>
-      <text x="535" y="488" text-anchor="start" fill="#e9e5f7" font-size="16">• تأشير أو عدّاد أو قائمة بنود</text>
-      <text x="535" y="524" text-anchor="start" fill="#e9e5f7" font-size="16">• أهداف يومية وسلاسل التزام</text>
-      <text x="535" y="560" text-anchor="start" fill="#aaa4c1" font-size="15">• خريطة نشاط وتركيز اختياري</text>
-    </g>
-
-    <g>
-      <rect x="620" y="632" width="535" height="218" rx="22" fill="url(#card)" stroke="#4386c8" stroke-width="2"/>
-      <rect x="1082" y="654" width="48" height="48" rx="15" fill="#1e3448"/>
-      <text x="1106" y="687" text-anchor="middle" fill="#83b9e8" font-size="25" font-weight="800">◉</text>
-      <text x="1065" y="678" text-anchor="start" fill="#83b9e8" font-size="22" font-weight="800">التركيز</text>
-      <text x="1110" y="738" text-anchor="start" fill="#e9e5f7" font-size="16">• يبدأ من بطاقة المهمة أو العادة</text>
-      <text x="1110" y="774" text-anchor="start" fill="#e9e5f7" font-size="16">• مدة مقترحة وسجل للوقت الفعلي</text>
-      <text x="1110" y="810" text-anchor="start" fill="#aaa4c1" font-size="15">• متابعة الجلسة من لوحة اليوم</text>
+      <rect x="625" y="377" width="530" height="205" rx="22" fill="#1b1930" stroke="#ebc47e" stroke-opacity=".7" stroke-width="2"/>
+      <rect x="1080" y="400" width="48" height="48" rx="15" fill="#3a2f1e"/>
+      <circle cx="1104" cy="424" r="13" fill="none" stroke="#ebc47e" stroke-width="3"/>
+      <circle cx="1104" cy="424" r="4" fill="#ebc47e"/>
+      <text x="1063" y="429" text-anchor="start" fill="#f1ca83" font-size="22" font-weight="800">الأهداف والعادات</text>
+      <text x="1110" y="492" text-anchor="start" fill="#f3f0ff" font-size="17">تابع ما يهمك فقط.</text>
+      <text x="1110" y="527" text-anchor="start" fill="#aaa5c1" font-size="15">أضف هدفاً أو عادة وقتما تحتاج.</text>
     </g>
     <g>
-      <rect x="45" y="632" width="535" height="218" rx="22" fill="url(#card)" stroke="#a65fc6" stroke-width="2"/>
-      <rect x="507" y="654" width="48" height="48" rx="15" fill="#34233f"/>
-      <text x="531" y="687" text-anchor="middle" fill="#d2a0e5" font-size="25" font-weight="800">▤</text>
-      <text x="490" y="678" text-anchor="start" fill="#d2a0e5" font-size="22" font-weight="800">اليوميات والمراجعات</text>
-      <text x="535" y="738" text-anchor="start" fill="#e9e5f7" font-size="16">• تدوينة يومية ومتابعة المزاج</text>
-      <text x="535" y="774" text-anchor="start" fill="#e9e5f7" font-size="16">• سجل مرتب حسب التاريخ</text>
-      <text x="535" y="810" text-anchor="start" fill="#aaa4c1" font-size="15">• مراجعات أسبوعية للتعلم والتخطيط</text>
-    </g>
-
-    <g>
-      <rect x="620" y="882" width="535" height="198" rx="22" fill="url(#card)" stroke="#3982aa" stroke-width="2"/>
-      <rect x="1082" y="904" width="48" height="48" rx="15" fill="#1e3448"/>
-      <text x="1106" y="937" text-anchor="middle" fill="#88c6e4" font-size="25" font-weight="800">▥</text>
-      <text x="1065" y="928" text-anchor="start" fill="#88c6e4" font-size="22" font-weight="800">التقارير</text>
-      <text x="1110" y="988" text-anchor="start" fill="#e9e5f7" font-size="16">• رسوم ومؤشرات حسب القسم والفترة</text>
-      <text x="1110" y="1024" text-anchor="start" fill="#aaa4c1" font-size="15">• تصدير البيانات أو طباعتها</text>
-    </g>
-    <g>
-      <rect x="45" y="882" width="535" height="198" rx="22" fill="url(#card)" stroke="#64748b" stroke-width="2"/>
-      <rect x="507" y="904" width="48" height="48" rx="15" fill="#283142"/>
-      <text x="531" y="937" text-anchor="middle" fill="#bac8d9" font-size="25" font-weight="800">⚙</text>
-      <text x="490" y="928" text-anchor="start" fill="#bac8d9" font-size="22" font-weight="800">الإعدادات والخصوصية</text>
-      <text x="535" y="988" text-anchor="start" fill="#e9e5f7" font-size="16">• بيانات محلية ونسخة احتياطية</text>
-      <text x="535" y="1024" text-anchor="start" fill="#aaa4c1" font-size="15">• مزامنة اختيارية وخاصة</text>
+      <rect x="45" y="377" width="530" height="205" rx="22" fill="#1b1930" stroke="#7ea2c8" stroke-opacity=".7" stroke-width="2"/>
+      <rect x="500" y="400" width="48" height="48" rx="15" fill="#1e3448"/>
+      <circle cx="512" cy="424" r="3" fill="#a9d2f3"/>
+      <circle cx="524" cy="424" r="3" fill="#a9d2f3"/>
+      <circle cx="536" cy="424" r="3" fill="#a9d2f3"/>
+      <text x="483" y="429" text-anchor="start" fill="#a9d2f3" font-size="22" font-weight="800">المزيد</text>
+      <text x="530" y="492" text-anchor="start" fill="#f3f0ff" font-size="17">اليوميات والتقارير والإعدادات.</text>
+      <text x="530" y="527" text-anchor="start" fill="#aaa5c1" font-size="15">تظهر عند الحاجة، لا تزاحم يومك.</text>
     </g>
   </g>
+  <rect x="64" y="594" width="1072" height="4" rx="2" fill="url(#mint)" opacity=".8"/>
 </svg>

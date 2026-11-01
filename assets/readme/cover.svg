@@ -1,71 +1,79 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" role="img" aria-labelledby="title desc">
-  <title id="title">مِحوَر — خطّط بلطف، وتقدّم بطريقتك</title>
-  <desc id="desc">رسم توضيحي لواجهة مِحوَر مع ملخص يوم ومهام وأهداف وعادات.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" role="img" aria-labelledby="title description">
+  <title id="title">مِحوَر — خطّط بلطف، وأنجز ما يهمك</title>
+  <desc id="description">معاينة توضيحية لواجهة اليوم في مِحوَر، مع ملخص يومي وقائمة مهام وتنقل واضح.</desc>
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
       <stop stop-color="#11101e"/>
-      <stop offset="1" stop-color="#26213f"/>
+      <stop offset="1" stop-color="#25213b"/>
     </linearGradient>
     <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#9b7dff"/>
-      <stop offset="1" stop-color="#25c8a4"/>
+      <stop stop-color="#b6dfbc"/>
+      <stop offset="1" stop-color="#63b89c"/>
     </linearGradient>
     <linearGradient id="progress" x1="0" y1="0" x2="1" y2="0">
-      <stop stop-color="#8a6cff"/>
-      <stop offset="1" stop-color="#27c7a2"/>
+      <stop stop-color="#a58aff"/>
+      <stop offset="1" stop-color="#27d0aa"/>
     </linearGradient>
-    <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse">
-      <circle cx="2" cy="2" r="1.2" fill="#b9aaff" opacity=".14"/>
-    </pattern>
   </defs>
-  <rect width="1200" height="480" rx="32" fill="url(#background)"/>
-  <rect width="1200" height="480" rx="32" fill="url(#dots)"/>
-  <circle cx="1080" cy="65" r="180" fill="#7658e8" opacity=".11"/>
-  <circle cx="90" cy="445" r="190" fill="#25c8a4" opacity=".08"/>
+  <rect width="1200" height="480" rx="30" fill="url(#background)"/>
+  <circle cx="1110" cy="35" r="205" fill="#7658e8" opacity=".1"/>
+  <circle cx="22" cy="465" r="180" fill="#27d0aa" opacity=".08"/>
 
-  <rect x="690" y="58" width="82" height="82" rx="23" fill="url(#brand)"/>
-  <text x="731" y="113" text-anchor="middle" fill="#fff" font-family="Tahoma, Arial, sans-serif" font-size="42" font-weight="800">م</text>
+  <g transform="translate(64 52)">
+    <rect width="560" height="376" rx="26" fill="#1b1930" stroke="#484067" stroke-width="2"/>
+    <rect x="22" y="20" width="48" height="48" rx="15" fill="url(#brand)"/>
+    <ellipse cx="46" cy="44" rx="17" ry="10" transform="rotate(-34 46 44)" fill="none" stroke="#f1e9d4" stroke-width="3"/>
+    <circle cx="46" cy="44" r="4" fill="#f1e9d4"/>
+    <text x="536" y="48" text-anchor="start" direction="rtl" fill="#f3f0ff" font-family="Tahoma, Arial, sans-serif" font-size="21" font-weight="700">الأحد، 1 نوفمبر</text>
+
+    <rect x="22" y="82" width="516" height="76" rx="17" fill="#25223d"/>
+    <circle cx="488" cy="120" r="23" fill="#193a35"/>
+    <path d="M477 120l8 8 15-17" fill="none" stroke="#58dfb3" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="448" y="113" text-anchor="start" direction="rtl" fill="#aaa5c1" font-family="Tahoma, Arial, sans-serif" font-size="13">إنجاز اليوم</text>
+    <text x="448" y="137" text-anchor="start" direction="rtl" fill="#f3f0ff" font-family="Tahoma, Arial, sans-serif" font-size="17" font-weight="700">كل خطوة تُحسب</text>
+    <rect x="48" y="116" width="145" height="8" rx="4" fill="#393451"/>
+    <rect x="48" y="116" width="92" height="8" rx="4" fill="url(#progress)"/>
+
+    <g font-family="Tahoma, Arial, sans-serif" font-size="15">
+      <rect x="22" y="171" width="516" height="47" rx="13" fill="#25223d"/>
+      <circle cx="500" cy="194" r="9" fill="#27d0aa"/>
+      <path d="M496 194l3 3 6-7" fill="none" stroke="#11101e" stroke-width="2" stroke-linecap="round"/>
+      <text x="476" y="199" text-anchor="start" direction="rtl" fill="#aaa5c1">رتّب أولويات اليوم</text>
+      <text x="50" y="199" fill="#58dfb3" font-size="12">مكتملة</text>
+
+      <rect x="22" y="227" width="516" height="47" rx="13" fill="#25223d"/>
+      <circle cx="500" cy="250" r="9" fill="none" stroke="#a58aff" stroke-width="2"/>
+      <text x="476" y="255" text-anchor="start" direction="rtl" fill="#f3f0ff">أنجز خطوة من هدفك</text>
+      <text x="50" y="255" fill="#aaa5c1" font-size="12">اليوم</text>
+
+      <rect x="22" y="283" width="516" height="47" rx="13" fill="#25223d"/>
+      <circle cx="500" cy="306" r="9" fill="none" stroke="#a58aff" stroke-width="2"/>
+      <text x="476" y="311" text-anchor="start" direction="rtl" fill="#f3f0ff">خذ استراحة قصيرة</text>
+      <text x="50" y="311" fill="#aaa5c1" font-size="12">لاحقاً</text>
+    </g>
+
+    <rect x="22" y="341" width="516" height="25" rx="12" fill="#171526"/>
+    <g fill="#c6b8ff" font-family="Tahoma, Arial, sans-serif" font-size="11" text-anchor="middle">
+      <text x="93" y="358">اليوم</text>
+      <text x="216" y="358">المهام</text>
+      <text x="340" y="358">الأهداف</text>
+      <text x="463" y="358">العادات</text>
+    </g>
+  </g>
 
   <g font-family="Tahoma, Arial, sans-serif" direction="rtl">
-    <text x="1110" y="115" text-anchor="start" fill="#c6b8ff" font-size="21" font-weight="700">مساحة هادئة ليومك</text>
-    <text x="1110" y="205" text-anchor="start" fill="#f7f4ff" font-size="68" font-weight="800">مِحوَر</text>
-    <text x="1110" y="258" text-anchor="start" fill="#e7e1ff" font-size="31" font-weight="700">خطّط بلطف، وأنجز ما يهمك</text>
-    <text x="1110" y="302" text-anchor="start" fill="#aaa4c1" font-size="19">مهامك وأهدافك وعاداتك في مساحة واحدة</text>
-  </g>
-
-  <g transform="translate(82 60)">
-    <rect width="535" height="360" rx="26" fill="#1b1930" stroke="#484067" stroke-width="2"/>
-    <text x="485" y="52" text-anchor="start" direction="rtl" fill="#f2efff" font-family="Tahoma, Arial, sans-serif" font-size="22" font-weight="700">ملخص يومك</text>
-    <text x="485" y="83" text-anchor="start" direction="rtl" fill="#aaa4c1" font-family="Tahoma, Arial, sans-serif" font-size="14">تقدّم هادئ، خطوة واحدة في كل مرة</text>
-    <circle cx="70" cy="62" r="25" fill="#30274f"/>
-    <path d="M58 63l8 8 16-18" fill="none" stroke="#27c7a2" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-
-    <rect x="28" y="112" width="479" height="62" rx="16" fill="#25223d"/>
-    <circle cx="475" cy="143" r="12" fill="#27c7a2"/>
-    <path d="M469 143l4 4 8-9" fill="none" stroke="#11101e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="446" y="149" text-anchor="start" direction="rtl" fill="#f2efff" font-family="Tahoma, Arial, sans-serif" font-size="17">رتّب أولويات اليوم</text>
-    <text x="67" y="149" text-anchor="start" fill="#27c7a2" font-family="Tahoma, Arial, sans-serif" font-size="13">مكتملة</text>
-
-    <rect x="28" y="188" width="479" height="62" rx="16" fill="#25223d"/>
-    <circle cx="475" cy="219" r="12" fill="#30274f" stroke="#8a6cff" stroke-width="2"/>
-    <text x="446" y="225" text-anchor="start" direction="rtl" fill="#f2efff" font-family="Tahoma, Arial, sans-serif" font-size="17">أنجز خطوة من هدفك</text>
-    <text x="67" y="225" text-anchor="start" fill="#aaa4c1" font-family="Tahoma, Arial, sans-serif" font-size="13">قيد التنفيذ</text>
-
-    <rect x="28" y="264" width="479" height="66" rx="16" fill="#25223d"/>
-    <text x="475" y="292" text-anchor="start" direction="rtl" fill="#aaa4c1" font-family="Tahoma, Arial, sans-serif" font-size="13">إنجاز اليوم</text>
-    <text x="475" y="317" text-anchor="start" direction="rtl" fill="#f2efff" font-family="Tahoma, Arial, sans-serif" font-size="17" font-weight="700">خطوات صغيرة تصنع فرقاً</text>
-    <rect x="50" y="298" width="155" height="9" rx="5" fill="#393451"/>
-    <rect x="50" y="298" width="98" height="9" rx="5" fill="url(#progress)"/>
-  </g>
-
-  <g font-family="Tahoma, Arial, sans-serif" font-size="15" font-weight="700" direction="rtl">
-    <rect x="800" y="352" width="132" height="44" rx="22" fill="#30274f" stroke="#6951bd"/>
-    <text x="866" y="380" text-anchor="middle" fill="#d9ceff">المهام</text>
-    <rect x="948" y="352" width="132" height="44" rx="22" fill="#193a35" stroke="#267e69"/>
-    <text x="1014" y="380" text-anchor="middle" fill="#9be5d2">العادات</text>
-    <rect x="800" y="408" width="132" height="44" rx="22" fill="#3a2f1e" stroke="#8f6a31"/>
-    <text x="866" y="436" text-anchor="middle" fill="#f1ca83">الأهداف</text>
-    <rect x="948" y="408" width="132" height="44" rx="22" fill="#1e3448" stroke="#447ba9"/>
-    <text x="1014" y="436" text-anchor="middle" fill="#a9d2f3">التقارير</text>
+    <rect x="704" y="83" width="82" height="82" rx="24" fill="url(#brand)"/>
+    <ellipse cx="745" cy="124" rx="29" ry="17" transform="rotate(-34 745 124)" fill="none" stroke="#f1e9d4" stroke-width="5"/>
+    <path d="M716 124h58" stroke="#f1e9d4" stroke-opacity=".6" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="745" cy="124" r="8" fill="#f1e9d4"/>
+    <circle cx="769" cy="108" r="4" fill="#ebc47e"/>
+    <text x="1120" y="122" text-anchor="start" fill="#b6dfbc" font-size="18" font-weight="700">مساحة هادئة ليومك</text>
+    <text x="1120" y="218" text-anchor="start" fill="#f3f0ff" font-size="64" font-weight="800">مِحوَر</text>
+    <text x="1120" y="269" text-anchor="start" fill="#e5e0f5" font-size="25" font-weight="700">خطّط بلطف، وأنجز ما يهمك</text>
+    <text x="1120" y="313" text-anchor="start" fill="#aaa5c1" font-size="17">أضف المهمة أولاً؛ التفاصيل عند الحاجة.</text>
+    <rect x="704" y="350" width="182" height="42" rx="21" fill="#30274f"/>
+    <text x="795" y="377" text-anchor="middle" fill="#d9ceff" font-size="14" font-weight="700">بداية بسيطة</text>
+    <rect x="902" y="350" width="182" height="42" rx="21" fill="#193a35"/>
+    <text x="993" y="377" text-anchor="middle" fill="#9be5d2" font-size="14" font-weight="700">بياناتك محلية</text>
   </g>
 </svg>
