@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f5f2">
+    <meta name="description" content="مِحوَر — مساحة عربية لتنظيم يومك وأهدافك.">
+    <title>مِحوَر</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./css/tokens.css">
+    <link rel="stylesheet" href="./css/base.css">
+    <link rel="stylesheet" href="./css/theme.css">
+    <script type="module" src="./js/app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="التنقّل الرئيسي">
+        <a class="brand" href="#/today" aria-label="مِحوَر — اليوم">
+          <span class="brand-mark" aria-hidden="true">م</span>
+          <span>مِحوَر</span>
+        </a>
+        <nav class="navigation" id="primary-navigation"></nav>
+        <div class="sidebar-footer">
+          <span class="sidebar-caption">مساحة هادئة ليومك</span>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">مساحة تنظيمك الشخصي</p>
+            <h1 id="page-title">اليوم</h1>
+          </div>
+          <div class="topbar-actions">
+            <button class="theme-toggle" id="theme-toggle" type="button" aria-label="تبديل المظهر">
+              <span aria-hidden="true">◐</span>
+              <span class="theme-toggle-label">المظهر</span>
+            </button>
+          </div>
+        </header>
+        <section class="page-content" id="app" aria-live="polite"></section>
+      </main>
+    </div>
+    <div class="app-toast" id="app-toast" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true">
+      <span class="app-toast-icon" aria-hidden="true"></span>
+      <span class="app-toast-message"></span>
+      <button class="app-toast-close" id="app-toast-close" type="button" aria-label="إغلاق التنبيه">×</button>
+    </div>
+    <dialog class="onboarding-dialog" id="onboarding-dialog">
+      <form method="dialog">
+        <span class="brand-mark" aria-hidden="true">م</span>
+        <p class="eyebrow">أهلاً بك في مِحوَر</p>
+        <h2>خطط بلطف، وأنجز ما يهمك</h2>
+        <p>ابدأ بخطوة واحدة. بياناتك تُحفظ على هذا الجهاز، ويمكنك أخذ نسخة احتياطية في أي وقت.</p>
+        <button class="button button-primary" value="start">ابدأ يومك</button>
+      </form>
+    </dialog>
+  </body>
+</html>
