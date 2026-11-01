@@ -13,8 +13,8 @@
   </defs>
   <rect width="1200" height="1120" rx="28" fill="url(#background)"/>
   <g font-family="Tahoma, Arial, sans-serif" direction="rtl">
-    <text x="1140" y="58" text-anchor="end" fill="#c6b8ff" font-size="18" font-weight="700">مساحات متكاملة، من دون تعقيد</text>
-    <text x="1140" y="98" text-anchor="end" fill="#f7f4ff" font-size="30" font-weight="800">كل ما تحتاجه ليومك في بطاقات واضحة</text>
+    <text x="1140" y="58" text-anchor="start" fill="#c6b8ff" font-size="18" font-weight="700">مساحات متكاملة، من دون تعقيد</text>
+    <text x="1140" y="98" text-anchor="start" fill="#f7f4ff" font-size="30" font-weight="800">كل ما تحتاجه ليومك في بطاقات واضحة</text>
   </g>
 
   <g font-family="Tahoma, Arial, sans-serif" direction="rtl">
@@ -22,74 +22,74 @@
       <rect x="620" y="132" width="535" height="218" rx="22" fill="url(#card)" stroke="#7658e8" stroke-width="2"/>
       <rect x="1082" y="154" width="48" height="48" rx="15" fill="#30274f"/>
       <text x="1106" y="187" text-anchor="middle" fill="#bba8ff" font-size="25" font-weight="800">◷</text>
-      <text x="1065" y="178" text-anchor="end" fill="#bba8ff" font-size="22" font-weight="800">لوحة اليوم</text>
-      <text x="1110" y="238" text-anchor="end" fill="#e9e5f7" font-size="16">• إنجاز المهام والعادات المخططة</text>
-      <text x="1110" y="274" text-anchor="end" fill="#e9e5f7" font-size="16">• الجلسة النشطة والمهام المكتملة</text>
-      <text x="1110" y="310" text-anchor="end" fill="#aaa4c1" font-size="15">• حصاد شهري للتقدم والاستمرارية</text>
+      <text x="1065" y="178" text-anchor="start" fill="#bba8ff" font-size="22" font-weight="800">لوحة اليوم</text>
+      <text x="1110" y="238" text-anchor="start" fill="#e9e5f7" font-size="16">• إنجاز المهام والعادات المخططة</text>
+      <text x="1110" y="274" text-anchor="start" fill="#e9e5f7" font-size="16">• الجلسة النشطة والمهام المكتملة</text>
+      <text x="1110" y="310" text-anchor="start" fill="#aaa4c1" font-size="15">• حصاد شهري للتقدم والاستمرارية</text>
     </g>
     <g>
       <rect x="45" y="132" width="535" height="218" rx="22" fill="url(#card)" stroke="#1d9a83" stroke-width="2"/>
       <rect x="507" y="154" width="48" height="48" rx="15" fill="#193a35"/>
       <text x="531" y="187" text-anchor="middle" fill="#70d7bd" font-size="25" font-weight="800">☷</text>
-      <text x="490" y="178" text-anchor="end" fill="#70d7bd" font-size="22" font-weight="800">المهام</text>
-      <text x="535" y="238" text-anchor="end" fill="#e9e5f7" font-size="16">• إضافة سريعة ومواعيد اختيارية</text>
-      <text x="535" y="274" text-anchor="end" fill="#e9e5f7" font-size="16">• أولويات ومشاريع ومهام فرعية</text>
-      <text x="535" y="310" text-anchor="end" fill="#aaa4c1" font-size="15">• إنجاز محفوظ يمكن مراجعته وإعادته</text>
+      <text x="490" y="178" text-anchor="start" fill="#70d7bd" font-size="22" font-weight="800">المهام</text>
+      <text x="535" y="238" text-anchor="start" fill="#e9e5f7" font-size="16">• إضافة سريعة ومواعيد اختيارية</text>
+      <text x="535" y="274" text-anchor="start" fill="#e9e5f7" font-size="16">• أولويات ومشاريع ومهام فرعية</text>
+      <text x="535" y="310" text-anchor="start" fill="#aaa4c1" font-size="15">• إنجاز محفوظ يمكن مراجعته وإعادته</text>
     </g>
 
     <g>
       <rect x="620" y="382" width="535" height="218" rx="22" fill="url(#card)" stroke="#d18b28" stroke-width="2"/>
       <rect x="1082" y="404" width="48" height="48" rx="15" fill="#3a2f1e"/>
       <text x="1106" y="437" text-anchor="middle" fill="#f1ca83" font-size="25" font-weight="800">◎</text>
-      <text x="1065" y="428" text-anchor="end" fill="#f1ca83" font-size="22" font-weight="800">الأهداف والنتائج</text>
-      <text x="1110" y="488" text-anchor="end" fill="#e9e5f7" font-size="16">• تنظيم حسب مجالات الحياة والخطة</text>
-      <text x="1110" y="524" text-anchor="end" fill="#e9e5f7" font-size="16">• نتائج رئيسية بقيم قابلة للقياس</text>
-      <text x="1110" y="560" text-anchor="end" fill="#aaa4c1" font-size="15">• ربط المهام ومتابعة التقدم</text>
+      <text x="1065" y="428" text-anchor="start" fill="#f1ca83" font-size="22" font-weight="800">الأهداف والنتائج</text>
+      <text x="1110" y="488" text-anchor="start" fill="#e9e5f7" font-size="16">• تنظيم حسب مجالات الحياة والخطة</text>
+      <text x="1110" y="524" text-anchor="start" fill="#e9e5f7" font-size="16">• نتائج رئيسية بقيم قابلة للقياس</text>
+      <text x="1110" y="560" text-anchor="start" fill="#aaa4c1" font-size="15">• ربط المهام ومتابعة التقدم</text>
     </g>
     <g>
       <rect x="45" y="382" width="535" height="218" rx="22" fill="url(#card)" stroke="#d35d7b" stroke-width="2"/>
       <rect x="507" y="404" width="48" height="48" rx="15" fill="#402333"/>
       <text x="531" y="437" text-anchor="middle" fill="#f39ab0" font-size="25" font-weight="800">✳</text>
-      <text x="490" y="428" text-anchor="end" fill="#f39ab0" font-size="22" font-weight="800">العادات</text>
-      <text x="535" y="488" text-anchor="end" fill="#e9e5f7" font-size="16">• تأشير أو عدّاد أو قائمة بنود</text>
-      <text x="535" y="524" text-anchor="end" fill="#e9e5f7" font-size="16">• أهداف يومية وسلاسل التزام</text>
-      <text x="535" y="560" text-anchor="end" fill="#aaa4c1" font-size="15">• خريطة نشاط وتركيز اختياري</text>
+      <text x="490" y="428" text-anchor="start" fill="#f39ab0" font-size="22" font-weight="800">العادات</text>
+      <text x="535" y="488" text-anchor="start" fill="#e9e5f7" font-size="16">• تأشير أو عدّاد أو قائمة بنود</text>
+      <text x="535" y="524" text-anchor="start" fill="#e9e5f7" font-size="16">• أهداف يومية وسلاسل التزام</text>
+      <text x="535" y="560" text-anchor="start" fill="#aaa4c1" font-size="15">• خريطة نشاط وتركيز اختياري</text>
     </g>
 
     <g>
       <rect x="620" y="632" width="535" height="218" rx="22" fill="url(#card)" stroke="#4386c8" stroke-width="2"/>
       <rect x="1082" y="654" width="48" height="48" rx="15" fill="#1e3448"/>
       <text x="1106" y="687" text-anchor="middle" fill="#83b9e8" font-size="25" font-weight="800">◉</text>
-      <text x="1065" y="678" text-anchor="end" fill="#83b9e8" font-size="22" font-weight="800">التركيز</text>
-      <text x="1110" y="738" text-anchor="end" fill="#e9e5f7" font-size="16">• يبدأ من بطاقة المهمة أو العادة</text>
-      <text x="1110" y="774" text-anchor="end" fill="#e9e5f7" font-size="16">• مدة مقترحة وسجل للوقت الفعلي</text>
-      <text x="1110" y="810" text-anchor="end" fill="#aaa4c1" font-size="15">• متابعة الجلسة من لوحة اليوم</text>
+      <text x="1065" y="678" text-anchor="start" fill="#83b9e8" font-size="22" font-weight="800">التركيز</text>
+      <text x="1110" y="738" text-anchor="start" fill="#e9e5f7" font-size="16">• يبدأ من بطاقة المهمة أو العادة</text>
+      <text x="1110" y="774" text-anchor="start" fill="#e9e5f7" font-size="16">• مدة مقترحة وسجل للوقت الفعلي</text>
+      <text x="1110" y="810" text-anchor="start" fill="#aaa4c1" font-size="15">• متابعة الجلسة من لوحة اليوم</text>
     </g>
     <g>
       <rect x="45" y="632" width="535" height="218" rx="22" fill="url(#card)" stroke="#a65fc6" stroke-width="2"/>
       <rect x="507" y="654" width="48" height="48" rx="15" fill="#34233f"/>
       <text x="531" y="687" text-anchor="middle" fill="#d2a0e5" font-size="25" font-weight="800">▤</text>
-      <text x="490" y="678" text-anchor="end" fill="#d2a0e5" font-size="22" font-weight="800">اليوميات والمراجعات</text>
-      <text x="535" y="738" text-anchor="end" fill="#e9e5f7" font-size="16">• تدوينة يومية ومتابعة المزاج</text>
-      <text x="535" y="774" text-anchor="end" fill="#e9e5f7" font-size="16">• سجل مرتب حسب التاريخ</text>
-      <text x="535" y="810" text-anchor="end" fill="#aaa4c1" font-size="15">• مراجعات أسبوعية للتعلم والتخطيط</text>
+      <text x="490" y="678" text-anchor="start" fill="#d2a0e5" font-size="22" font-weight="800">اليوميات والمراجعات</text>
+      <text x="535" y="738" text-anchor="start" fill="#e9e5f7" font-size="16">• تدوينة يومية ومتابعة المزاج</text>
+      <text x="535" y="774" text-anchor="start" fill="#e9e5f7" font-size="16">• سجل مرتب حسب التاريخ</text>
+      <text x="535" y="810" text-anchor="start" fill="#aaa4c1" font-size="15">• مراجعات أسبوعية للتعلم والتخطيط</text>
     </g>
 
     <g>
       <rect x="620" y="882" width="535" height="198" rx="22" fill="url(#card)" stroke="#3982aa" stroke-width="2"/>
       <rect x="1082" y="904" width="48" height="48" rx="15" fill="#1e3448"/>
       <text x="1106" y="937" text-anchor="middle" fill="#88c6e4" font-size="25" font-weight="800">▥</text>
-      <text x="1065" y="928" text-anchor="end" fill="#88c6e4" font-size="22" font-weight="800">التقارير</text>
-      <text x="1110" y="988" text-anchor="end" fill="#e9e5f7" font-size="16">• رسوم ومؤشرات حسب القسم والفترة</text>
-      <text x="1110" y="1024" text-anchor="end" fill="#aaa4c1" font-size="15">• تصدير البيانات أو طباعتها</text>
+      <text x="1065" y="928" text-anchor="start" fill="#88c6e4" font-size="22" font-weight="800">التقارير</text>
+      <text x="1110" y="988" text-anchor="start" fill="#e9e5f7" font-size="16">• رسوم ومؤشرات حسب القسم والفترة</text>
+      <text x="1110" y="1024" text-anchor="start" fill="#aaa4c1" font-size="15">• تصدير البيانات أو طباعتها</text>
     </g>
     <g>
       <rect x="45" y="882" width="535" height="198" rx="22" fill="url(#card)" stroke="#64748b" stroke-width="2"/>
       <rect x="507" y="904" width="48" height="48" rx="15" fill="#283142"/>
       <text x="531" y="937" text-anchor="middle" fill="#bac8d9" font-size="25" font-weight="800">⚙</text>
-      <text x="490" y="928" text-anchor="end" fill="#bac8d9" font-size="22" font-weight="800">الإعدادات والخصوصية</text>
-      <text x="535" y="988" text-anchor="end" fill="#e9e5f7" font-size="16">• بيانات محلية ونسخة احتياطية</text>
-      <text x="535" y="1024" text-anchor="end" fill="#aaa4c1" font-size="15">• مزامنة اختيارية وخاصة</text>
+      <text x="490" y="928" text-anchor="start" fill="#bac8d9" font-size="22" font-weight="800">الإعدادات والخصوصية</text>
+      <text x="535" y="988" text-anchor="start" fill="#e9e5f7" font-size="16">• بيانات محلية ونسخة احتياطية</text>
+      <text x="535" y="1024" text-anchor="start" fill="#aaa4c1" font-size="15">• مزامنة اختيارية وخاصة</text>
     </g>
   </g>
 </svg>

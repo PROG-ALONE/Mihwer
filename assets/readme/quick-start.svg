@@ -13,27 +13,27 @@
   </defs>
   <rect width="1200" height="560" rx="28" fill="url(#background)"/>
   <g font-family="Tahoma, Arial, sans-serif" direction="rtl">
-    <text x="1140" y="62" text-anchor="end" fill="#c6b8ff" font-size="18" font-weight="700">أول استخدام؟ الأمر بسيط</text>
-    <text x="1140" y="105" text-anchor="end" fill="#f7f4ff" font-size="30" font-weight="800">من فكرة صغيرة إلى إنجاز واضح</text>
+    <text x="1140" y="62" text-anchor="start" fill="#c6b8ff" font-size="18" font-weight="700">أول استخدام؟ الأمر بسيط</text>
+    <text x="1140" y="105" text-anchor="start" fill="#f7f4ff" font-size="30" font-weight="800">من فكرة صغيرة إلى إنجاز واضح</text>
   </g>
 
   <g font-family="Tahoma, Arial, sans-serif" direction="rtl">
     <rect x="820" y="145" width="330" height="330" rx="24" fill="#211e37" stroke="#7658e8" stroke-width="2"/>
     <circle cx="1095" cy="190" r="25" fill="#30274f"/>
     <text x="1095" y="198" text-anchor="middle" fill="#bba8ff" font-size="20" font-weight="800">١</text>
-    <text x="1090" y="247" text-anchor="end" fill="#bba8ff" font-size="23" font-weight="800">أضف مهمة</text>
-    <text x="1090" y="294" text-anchor="end" fill="#e9e5f7" font-size="16">من تبويب «المهام» اضغط</text>
-    <text x="1090" y="324" text-anchor="end" fill="#e9e5f7" font-size="16">زر الإضافة الثابت أسفل الشاشة.</text>
-    <text x="1090" y="368" text-anchor="end" fill="#aaa4c1" font-size="15">اكتب عنواناً واضحاً؛ الموعد</text>
-    <text x="1090" y="395" text-anchor="end" fill="#aaa4c1" font-size="15">والوقت والتركيز اختيارية.</text>
+    <text x="1090" y="247" text-anchor="start" fill="#bba8ff" font-size="23" font-weight="800">أضف مهمة</text>
+    <text x="1090" y="294" text-anchor="start" fill="#e9e5f7" font-size="16">من تبويب «المهام» اضغط</text>
+    <text x="1090" y="324" text-anchor="start" fill="#e9e5f7" font-size="16">زر الإضافة الثابت أسفل الشاشة.</text>
+    <text x="1090" y="368" text-anchor="start" fill="#aaa4c1" font-size="15">اكتب عنواناً واضحاً؛ الموعد</text>
+    <text x="1090" y="395" text-anchor="start" fill="#aaa4c1" font-size="15">والوقت والتركيز اختيارية.</text>
     <rect x="868" y="425" width="242" height="32" rx="16" fill="#30274f"/>
     <text x="989" y="447" text-anchor="middle" fill="#d9ceff" font-size="14" font-weight="700">ابدأ بما تريد إنجازه</text>
 
     <rect x="435" y="145" width="330" height="330" rx="24" fill="#211e37" stroke="#d18b28" stroke-width="2"/>
     <circle cx="710" cy="190" r="25" fill="#3a2f1e"/>
     <text x="710" y="198" text-anchor="middle" fill="#f1ca83" font-size="20" font-weight="800">٢</text>
-    <text x="705" y="247" text-anchor="end" fill="#f1ca83" font-size="23" font-weight="800">رتّبها بسرعة</text>
-    <text x="705" y="291" text-anchor="end" fill="#e9e5f7" font-size="16">خصّص المهمة من العنوان:</text>
+    <text x="705" y="247" text-anchor="start" fill="#f1ca83" font-size="23" font-weight="800">رتّبها بسرعة</text>
+    <text x="705" y="291" text-anchor="start" fill="#e9e5f7" font-size="16">خصّص المهمة من العنوان:</text>
     <rect x="650" y="313" width="88" height="68" rx="14" fill="#30274f"/>
     <text x="694" y="338" text-anchor="middle" fill="#f1ca83" font-size="12">أولوية</text>
     <text x="694" y="363" text-anchor="middle" fill="#f7f4ff" font-size="14" font-weight="700">مهم وعاجل</text>
@@ -43,16 +43,16 @@
     <rect x="450" y="313" width="88" height="68" rx="14" fill="#30274f"/>
     <text x="494" y="338" text-anchor="middle" fill="#f1ca83" font-size="12">تركيز</text>
     <text x="494" y="363" text-anchor="middle" fill="#f7f4ff" font-size="14" font-weight="700">٣٠ دقيقة</text>
-    <text x="705" y="422" text-anchor="end" fill="#aaa4c1" font-size="14">ويمكنك إضافة بقية التفاصيل لاحقاً.</text>
+    <text x="705" y="422" text-anchor="start" fill="#aaa4c1" font-size="14">ويمكنك إضافة بقية التفاصيل لاحقاً.</text>
 
     <rect x="50" y="145" width="330" height="330" rx="24" fill="#211e37" stroke="#1d9a83" stroke-width="2"/>
     <circle cx="325" cy="190" r="25" fill="#193a35"/>
     <text x="325" y="198" text-anchor="middle" fill="#70d7bd" font-size="20" font-weight="800">٣</text>
-    <text x="320" y="247" text-anchor="end" fill="#70d7bd" font-size="23" font-weight="800">أنجز وتابع</text>
-    <text x="320" y="294" text-anchor="end" fill="#e9e5f7" font-size="16">أكمل بالتأشير أو اسحب</text>
-    <text x="320" y="324" text-anchor="end" fill="#e9e5f7" font-size="16">المهمة إلى اليمين.</text>
-    <text x="320" y="368" text-anchor="end" fill="#aaa4c1" font-size="15">ستبقى المهمة محفوظة؛ راجعها</text>
-    <text x="320" y="395" text-anchor="end" fill="#aaa4c1" font-size="15">من قائمة المنجَز وأعد فتحها.</text>
+    <text x="320" y="247" text-anchor="start" fill="#70d7bd" font-size="23" font-weight="800">أنجز وتابع</text>
+    <text x="320" y="294" text-anchor="start" fill="#e9e5f7" font-size="16">أكمل بالتأشير أو اسحب</text>
+    <text x="320" y="324" text-anchor="start" fill="#e9e5f7" font-size="16">المهمة إلى اليمين.</text>
+    <text x="320" y="368" text-anchor="start" fill="#aaa4c1" font-size="15">ستبقى المهمة محفوظة؛ راجعها</text>
+    <text x="320" y="395" text-anchor="start" fill="#aaa4c1" font-size="15">من قائمة المنجَز وأعد فتحها.</text>
     <rect x="98" y="425" width="242" height="32" rx="16" fill="#193a35"/>
     <text x="219" y="447" text-anchor="middle" fill="#9be5d2" font-size="14" font-weight="700">تقدّمك يظهر في لوحة اليوم</text>
   </g>
