@@ -63,7 +63,7 @@ export function renderHelp(app) {
       <section class="guide-library" aria-labelledby="guide-library-title">
         <div class="guide-block-heading">
           <div><p class="guide-eyebrow">عند الحاجة</p><h2 id="guide-library-title">أقسام إضافية</h2></div>
-          <p>كل قسم اختياري؛ ستجد اليوميات والتقارير والإعدادات تحت «المزيد».</p>
+          <p>كل قسم اختياري؛ ستجد العادات والتركيز واليوميات والدليل تحت «المزيد»، والإعدادات هناك على الهاتف.</p>
         </div>
         <nav class="guide-nav" aria-label="الأقسام الإضافية">
           ${OPTIONAL_PAGES.map((item) => `

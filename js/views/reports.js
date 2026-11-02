@@ -229,9 +229,10 @@ function renderSummaryCards(sections) {
     { label: "المشاريع", value: sections.projects.metrics[0].value, detail: `${sections.projects.metrics[1].value} نشطة`, tone: "primary" },
   ];
   return `<section class="report-overview" aria-label="مؤشرات جميع الأقسام"><h3>مؤشرات جميع الأقسام</h3><div class="report-summary-grid">${stats.map((stat) => `
-    <article class="report-stat-card tone-${stat.tone}">
+    <article class="report-stat-card tone-${stat.tone}${stat.label === "العادات" ? " has-ring" : ""}"${stat.label === "العادات" ? ` style="--report-progress:${stat.percent}%;"` : ""}>
       <div class="report-stat-top"><span>${stat.label}</span><span class="report-stat-dot" aria-hidden="true"></span></div>
       <div class="report-stat-value"><strong>${escapeHtml(stat.value)}</strong></div>
+      ${stat.label === "العادات" ? `<div class="report-stat-ring" role="img" aria-label="الالتزام بالعادات ${stat.percent}%"><span>${stat.percent}%</span></div>` : ""}
       ${Number.isFinite(stat.percent) ? `<div class="report-stat-track" role="progressbar" aria-label="${stat.label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stat.percent}"><span style="width:${stat.percent}%"></span></div>` : ""}
       <p>${escapeHtml(stat.detail)}</p>
     </article>`).join("")}</div></section>`;
@@ -369,8 +370,8 @@ function render() {
   const tasks = filteredTasks();
   const { start, end } = dateRange();
   app.innerHTML = `
-    <section class="reports-page" aria-label="التقارير">
-      <header class="reports-heading"><div><p class="goals-kicker">رؤية بلا تعقيد</p><h2>تقاريرك</h2></div><div class="report-exports"><button class="button button-secondary" type="button" data-export="csv">CSV</button><button class="button button-secondary" type="button" data-export="excel">Excel</button><button class="button button-secondary" type="button" data-export="json">JSON</button><button class="button button-primary" type="button" data-export="pdf">طباعة / PDF</button></div></header>
+    <section class="reports-page" aria-label="تقدّمي">
+      <header class="reports-heading"><div><p class="goals-kicker">رحلتك بالأرقام</p><h2>تقدّمي</h2></div><details class="report-exports"><summary>تصدير</summary><div><button class="button button-secondary" type="button" data-export="csv">CSV</button><button class="button button-secondary" type="button" data-export="excel">Excel</button><button class="button button-secondary" type="button" data-export="json">JSON</button><button class="button button-primary" type="button" data-export="pdf">طباعة / PDF</button></div></details></header>
       <section class="today-panel reports-filters">
         <label>الفترة<select id="report-range">
           <option value="day"${range === "day" ? " selected" : ""}>اليوم</option><option value="week"${range === "week" ? " selected" : ""}>أسبوع</option><option value="month"${range === "month" ? " selected" : ""}>شهر</option><option value="quarter"${range === "quarter" ? " selected" : ""}>ربع سنة</option><option value="year"${range === "year" ? " selected" : ""}>سنة</option><option value="plan"${range === "plan" ? " selected" : ""}>فترة التخطيط (${plan.columns.length} فترات)</option><option value="custom"${range === "custom" ? " selected" : ""}>مخصص</option><option value="all"${range === "all" ? " selected" : ""}>كامل الفترة</option>

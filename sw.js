@@ -1,8 +1,11 @@
-const CACHE_NAME = "mihwar-shell-v79";
+const CACHE_NAME = "mihwar-shell-v81";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
+  "./assets/icons/apple-touch-icon.png",
+  "./assets/icons/icon-192.png",
+  "./assets/icons/icon-512.png",
   "./css/tokens.css",
   "./css/base.css",
   "./css/theme.css",

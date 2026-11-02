@@ -73,6 +73,14 @@ a:focus-visible {
   border-radius: 13px;
 }
 
+.mobile-brand-mark {
+  display: none;
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
 .navigation {
   display: grid;
   gap: 7px;
@@ -2515,6 +2523,10 @@ a:focus-visible {
   .brand,
   .sidebar-footer {
     display: none;
+  }
+
+  .mobile-brand-mark {
+    display: block;
   }
 
   .navigation {

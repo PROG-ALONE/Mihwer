@@ -5,10 +5,13 @@ export const routes = [
   { id: "habits", label: "العادات", icon: "✳", title: "العادات" },
   { id: "focus", label: "جلسة التركيز", icon: "◉", title: "جلسة التركيز" },
   { id: "journal", label: "اليوميات", icon: "▤", title: "اليوميات والمراجعات" },
-  { id: "reports", label: "التقارير", icon: "▥", title: "التقارير" },
+  { id: "reports", label: "تقدّمي", icon: "▥", title: "تقدّمي" },
   { id: "settings", label: "الإعدادات", icon: "⚙", title: "الإعدادات" },
   { id: "help", label: "الدليل", icon: "?", title: "دليل الاستخدام" },
 ];
+
+const compactNavigation = window.matchMedia("(max-width: 720px)");
+let navigationElements;
 
 export function getRouteFromHash(hash = window.location.hash) {
   const routeId = hash.replace(/^#\/?/, "").split(/[/?]/)[0];
@@ -16,8 +19,11 @@ export function getRouteFromHash(hash = window.location.hash) {
 }
 
 export function renderNavigation(navigation, moreNavigation, activeRoute) {
+  navigationElements = { navigation, moreNavigation };
   const visibleRoutes = routes.filter((route) => route.id !== "focus");
-  const primaryIds = new Set(["today", "tasks", "goals", "habits"]);
+  const primaryIds = new Set(compactNavigation.matches
+    ? ["today", "tasks", "goals", "reports"]
+    : ["today", "tasks", "goals", "reports", "settings"]);
   const primaryRoutes = visibleRoutes.filter((route) => primaryIds.has(route.id));
   const moreRoutes = visibleRoutes.filter((route) => !primaryIds.has(route.id));
   const query = new URLSearchParams(window.location.hash.split("?")[1] ?? "");
@@ -42,6 +48,12 @@ export function renderNavigation(navigation, moreNavigation, activeRoute) {
     </button>`;
   moreNavigation.innerHTML = moreRoutes.map(renderLink).join("");
 }
+
+compactNavigation.addEventListener("change", () => {
+  if (navigationElements) {
+    renderNavigation(navigationElements.navigation, navigationElements.moreNavigation, getRouteFromHash());
+  }
+});
 
 export function renderRoute(route, app, title) {
   document.title = `${route.title} — مِحوَر`;

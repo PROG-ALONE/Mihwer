@@ -144,6 +144,10 @@ function render() {
   const yearObjectives = records.objectives.filter((objective) => Number(objective.year) === selectedYear && objective.status !== "archived");
   const completedObjectives = yearObjectives.filter((objective) => objective.status === "done").length;
   const keyResultCount = records.keyResults.filter((result) => yearObjectives.some((objective) => objective.id === result.objectiveId)).length;
+  const overallProgress = yearObjectives.length
+    ? Math.round(yearObjectives.reduce((total, objective) =>
+      total + getObjectiveProgress(objective, records.keyResults), 0) / yearObjectives.length)
+    : 0;
   app.innerHTML = `
     <section class="goals-page" aria-label="الأهداف والنتائج الرئيسية">
       <div class="goals-heading">
@@ -154,7 +158,11 @@ function render() {
           <button class="button button-primary" type="button" data-action="new-objective">هدف جديد</button>
         </div>
       </div>
-      <p class="goals-overview">${yearObjectives.length} هدف · ${yearObjectives.length - completedObjectives} قيد التقدّم · ${completedObjectives} مكتمل · ${keyResultCount} نتيجة رئيسية</p>
+      <div class="goals-overview" aria-label="ملخص أهدافك">
+        <article class="goal-overview-stat has-progress"><span>التقدم العام</span><strong>${overallProgress}%</strong><small>متوسط إنجاز أهداف السنة</small><div role="progressbar" aria-label="التقدم العام" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${overallProgress}"><i style="width:${overallProgress}%"></i></div></article>
+        <article class="goal-overview-stat"><span>أهداف نشطة</span><strong>${yearObjectives.length - completedObjectives}</strong><small>قيد التقدم</small></article>
+        <article class="goal-overview-stat"><span>نتائج رئيسية</span><strong>${keyResultCount}</strong><small>${completedObjectives} أهداف مكتملة</small></article>
+      </div>
       ${areas.length ? `<div class="goal-areas">
         ${renderLifeAreas()}
       </div>` : `<div class="goals-empty-state">${renderLifeAreas()}</div>`}

@@ -1,19 +1,31 @@
-import { getRecords, subscribe } from "../store.js";
+import { getRecords, subscribe, update } from "../store.js";
 import { formatDate, localDateString } from "../utils/dates.js";
 import { getObjectiveProgress } from "../utils/okr.js";
-import { dayProgress } from "./habits.js";
+import { dayProgress, setDayComplete } from "./habits.js";
+import { showToast } from "../utils/notifications.js";
 
 const DAY_NAMES = ["أحد", "اثن", "ثلا", "أرب", "خمي", "جمع", "سبت"];
+const WEEKDAY_SHORT_NAMES = ["أحد", "إثن", "ثلا", "أرب", "خمي", "جمع", "سبت"];
 const MONTH_NAMES = Array.from({ length: 12 }, (_, month) =>
   new Intl.DateTimeFormat("ar", { month: "long" }).format(new Date(2026, month, 1)));
 const STORE_NAMES = ["tasks", "habits", "objectives", "keyResults", "sessions", "journal"];
+const DASHBOARD_LAYOUT_VERSION = "today-home-v1";
+
+const storedMode = localStorage.getItem("mihwar-dashboard-mode");
+if (localStorage.getItem("mihwar-dashboard-layout") !== DASHBOARD_LAYOUT_VERSION) {
+  if (storedMode === "month") {
+    localStorage.setItem("mihwar-dashboard-mode", "day");
+    localStorage.setItem("mihwar-dashboard-date", localDateString());
+  }
+  localStorage.setItem("mihwar-dashboard-layout", DASHBOARD_LAYOUT_VERSION);
+}
 
 let root;
 let unsubscribe;
 let records = { tasks: [], habits: [], objectives: [], keyResults: [], sessions: [], journal: [] };
 let periodMode = ["day", "month", "year"].includes(localStorage.getItem("mihwar-dashboard-mode"))
   ? localStorage.getItem("mihwar-dashboard-mode")
-  : "month";
+  : "day";
 let selectedDate = validDate(localStorage.getItem("mihwar-dashboard-date"))
   ? localStorage.getItem("mihwar-dashboard-date")
   : localDateString();
@@ -204,29 +216,131 @@ function renderDayDetails(date) {
     task.status !== "done" && (task.scheduled === date || task.due === date));
   const completed = records.tasks.filter((task) =>
     task.status === "done" && (task.completedAt?.slice(0, 10) === date || task.scheduled === date || task.due === date));
-  const habits = records.habits.filter((habit) => !habit.archived && isHabitScheduled(habit, date));
   const focusSessions = records.sessions.filter((session) =>
     session.type !== "break" && dateWithin(session.start, date, date));
   const journal = records.journal.find((entry) => entry.date === date);
   const taskList = (items, empty) => items.length
     ? `<ul class="period-detail-list">${items.map((task) => `<li><a href="#/tasks">${escapeHtml(task.title)}</a><span>${task.status === "done" ? "مكتملة" : "قيد الإنجاز"}</span></li>`).join("")}</ul>`
     : `<p class="period-empty">${empty}</p>`;
-  const habitList = habits.length
-    ? `<ul class="period-detail-list">${habits.map((habit) => {
-      const progress = dayProgress(habit, date);
-      return `<li><a href="#/habits">${escapeHtml(habit.title)}</a><span>${progress.done}/${progress.target ?? progress.total}</span></li>`;
-    }).join("")}</ul>`
-    : `<p class="period-empty">لا توجد عادات مجدولة لهذا اليوم.</p>`;
   const sessions = focusSessions.length
     ? `<ul class="period-detail-list">${focusSessions.map((session) => `<li><a href="#/focus">${session.taskId ? "جلسة مهمة" : session.habitId ? "جلسة عادة" : "تركيز حر"}</a><span>${session.status === "active" ? "نشطة" : `${Number(session.durationMin) || 0} د`}</span></li>`).join("")}</ul>`
     : `<p class="period-empty">لا توجد جلسات تركيز مكتملة.</p>`;
   return `<div class="period-day-details">
     <section class="period-detail-card"><h3>المهام</h3>${taskList(planned, "لا توجد مهام مجدولة.")}<details class="period-completed-details"><summary>المهام المنجزة (${completed.length})</summary>${taskList(completed, "لا توجد مهام منجزة.")}</details></section>
-    <section class="period-detail-card"><h3>العادات</h3>${habitList}</section>
     <section class="period-detail-card"><h3>التركيز</h3>${sessions}</section>
     <section class="period-detail-card"><h3>اليوميات</h3>${journal
       ? `<a class="period-journal-entry" href="#/journal">${escapeHtml(journal.highlight || journal.text || "تدوينة اليوم")}</a>`
       : `<p class="period-empty">لا توجد تدوينة لهذا اليوم.</p>`}</section>
+  </div>`;
+}
+
+function greetingForDate(date) {
+  if (date !== localDateString()) return "خطة يومك";
+  const hour = new Date().getHours();
+  if (hour < 12) return "صباح الخير";
+  if (hour < 17) return "نهارك سعيد";
+  return "مساء الخير";
+}
+
+function messageForDate(date) {
+  const messages = [
+    "خطوة صغيرة اليوم تصنع فرقاً كبيراً غداً.",
+    "استمر بهدوء؛ التقدم لا يحتاج إلى الكمال.",
+    "امنح أهم ما لديك وقتاً، والباقي يأتي تباعاً.",
+    "يكفي أن تبدأ. أكمل يومك على مهل.",
+  ];
+  return messages[Number(date.slice(-2)) % messages.length];
+}
+
+function renderWeekStrip(date) {
+  const sunday = localDate(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
+  const days = Array.from({ length: 7 }, (_item, index) => {
+    const day = localDate(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + index);
+    const value = dateString(day);
+    const selected = value === selectedDate;
+    return `<button class="today-week-day${selected ? " is-selected" : ""}" type="button" data-select-day="${value}" aria-pressed="${selected}" aria-label="${escapeHtml(formatDate(value))}">
+      <span>${WEEKDAY_SHORT_NAMES[day.getDay()]}</span><strong>${day.getDate()}</strong>
+    </button>`;
+  }).join("");
+  return `<nav class="today-week-picker" aria-label="اختر يوماً من هذا الأسبوع">
+    <button class="today-week-arrow" type="button" data-period-action="previous-week" aria-label="الأسبوع السابق">‹</button>
+    <div class="today-week-days">${days}</div>
+    <button class="today-week-arrow" type="button" data-period-action="next-week" aria-label="الأسبوع التالي">›</button>
+  </nav>`;
+}
+
+function habitIcon(habit) {
+  const title = String(habit.title ?? "");
+  if (/ماء|شرب|ترطيب/.test(title)) return "💧";
+  if (/قراءة|كتاب|كتب/.test(title)) return "📖";
+  if (/رياضة|تمرين|جري|مشي/.test(title)) return "🏃";
+  if (/صلاة|قرآن|ذكر/.test(title)) return "🙏";
+  if (/نوم|راحة/.test(title)) return "🌙";
+  return habit.kind === "quit" ? "✦" : "✧";
+}
+
+function renderTodayHabits(date, habits) {
+  if (!habits.length) {
+    return `<div class="today-habits-empty"><p>لا توجد عادات مجدولة لهذا اليوم.</p><a href="#/habits">استكشف عاداتك</a></div>`;
+  }
+  return habits.map((habit, index) => {
+    const progress = dayProgress(habit, date);
+    const complete = progress.complete;
+    const progressText = progress.mode === "count"
+      ? `${progress.done}/${progress.total}${habit.unit ? ` ${escapeHtml(habit.unit)}` : ""}`
+      : progress.mode === "items"
+        ? `${progress.done}/${progress.target} بند اليوم`
+        : complete ? "اكتملت اليوم" : "خطوة صغيرة تكفي";
+    return `<article class="today-habit-card tone-${index % 4}" data-habit-id="${escapeHtml(habit.id)}">
+      <span class="today-habit-icon" aria-hidden="true">${habitIcon(habit)}</span>
+      <a class="today-habit-info" href="#/habits"><strong>${escapeHtml(habit.title)}</strong><small>${progressText}</small></a>
+      <button class="today-habit-toggle${complete ? " is-complete" : ""}" type="button" data-toggle-habit="${escapeHtml(habit.id)}" aria-pressed="${complete}" aria-label="${complete ? "إلغاء إنجاز" : "تسجيل إنجاز"} ${escapeHtml(habit.title)}">
+        <span aria-hidden="true">${complete ? "✓" : ""}</span>
+      </button>
+    </article>`;
+  }).join("");
+}
+
+function renderDailyHome(date) {
+  const habits = records.habits.filter((habit) =>
+    !habit.archived && isHabitScheduled(habit, date));
+  const completedHabits = habits.filter((habit) => dayProgress(habit, date).complete).length;
+  const dailyPercent = habits.length ? Math.round(completedHabits / habits.length * 100) : 0;
+  const dateObject = new Date(`${date}T12:00:00`);
+  const monthStart = dateString(localDate(dateObject.getFullYear(), dateObject.getMonth(), 1));
+  const monthEnd = dateString(localDate(dateObject.getFullYear(), dateObject.getMonth() + 1, 0));
+  const monthHabits = habitTotals(monthStart, monthEnd);
+  const monthPercent = monthHabits.scheduled
+    ? Math.round(monthHabits.completed / monthHabits.scheduled * 100)
+    : 0;
+  const habitHeading = habits.length
+    ? completedHabits === habits.length ? "يوم كامل، أحسنت!" : "كل خطوة تُحسب"
+    : "ابدأ بعادة بسيطة";
+
+  return `<div class="today-day-content">
+    <section class="today-message-card" aria-label="رسالة اليوم">
+      <span class="today-message-icon" aria-hidden="true">✦</span>
+      <div><span>رسالة اليوم</span><p>${messageForDate(date)}</p></div>
+    </section>
+    <section class="today-habits-spotlight" aria-label="ملخص العادات">
+      <div class="today-habits-spotlight-copy">
+        <p class="today-section-kicker">عاداتك</p>
+        <h3>${habitHeading}</h3>
+        <p>${habits.length ? `${completedHabits} من ${habits.length} عادات مكتملة اليوم` : "أضف عادة صغيرة تحب الالتزام بها."}</p>
+        <div class="today-progress-tags">
+          <span>${monthPercent}% هذا الشهر</span>
+          <a href="#/reports">عرض تقدّمك</a>
+        </div>
+      </div>
+      <div class="today-progress-ring" role="progressbar" aria-label="إنجاز العادات اليوم" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${dailyPercent}" style="--progress:${dailyPercent}%">
+        <div><strong>${dailyPercent}<small>%</small></strong><span>${completedHabits} من ${habits.length} عادات</span></div>
+      </div>
+    </section>
+    <section class="today-habits-section" aria-label="عادات اليوم">
+      <header class="today-habits-heading"><div><h3>عاداتك اليوم</h3><span>${habits.length ? `${completedHabits} من ${habits.length} مكتملة` : "ابدأ بخطوة صغيرة"}</span></div><a href="#/habits">إدارة العادات</a></header>
+      <div class="today-habits-list">${renderTodayHabits(date, habits)}</div>
+    </section>
+    <section class="today-day-activity" aria-label="تفاصيل اليوم">${renderDayDetails(date)}</section>
   </div>`;
 }
 
@@ -278,11 +392,7 @@ function renderPeriodContent() {
   const date = currentDate();
   if (periodMode === "year") return renderMonthGrid();
   if (periodMode === "month") return dayCalendar(date);
-  const dayMetrics = metricsForDate(selectedDate);
-  return `<div class="period-selected-day">
-    <div class="period-selected-heading"><h3>${escapeHtml(formatPeriod())}</h3><span>${dayMetrics.planned} مهام · ${dayMetrics.habitCompleted}/${dayMetrics.habitScheduled} عادات</span></div>
-    ${renderDayDetails(selectedDate)}
-  </div>`;
+  return renderDailyHome(selectedDate);
 }
 
 function changePeriod(delta) {
@@ -302,21 +412,25 @@ function render() {
   if (!root) return;
   const metrics = periodMetrics();
   const modeNames = { day: "اليوم", month: "الشهر", year: "السنة" };
-  root.innerHTML = `<section class="period-dashboard" aria-label="لوحة الفترات">
+  const isDaily = periodMode === "day";
+  root.innerHTML = `<section class="period-dashboard${isDaily ? " period-dashboard--today" : ""}" aria-label="لوحة الفترات">
     <header class="period-dashboard-heading">
-      <div><p class="today-kicker">لوحتك المختصرة</p><h2>${escapeHtml(formatPeriod())}</h2></div>
+      <div><p class="today-kicker">${isDaily ? "مساحتك الهادئة" : "لوحتك المختصرة"}</p><h2>${escapeHtml(isDaily ? greetingForDate(selectedDate) : formatPeriod())}</h2>${isDaily ? `<p class="today-header-date">${escapeHtml(formatPeriod())}</p>` : ""}</div>
       <button class="period-today-button" type="button" data-period-action="today">اليوم</button>
     </header>
     <nav class="period-mode-switch" aria-label="طريقة عرض التاريخ">
       ${Object.entries(modeNames).map(([mode, label]) => `<button type="button" data-period-mode="${mode}" aria-pressed="${periodMode === mode}">${label}</button>`).join("")}
     </nav>
-    <div class="period-controls">
-      <button class="period-arrow" type="button" data-period-action="previous" aria-label="الفترة السابقة">‹</button>
-      ${periodInput()}
-      <button class="period-arrow" type="button" data-period-action="next" aria-label="الفترة التالية">›</button>
-    </div>
-    <div class="period-summary-grid" aria-label="ملخص الفترة">${periodSummaryCards(metrics)}</div>
-    <div class="period-content">${renderPeriodContent()}</div>
+    ${isDaily ? renderWeekStrip(currentDate()) : `
+      <div class="period-controls">
+        <button class="period-arrow" type="button" data-period-action="previous" aria-label="الفترة السابقة">‹</button>
+        ${periodInput()}
+        <button class="period-arrow" type="button" data-period-action="next" aria-label="الفترة التالية">›</button>
+      </div>
+      <div class="period-summary-grid" aria-label="ملخص الفترة">${periodSummaryCards(metrics)}</div>
+      <div class="period-content">${renderPeriodContent()}</div>
+    `}
+    ${isDaily ? `<div class="period-content">${renderPeriodContent()}</div>` : ""}
   </section>`;
 }
 
@@ -329,7 +443,22 @@ async function refreshRecords() {
 }
 
 function bindEvents() {
-  root.addEventListener("click", (event) => {
+  root.addEventListener("click", async (event) => {
+    const habitToggle = event.target.closest("[data-toggle-habit]");
+    if (habitToggle) {
+      const habit = records.habits.find((item) => item.id === habitToggle.dataset.toggleHabit);
+      if (!habit) return;
+      const complete = dayProgress(habit, selectedDate).complete;
+      try {
+        await update("habits", setDayComplete(habit, selectedDate, !complete));
+        showToast(complete ? "أُزيل تسجيل العادة." : "تم تسجيل العادة لليوم المحدد.");
+      } catch (error) {
+        console.error("تعذّر تحديث العادة من لوحة اليوم:", error);
+        showToast("تعذّر تحديث العادة. حاول مجدداً.", { isError: true });
+      }
+      return;
+    }
+
     const button = event.target.closest("[data-period-mode], [data-period-action], [data-select-day], [data-select-month]");
     if (!button) return;
     if (button.dataset.periodMode) {
@@ -344,6 +473,10 @@ function bindEvents() {
       changePeriod(-1);
     } else if (button.dataset.periodAction === "next") {
       changePeriod(1);
+    } else if (button.dataset.periodAction === "previous-week") {
+      changePeriod(-7);
+    } else if (button.dataset.periodAction === "next-week") {
+      changePeriod(7);
     } else if (button.dataset.periodAction === "today") {
       selectedDate = localDateString();
       periodMode = "day";
