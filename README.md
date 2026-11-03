@@ -5,61 +5,61 @@
 </p>
 
 <h1 align="center" dir="rtl">مِحوَر</h1>
-<p align="center" dir="rtl"><strong>خطّط بلطف، وأنجز ما يهمك.</strong><br>لوحة عربية هادئة تجمع يومك، فتراتك، ومؤشرات تقدمك في مكان واحد.</p>
+<p align="center" dir="rtl"><strong>خطّط بلطف، وأنجز ما يهمك.</strong><br>مِحوَر مساحة عربية هادئة للمهام والعادات والتركيز والتقدم.</p>
 <p align="center"><a href="https://prog-alone.github.io/Mihwer/">افتح التطبيق</a></p>
 
 <p align="center">
   <img src="./assets/readme/cover.svg" alt="معاينة توضيحية لواجهة اليوم في مِحوَر" width="100%">
 </p>
 
-<h2 align="center" dir="rtl">لوحة مِحوَر في أربع بطاقات</h2>
+<h2 align="center" dir="rtl">مِحوَر في أربع بطاقات</h2>
 
-<table dir="rtl" align="center">
+<table width="100%" cellpadding="18" cellspacing="12" dir="rtl" align="center">
   <tr>
-    <td align="center" width="50%">
-      <img src="./assets/readme/today-real.png" alt="لقطة حقيقية من لوحة اليوم" width="100%"><br>
-      <strong>اليوم</strong><br>
-      <small>إحصائيات واختصارات بلا تكرار.</small>
+    <td bgcolor="#F0ECFF" align="center" width="50%">
+      <h3>☀️ اليوم</h3>
+      <p>ملخص سريع لما يهمك الآن: الإنجاز، المهام، العادات، التركيز واليوميات.</p>
+      <img src="./assets/readme/today-real.png" alt="لوحة اليوم كاملة" width="96%">
     </td>
-    <td align="center" width="50%">
-      <img src="./assets/readme/week-real.png" alt="لقطة حقيقية من لوحة الأسبوع" width="100%"><br>
-      <strong>الأسبوع</strong><br>
-      <small>إنجاز الفترة وبوكس مدموج لسبعة أيام.</small>
+    <td bgcolor="#E8F7F2" align="center" width="50%">
+      <h3>📅 الأسبوع</h3>
+      <p>راقب أسبوعك في شاشة واحدة واختر أي يوم من البوكس المدموج.</p>
+      <img src="./assets/readme/week-real.png" alt="لوحة الأسبوع كاملة وبوكس الأيام السبعة" width="96%">
     </td>
   </tr>
   <tr>
-    <td align="center" width="50%">
-      <img src="./assets/readme/month-real.png" alt="لقطة حقيقية من لوحة الشهر" width="100%"><br>
-      <strong>الشهر</strong><br>
-      <small>شبكة نشاط واضحة للأيام.</small>
+    <td bgcolor="#FFF4DF" align="center" width="50%">
+      <h3>🗓️ الشهر</h3>
+      <p>شاهد إيقاع الشهر ونشاط الأيام من خلال شبكة واضحة.</p>
+      <img src="./assets/readme/month-real.png" alt="لوحة الشهر كاملة" width="96%">
     </td>
-    <td align="center" width="50%">
-      <img src="./assets/readme/year-real.png" alt="لقطة حقيقية من لوحة السنة" width="100%"><br>
-      <strong>السنة</strong><br>
-      <small>بطاقات الأشهر ونسبة النشاط.</small>
+    <td bgcolor="#EAF1FF" align="center" width="50%">
+      <h3>🌱 السنة</h3>
+      <p>ملخص سنوي خفيف يوضح الأشهر النشطة ونسبة التقدم.</p>
+      <img src="./assets/readme/year-real.png" alt="لوحة السنة كاملة" width="96%">
     </td>
   </tr>
 </table>
 
-<h2 align="center" dir="rtl">ابدأ بسرعة</h2>
+<h2 align="center" dir="rtl">كيف تستخدمه؟</h2>
 
-<table dir="rtl" align="center">
+<table width="100%" cellpadding="16" cellspacing="10" dir="rtl" align="center">
   <tr>
-    <td align="center"><strong>١ · أضف</strong><br><small>اكتب المهمة واختر الأولوية.</small></td>
-    <td align="center"><strong>٢ · نفّذ</strong><br><small>تابعها من لوحة اليوم.</small></td>
-    <td align="center"><strong>٣ · راجع</strong><br><small>شاهد تقدمك في التقارير.</small></td>
+    <td bgcolor="#F7EEFF" align="center"><strong>١ · أضف</strong><br>اكتب المهمة وحدد الأولوية.</td>
+    <td bgcolor="#EAF9F4" align="center"><strong>٢ · نفّذ</strong><br>تابع يومك بهدوء.</td>
+    <td bgcolor="#FFF3E5" align="center"><strong>٣ · راجع</strong><br>اقرأ أرقامك وصدّر تقاريرك.</td>
   </tr>
 </table>
 
 <h2 align="center" dir="rtl">الأقسام</h2>
 
-<table dir="rtl" align="center">
+<table width="100%" cellpadding="14" cellspacing="8" dir="rtl" align="center">
   <tr>
-    <td align="center"><strong>المهام</strong><br><small>طابور وأولويات ومواعيد.</small></td>
-    <td align="center"><strong>العادات</strong><br><small>سلاسل وإنجاز يومي.</small></td>
-    <td align="center"><strong>التركيز</strong><br><small>جلسات مرتبطة بيومك.</small></td>
-    <td align="center"><strong>اليوميات</strong><br><small>سجّل لحظتك.</small></td>
-    <td align="center"><strong>التقدم</strong><br><small>أرقام وتصدير.</small></td>
+    <td bgcolor="#F0ECFF" align="center"><strong>المهام</strong><br><small>طابور وأولويات ومواعيد.</small></td>
+    <td bgcolor="#E8F7F2" align="center"><strong>العادات</strong><br><small>سلاسل وإنجاز يومي.</small></td>
+    <td bgcolor="#EAF1FF" align="center"><strong>التركيز</strong><br><small>جلسات مرتبطة بيومك.</small></td>
+    <td bgcolor="#FFF4DF" align="center"><strong>اليوميات</strong><br><small>سجّل لحظتك.</small></td>
+    <td bgcolor="#F7EEFF" align="center"><strong>التقدم</strong><br><small>أرقام وتصدير.</small></td>
   </tr>
 </table>
 
