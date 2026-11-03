@@ -12,47 +12,56 @@
   <img src="./assets/readme/cover.svg" alt="معاينة توضيحية لواجهة اليوم في مِحوَر" width="100%">
 </p>
 
-## كيف تعمل لوحة مِحوَر؟
+<h2 align="center" dir="rtl">لوحة مِحوَر في أربع بطاقات</h2>
 
-تبدأ لوحة اليوم بملخص بصري واحد: نسبة الإنجاز، المهام، العادات، التركيز، واليوميات. لا تُعرض القوائم التفصيلية داخل اليوم حتى تبقى الصفحة خفيفة؛ تفتح التفاصيل الكاملة من تبويباتها المستقلة.
+<table dir="rtl" align="center">
+  <tr>
+    <td align="center" width="50%">
+      <img src="./assets/readme/today-real.png" alt="لقطة حقيقية من لوحة اليوم" width="100%"><br>
+      <strong>اليوم</strong><br>
+      <small>إحصائيات واختصارات بلا تكرار.</small>
+    </td>
+    <td align="center" width="50%">
+      <img src="./assets/readme/week-real.png" alt="لقطة حقيقية من لوحة الأسبوع" width="100%"><br>
+      <strong>الأسبوع</strong><br>
+      <small>إنجاز الفترة وبوكس مدموج لسبعة أيام.</small>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="./assets/readme/month-real.png" alt="لقطة حقيقية من لوحة الشهر" width="100%"><br>
+      <strong>الشهر</strong><br>
+      <small>شبكة نشاط واضحة للأيام.</small>
+    </td>
+    <td align="center" width="50%">
+      <img src="./assets/readme/year-real.png" alt="لقطة حقيقية من لوحة السنة" width="100%"><br>
+      <strong>السنة</strong><br>
+      <small>بطاقات الأشهر ونسبة النشاط.</small>
+    </td>
+  </tr>
+</table>
 
-<p align="center" dir="rtl">
-  <img src="./assets/readme/today-real.png" alt="لقطة حقيقية من لوحة اليوم في مِحوَر" width="100%">
-</p>
-<p align="center" dir="rtl">
-  <img src="./assets/readme/week-real.png" alt="لقطة حقيقية من لوحة الأسبوع وبوكس الأيام السبعة" width="100%">
-</p>
-<p align="center" dir="rtl">
-  <img src="./assets/readme/month-real.png" alt="لقطة حقيقية من لوحة الشهر" width="100%">
-</p>
-<p align="center" dir="rtl">
-  <img src="./assets/readme/year-real.png" alt="لقطة حقيقية من لوحة السنة" width="100%">
-</p>
+<h2 align="center" dir="rtl">ابدأ بسرعة</h2>
 
-- **اليوم:** إحصائيات مختصرة، تذكير اليوم، واختصارات سريعة للتدوين والتركيز والأهداف والتقدم.
-- **الأسبوع:** بطاقة إنجاز وإحصائيات الأسبوع، ثم بوكس مدموج لسبعة أيام لاختيار يوم محدد.
-- **الشهر:** ملخص الفترة ثم شبكة نشاط الأيام.
-- **السنة:** ملخص السنة ثم بطاقات الأشهر ونسبة نشاط كل شهر.
+<table dir="rtl" align="center">
+  <tr>
+    <td align="center"><strong>١ · أضف</strong><br><small>اكتب المهمة واختر الأولوية.</small></td>
+    <td align="center"><strong>٢ · نفّذ</strong><br><small>تابعها من لوحة اليوم.</small></td>
+    <td align="center"><strong>٣ · راجع</strong><br><small>شاهد تقدمك في التقارير.</small></td>
+  </tr>
+</table>
 
-## ابدأ في ثلاث خطوات
+<h2 align="center" dir="rtl">الأقسام</h2>
 
-<p align="center">
-  <img src="./assets/readme/quick-start.svg" alt="أضف مهمة، راجع خطة اليوم، ثم أكمل المهمة مع بقائها محفوظة" width="100%">
-</p>
-
-اكتب عنوان المهمة واختر بطاقة الأولوية؛ ستظهر في الطابور، ويمكنك التبديل إلى عرض الأولويات. الموعد والتركيز والتفاصيل الإضافية اختيارية، وتبقى بياناتك محفوظة محلياً.
-
-## الأقسام
-
-<p align="center">
-  <img src="./assets/readme/system-cards.svg" alt="أقسام مِحوَر الرئيسية والإضافية" width="100%">
-</p>
-
-- **لوحة اليوم:** ملخص سريع بلا تكرار، مع روابط مباشرة للأقسام التي تحتاجها.
-- **المهام:** طابور واضح، أولويات، مهام فرعية، ومواعيد.
-- **العادات:** متابعة السلاسل والإنجاز اليومي دون ازدحام لوحة اليوم.
-- **التركيز واليوميات:** سجّل جلسات التركيز أو فكرة اليوم من الاختصارات.
-- **الأهداف والتقدم:** اربط ما تنجزه باتجاهك العام، ثم راجع الأرقام والتقارير والتصدير.
+<table dir="rtl" align="center">
+  <tr>
+    <td align="center"><strong>المهام</strong><br><small>طابور وأولويات ومواعيد.</small></td>
+    <td align="center"><strong>العادات</strong><br><small>سلاسل وإنجاز يومي.</small></td>
+    <td align="center"><strong>التركيز</strong><br><small>جلسات مرتبطة بيومك.</small></td>
+    <td align="center"><strong>اليوميات</strong><br><small>سجّل لحظتك.</small></td>
+    <td align="center"><strong>التقدم</strong><br><small>أرقام وتصدير.</small></td>
+  </tr>
+</table>
 
 ## بياناتك
 
