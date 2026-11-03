@@ -36,9 +36,9 @@
 
 [![لوحة السنة كاملة](./assets/readme/year-real.png)](./assets/readme/year-real.png)
 
-[![أربع بطاقات تشرح إضافة المهمة ومتابعة اليوم والتسجيل والمراجعة](./assets/readme/how-to.svg?v=4)](./assets/readme/how-to.svg?v=4)
+[![أربع بطاقات تشرح إضافة المهمة ومتابعة اليوم والتسجيل والمراجعة](./assets/readme/how-to.svg?v=5)](./assets/readme/how-to.svg?v=5)
 
-[![بطاقات أقسام المهام والعادات والتركيز واليوميات والأهداف والتقدم](./assets/readme/sections.svg?v=4)](./assets/readme/sections.svg?v=4)
+[![بطاقات أقسام المهام والعادات والتركيز واليوميات والأهداف والتقدم](./assets/readme/sections.svg?v=5)](./assets/readme/sections.svg?v=5)
 
 ## بياناتك
 
