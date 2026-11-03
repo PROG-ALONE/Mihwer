@@ -32,12 +32,12 @@ const themes = {
 let renderSequence = 0;
 let mountedRoute;
 const animatedCountSelector = "[data-count]";
-const LATEST_UPDATE_ID = "backup-reminder-and-periods-v99";
+const LATEST_UPDATE_ID = "backup-reminder-and-periods-v100";
 
 function showLatestUpdates() {
   if (localStorage.getItem("mihwar-seen-update") === LATEST_UPDATE_ID) return;
   localStorage.setItem("mihwar-seen-update", LATEST_UPDATE_ID);
-  showToast("آخر التحديثات: تذكير الجمعة بالنسخ الاحتياطي · حفظ باسم اليوم والتاريخ · إحصائيات أوضح للفترات.", { duration: 9000 });
+  showToast("آخر التحديثات:\n• تذكير الجمعة بالنسخ الاحتياطي\n• حفظ النسخة باسم اليوم والتاريخ\n• إحصائيات أوضح للفترات", { duration: 9000 });
 }
 
 function arabicDigits(value) {

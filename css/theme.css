@@ -8526,6 +8526,7 @@ details.objective-card > .objective-details-content {
   flex: 1;
   font-size: .87rem;
   line-height: 1.55;
+  white-space: pre-line;
 }
 
 .app-toast-close {
