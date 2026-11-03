@@ -36,20 +36,35 @@
 
 [![لوحة السنة كاملة](./assets/readme/year-real.png)](./assets/readme/year-real.png)
 
-## كيف تستخدم مِحوَر؟
+<div dir="rtl" align="center">
 
-1. أضف المهمة وحدد الأولوية.
-2. تابع يومك من لوحة اليوم أو الأسبوع.
-3. سجّل العادات والتركيز واليوميات عند الحاجة.
-4. راجع أرقامك وتقاريرك وصدّر بياناتك.
+<h2>كيف تستخدم مِحوَر؟</h2>
 
-## الأقسام
+<table width="100%" cellpadding="16" cellspacing="10" dir="rtl">
+  <tr>
+    <td bgcolor="#F0ECFF" align="center" width="25%"><strong>١ · أضف</strong><br><small>اكتب المهمة وحدد الأولوية.</small></td>
+    <td bgcolor="#E8F7F2" align="center" width="25%"><strong>٢ · تابع</strong><br><small>راجع يومك أو أسبوعك.</small></td>
+    <td bgcolor="#FFF4DF" align="center" width="25%"><strong>٣ · سجّل</strong><br><small>أضف عادة أو جلسة تركيز أو يومية.</small></td>
+    <td bgcolor="#EAF1FF" align="center" width="25%"><strong>٤ · راجع</strong><br><small>اقرأ أرقامك وصدّر تقاريرك.</small></td>
+  </tr>
+</table>
 
-- **المهام:** طابور واضح، أولويات، مهام فرعية، ومواعيد.
-- **العادات:** متابعة السلاسل والإنجاز اليومي.
-- **التركيز:** جلسات تركيز واستراحات قابلة للتخصيص.
-- **اليوميات:** تدوين سريع مرتبط بيومك.
-- **الأهداف والتقدم:** مراجعة الاتجاه العام والأرقام والتصدير.
+<h2>الأقسام</h2>
+
+<table width="100%" cellpadding="16" cellspacing="10" dir="rtl">
+  <tr>
+    <td bgcolor="#F0ECFF" align="center"><strong>المهام</strong><br><small>أولويات ومواعيد ومهام فرعية.</small></td>
+    <td bgcolor="#E8F7F2" align="center"><strong>العادات</strong><br><small>سلاسل وإنجاز يومي.</small></td>
+    <td bgcolor="#EAF1FF" align="center"><strong>التركيز</strong><br><small>جلسات واستراحات قابلة للتخصيص.</small></td>
+  </tr>
+  <tr>
+    <td bgcolor="#FFF4DF" align="center"><strong>اليوميات</strong><br><small>تدوين سريع مرتبط بيومك.</small></td>
+    <td bgcolor="#F7EEFF" align="center"><strong>الأهداف</strong><br><small>اتجاه واضح لما تريد إنجازه.</small></td>
+    <td bgcolor="#EAF9F4" align="center"><strong>التقدم</strong><br><small>إحصائيات وتقارير وتصدير.</small></td>
+  </tr>
+</table>
+
+</div>
 
 ## بياناتك
 

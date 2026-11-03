@@ -8,6 +8,7 @@ import { mountJournalView, unmountJournalView } from "./views/journal.js";
 import { mountReportsView, unmountReportsView } from "./views/reports.js";
 import { mountTasksView, unmountTasksView } from "./views/tasks.js";
 import { bindSettingsActions, checkBackupReminder } from "./views/settings.js";
+import { showToast } from "./utils/notifications.js";
 import { mountPeriodDashboard } from "./views/dashboard.js?v=97";
 
 const app = document.querySelector("#app");
@@ -31,6 +32,13 @@ const themes = {
 let renderSequence = 0;
 let mountedRoute;
 const animatedCountSelector = "[data-count]";
+const LATEST_UPDATE_ID = "backup-reminder-and-periods-v99";
+
+function showLatestUpdates() {
+  if (localStorage.getItem("mihwar-seen-update") === LATEST_UPDATE_ID) return;
+  localStorage.setItem("mihwar-seen-update", LATEST_UPDATE_ID);
+  showToast("آخر التحديثات: تذكير الجمعة بالنسخ الاحتياطي · حفظ باسم اليوم والتاريخ · إحصائيات أوضح للفترات.", { duration: 9000 });
+}
 
 function arabicDigits(value) {
   return String(value).replace(/\d/g, (digit) => "٠١٢٣٤٥٦٧٨٩"[digit]);
@@ -206,6 +214,7 @@ initializeStore()
   .then(() => {
     mountPeriodDashboard();
     checkBackupReminder();
+    showLatestUpdates();
   })
   .catch((error) => {
     console.error("تعذّر تهيئة قاعدة البيانات أو لوحة الفترات:", error);
