@@ -218,7 +218,7 @@ function reportSummary(tasks, start, end) {
   };
 }
 
-function renderSummaryCards(sections) {
+function renderSummaryCards(sections, activityTotal) {
   const stats = [
     { label: "المهام", value: `${sections.tasks.metrics[1].value}/${sections.tasks.metrics[0].value}`, detail: `${sections.tasks.metrics[2].value} مفتوحة`, percent: sections.tasks.metrics[1].percent, tone: "primary" },
     { label: "الأهداف والنتائج", value: sections.objectives.metrics[0].value, detail: `${sections.objectives.metrics[3].value} نتيجة رئيسية`, tone: "blue" },
@@ -227,6 +227,7 @@ function renderSummaryCards(sections) {
     { label: "اليوميات", value: sections.journal.metrics[0].value, detail: `${sections.journal.metrics[2].value} متوسط المزاج`, tone: "rose" },
     { label: "المراجعات", value: sections.reviews.metrics[0].value, detail: "مراجعات محفوظة", tone: "blue" },
     { label: "المشاريع", value: sections.projects.metrics[0].value, detail: `${sections.projects.metrics[1].value} نشطة`, tone: "primary" },
+    { label: "النشاط", value: activityTotal, detail: "إنجازات وجلسات وعادات", tone: "accent" },
   ];
   return `<section class="report-overview" aria-label="مؤشرات جميع الأقسام"><h3>مؤشرات جميع الأقسام</h3><div class="report-summary-grid">${stats.map((stat) => `
     <article class="report-stat-card tone-${stat.tone}${stat.label === "العادات" ? " has-ring" : ""}"${stat.label === "العادات" ? ` style="--report-progress:${stat.percent}%;"` : ""}>
@@ -361,7 +362,7 @@ function renderReportCharts(tasks) {
       <details class="report-entity-details"><summary>التفاصيل والمجاميع لكل سجل <span>${section.details.length}</span></summary>${renderEntityCards(section.details)}</details>
     </section>`;
   }).join("");
-  return `${renderSummaryCards(analytics.sections)}${renderActivityHeatmap(analytics.activity)}${sections}`;
+  return `${renderSummaryCards(analytics.sections, analytics.activity.reduce((sum, day) => sum + day.value, 0))}${renderActivityHeatmap(analytics.activity)}${sections}`;
 }
 
 function render() {
@@ -371,7 +372,13 @@ function render() {
   const { start, end } = dateRange();
   app.innerHTML = `
     <section class="reports-page" aria-label="تقدّمي">
-      <header class="reports-heading"><div><p class="goals-kicker">رحلتك بالأرقام</p><h2>تقدّمي</h2></div><details class="report-exports"><summary>تصدير</summary><div><button class="button button-secondary" type="button" data-export="csv">CSV</button><button class="button button-secondary" type="button" data-export="excel">Excel</button><button class="button button-secondary" type="button" data-export="json">JSON</button><button class="button button-primary" type="button" data-export="pdf">طباعة / PDF</button></div></details></header>
+      <header class="reports-heading"><div><p class="goals-kicker">رحلتك بالأرقام</p><h2>تقدّمي</h2></div><details class="report-exports"><summary>تصدير التقرير</summary><div class="report-export-menu">
+        <p class="report-export-title">اختر الصيغة المناسبة</p>
+        <button class="report-export-option" type="button" data-export="excel"><strong>Excel</strong><span>جداول مرتبة ورسوم قابلة للتحليل</span></button>
+        <button class="report-export-option" type="button" data-export="csv"><strong>CSV</strong><span>أرقام وتفاصيل قابلة للفتح في أي جدول</span></button>
+        <button class="report-export-option" type="button" data-export="json"><strong>JSON</strong><span>بيانات كاملة للاحتفاظ أو التكامل</span></button>
+        <button class="report-export-option is-primary" type="button" data-export="pdf"><strong>طباعة / PDF</strong><span>نسخة مرئية جاهزة للمشاركة</span></button>
+      </div></details></header>
       <section class="today-panel reports-filters">
         <label>الفترة<select id="report-range">
           <option value="day"${range === "day" ? " selected" : ""}>اليوم</option><option value="week"${range === "week" ? " selected" : ""}>أسبوع</option><option value="month"${range === "month" ? " selected" : ""}>شهر</option><option value="quarter"${range === "quarter" ? " selected" : ""}>ربع سنة</option><option value="year"${range === "year" ? " selected" : ""}>سنة</option><option value="plan"${range === "plan" ? " selected" : ""}>فترة التخطيط (${plan.columns.length} فترات)</option><option value="custom"${range === "custom" ? " selected" : ""}>مخصص</option><option value="all"${range === "all" ? " selected" : ""}>كامل الفترة</option>
@@ -391,7 +398,7 @@ function render() {
         <label>المشروع<select id="report-project"><option value="">كل المشاريع</option>${records.projects.filter((project) => !project.archived).map((project) => `<option value="${escapeHtml(project.id)}"${projectId === project.id ? " selected" : ""}>${escapeHtml(project.name)}</option>`).join("")}</select></label>
         <label>الهدف<select id="report-objective"><option value="">كل الأهداف</option>${records.objectives.filter((objective) => objective.status !== "archived").map((objective) => `<option value="${escapeHtml(objective.id)}"${objectiveId === objective.id ? " selected" : ""}>${escapeHtml(objective.title)}</option>`).join("")}</select></label>
       </section>
-      <div class="report-period-label">${range === "all" ? "كامل الفترة · المخططات تعرض آخر 12 شهراً" : `${escapeHtml(start)} — ${escapeHtml(end)}`} · ${tasks.filter((task) => task.status === "done").length} مهام مكتملة · التصدير: ${escapeHtml(EXPORT_SCOPE_LABELS[exportScope])}</div>
+      <div class="report-period-label">${range === "all" ? "كامل الفترة · المخططات تعرض آخر 12 شهراً" : `${escapeHtml(start)} — ${escapeHtml(end)}`} · ${tasks.filter((task) => task.status === "done").length} مهام مكتملة · ${escapeHtml(EXPORT_SCOPE_LABELS[exportScope])}</div>
       ${renderReportCharts(tasks)}
       <details class="report-table-details">
         <summary>سجل المهام بالتفصيل <span>${tasks.length} مهمة</span></summary>
@@ -880,6 +887,7 @@ function buildExportAnalytics(tasks) {
   const habitQuantities = new Map();
   const habitDetails = habits.map((habit) => {
     const from = habitStart(habit);
+    const schedule = habitPerformance[habits.indexOf(habit)];
     const history = Array.isArray(habit.history)
       ? Object.fromEntries(habit.history.map((date) => [date, true]))
       : habit.history ?? {};
@@ -921,7 +929,6 @@ function buildExportAnalytics(tasks) {
       for (const [unit, amount] of totalsByUnit) {
         habitQuantities.set(unit, (habitQuantities.get(unit) ?? 0) + amount);
       }
-      const schedule = habitPerformance[habits.indexOf(habit)];
       const categoryMetrics = [...totalsByCategory].flatMap(([category, totals]) => [
         { label: `${category} · مرات الإنجاز`, value: totals.occurrences },
         ...[...totals.units].map(([unit, amount]) => ({

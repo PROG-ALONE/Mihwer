@@ -4,8 +4,8 @@ import { getObjectiveProgress } from "../utils/okr.js";
 import { dayProgress, setDayComplete } from "./habits.js";
 import { showToast } from "../utils/notifications.js";
 
-const DAY_NAMES = ["أحد", "اثن", "ثلا", "أرب", "خمي", "جمع", "سبت"];
-const WEEKDAY_SHORT_NAMES = ["أحد", "إثن", "ثلا", "أرب", "خمي", "جمع", "سبت"];
+const DAY_NAMES = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+const WEEKDAY_SHORT_NAMES = DAY_NAMES;
 const MONTH_NAMES = Array.from({ length: 12 }, (_, month) =>
   new Intl.DateTimeFormat("ar", { month: "long" }).format(new Date(2026, month, 1)));
 const STORE_NAMES = ["tasks", "habits", "objectives", "keyResults", "sessions", "journal"];
@@ -23,7 +23,7 @@ if (localStorage.getItem("mihwar-dashboard-layout") !== DASHBOARD_LAYOUT_VERSION
 let root;
 let unsubscribe;
 let records = { tasks: [], habits: [], objectives: [], keyResults: [], sessions: [], journal: [] };
-let periodMode = ["day", "month", "year"].includes(localStorage.getItem("mihwar-dashboard-mode"))
+let periodMode = ["day", "week", "month", "year"].includes(localStorage.getItem("mihwar-dashboard-mode"))
   ? localStorage.getItem("mihwar-dashboard-mode")
   : "day";
 let selectedDate = validDate(localStorage.getItem("mihwar-dashboard-date"))
@@ -69,6 +69,11 @@ function dateWithin(value, start, end) {
 function periodBounds(mode = periodMode, date = currentDate()) {
   const year = date.getFullYear();
   const month = date.getMonth();
+  if (mode === "week") {
+    const startDate = localDate(year, month, date.getDate() - date.getDay());
+    const endDate = localDate(year, month, startDate.getDate() + 6);
+    return { start: dateString(startDate), end: dateString(endDate) };
+  }
   if (mode === "year") return {
     start: dateString(localDate(year, 0, 1)),
     end: dateString(localDate(year, 11, 31)),
@@ -86,6 +91,10 @@ function periodBounds(mode = periodMode, date = currentDate()) {
 function formatPeriod() {
   const date = currentDate();
   if (periodMode === "year") return String(date.getFullYear());
+  if (periodMode === "week") {
+    const bounds = periodBounds("week", date);
+    return `${new Intl.DateTimeFormat("ar", { day: "numeric", month: "short" }).format(new Date(`${bounds.start}T12:00:00`))} — ${new Intl.DateTimeFormat("ar", { day: "numeric", month: "short", year: "numeric" }).format(new Date(`${bounds.end}T12:00:00`))}`;
+  }
   if (periodMode === "month") {
     return new Intl.DateTimeFormat("ar", { month: "long", year: "numeric" }).format(date);
   }
@@ -196,22 +205,32 @@ function periodInput() {
   return `<label class="period-input-label">اليوم<input type="date" value="${selectedDate}" data-period-input="day" aria-label="اختر اليوم"></label>`;
 }
 
-function periodSummaryCards(metrics) {
+function periodSummaryData(metrics) {
   const habitPercent = metrics.scheduled
     ? Math.round(metrics.completed / metrics.scheduled * 100)
     : 0;
+  const taskTotal = metrics.completedTasks + metrics.plannedTasks;
   return [
-    { title: "المهام", value: `${metrics.completedTasks} / ${metrics.plannedTasks}`, hint: "منجزة / قيد الإنجاز", tone: "tasks" },
-    { title: "العادات", value: `${metrics.completed} / ${metrics.scheduled}`, hint: `${habitPercent}% من الأيام المجدولة`, tone: "habits" },
-    { title: "التركيز", value: `${metrics.focusMinutes} د`, hint: "جلسات مكتملة", tone: "focus" },
-    { title: "الأهداف", value: `${metrics.objectiveProgress}%`, hint: `${metrics.objectives} أهداف هذا العام`, tone: "goals" },
-    { title: "اليوميات", value: metrics.journalEntries, hint: "تدوينات في الفترة", tone: "journal" },
-  ].map((card) => `<article class="period-summary-card" data-tone="${card.tone}">
-    <span>${card.title}</span><strong>${card.value}</strong><small>${card.hint}</small>
+    { title: "المهام", icon: "✓", value: metrics.completedTasks, suffix: "مكتملة", hint: `${metrics.plannedTasks} قيد الإنجاز`, progress: taskTotal ? Math.round(metrics.completedTasks / taskTotal * 100) : 0, tone: "tasks" },
+    { title: "العادات", icon: "✦", value: metrics.completed, suffix: "مكتملة", hint: `${metrics.scheduled} مجدولة`, progress: habitPercent, tone: "habits" },
+    { title: "التركيز", icon: "◉", value: metrics.focusMinutes, suffix: "دقيقة", hint: "جلسات مكتملة", progress: metrics.focusMinutes ? 100 : 0, tone: "focus" },
+    { title: "الأهداف", icon: "◎", value: metrics.objectiveProgress, suffix: "إنجاز", hint: `${metrics.objectives} أهداف هذا العام`, progress: metrics.objectiveProgress, tone: "goals" },
+    { title: "اليوميات", icon: "▤", value: metrics.journalEntries, suffix: "تدوينات", hint: "خلال هذه الفترة", progress: metrics.journalEntries ? 100 : 0, tone: "journal" },
+  ];
+}
+
+function periodSummaryCards(metrics) {
+  return periodSummaryData(metrics).map((card) => `<article class="period-summary-card" data-tone="${card.tone}" style="--card-progress:${card.progress}%">
+    <header><span class="period-summary-icon" aria-hidden="true">${card.icon}</span><strong>${card.title}</strong></header>
+    <div class="period-summary-value period-summary-chart" role="progressbar" aria-label="${escapeHtml(card.title)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${card.progress}">
+      <div class="period-summary-chart-inner"><b data-count="${card.value}">٠</b><span>${card.suffix}</span></div>
+    </div>
+    <small>${card.hint}</small>
   </article>`).join("");
 }
 
 function renderDayDetails(date) {
+  const metrics = metricsForDate(date);
   const planned = records.tasks.filter((task) =>
     task.status !== "done" && (task.scheduled === date || task.due === date));
   const completed = records.tasks.filter((task) =>
@@ -219,17 +238,36 @@ function renderDayDetails(date) {
   const focusSessions = records.sessions.filter((session) =>
     session.type !== "break" && dateWithin(session.start, date, date));
   const journal = records.journal.find((entry) => entry.date === date);
+  const priorityLabels = ["عاجلة ومهمة", "مهمة", "عاجلة", "عادية"];
+  const taskPriority = (task) => {
+    const priority = Number(task.priority);
+    if (Number.isInteger(priority) && priority >= 0 && priority < priorityLabels.length) {
+      return priorityLabels[priority];
+    }
+    if (task.important && task.urgent) return priorityLabels[0];
+    if (task.important) return priorityLabels[1];
+    if (task.urgent) return priorityLabels[2];
+    return priorityLabels[3];
+  };
   const taskList = (items, empty) => items.length
-    ? `<ul class="period-detail-list">${items.map((task) => `<li><a href="#/tasks">${escapeHtml(task.title)}</a><span>${task.status === "done" ? "مكتملة" : "قيد الإنجاز"}</span></li>`).join("")}</ul>`
+    ? `<ul class="period-detail-list">${items.map((task) => {
+      const taskTime = task.dueTime ? ` · ${escapeHtml(task.dueTime)}` : "";
+      const status = task.status === "done" ? "مكتملة" : taskTime ? `موعد ${task.dueTime}` : "قيد الإنجاز";
+      return `<li><a href="#/tasks"><strong>${escapeHtml(task.title)}</strong><small>${escapeHtml(taskPriority(task))}${taskTime}</small></a><span>${status}</span></li>`;
+    }).join("")}</ul>`
     : `<p class="period-empty">${empty}</p>`;
   const sessions = focusSessions.length
-    ? `<ul class="period-detail-list">${focusSessions.map((session) => `<li><a href="#/focus">${session.taskId ? "جلسة مهمة" : session.habitId ? "جلسة عادة" : "تركيز حر"}</a><span>${session.status === "active" ? "نشطة" : `${Number(session.durationMin) || 0} د`}</span></li>`).join("")}</ul>`
+    ? `<ul class="period-detail-list">${focusSessions.map((session) => {
+      const startTime = session.start?.slice(11, 16);
+      const duration = Number(session.durationMin) || 0;
+      return `<li><a href="#/focus"><strong>${session.taskId ? "جلسة مهمة" : session.habitId ? "جلسة عادة" : "تركيز حر"}</strong><small>${startTime ? `بدأت ${startTime}` : "جلسة اليوم"}</small></a><span>${session.status === "active" ? "نشطة" : `${duration} د`}</span></li>`;
+    }).join("")}</ul>`
     : `<p class="period-empty">لا توجد جلسات تركيز مكتملة.</p>`;
   return `<div class="period-day-details">
-    <section class="period-detail-card"><h3>المهام</h3>${taskList(planned, "لا توجد مهام مجدولة.")}<details class="period-completed-details"><summary>المهام المنجزة (${completed.length})</summary>${taskList(completed, "لا توجد مهام منجزة.")}</details></section>
-    <section class="period-detail-card"><h3>التركيز</h3>${sessions}</section>
-    <section class="period-detail-card"><h3>اليوميات</h3>${journal
-      ? `<a class="period-journal-entry" href="#/journal">${escapeHtml(journal.highlight || journal.text || "تدوينة اليوم")}</a>`
+    <section class="period-detail-card detail-tone-tasks"><header><h3>المهام</h3><span class="period-detail-icon">✓</span></header><div class="period-detail-stat"><strong data-count="${metrics.completed}">٠</strong><span>مكتملة</span><em>${metrics.planned} متبقية</em></div>${taskList(planned, "لا توجد مهام مجدولة.")}<details class="period-completed-details"><summary>عرض المنجزة (${completed.length})</summary>${taskList(completed, "لا توجد مهام منجزة.")}</details></section>
+    <section class="period-detail-card detail-tone-focus"><header><h3>التركيز</h3><span class="period-detail-icon">◉</span></header><div class="period-detail-stat"><strong data-count="${metrics.focusMinutes}">٠</strong><span>دقيقة</span><em>${focusSessions.length} جلسات</em></div>${sessions}</section>
+    <section class="period-detail-card detail-tone-journal"><header><h3>اليوميات</h3><span class="period-detail-icon">▤</span></header><div class="period-detail-stat"><strong data-count="${metrics.journalEntries}">٠</strong><span>تدوينات</span><em>${journal ? "تم التسجيل" : "لم تسجل بعد"}</em></div>${journal
+      ? `<a class="period-journal-entry" href="#/journal"><strong>${escapeHtml(journal.title || "تدوينة اليوم")}</strong><span>${escapeHtml(journal.highlight || journal.text || "تم تسجيل تدوينة لهذا اليوم.")}</span></a>`
       : `<p class="period-empty">لا توجد تدوينة لهذا اليوم.</p>`}</section>
   </div>`;
 }
@@ -252,7 +290,7 @@ function messageForDate(date) {
   return messages[Number(date.slice(-2)) % messages.length];
 }
 
-function renderWeekStrip(date) {
+function renderWeekStrip(date, context = "اختر يوماً") {
   const sunday = localDate(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
   const days = Array.from({ length: 7 }, (_item, index) => {
     const day = localDate(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + index);
@@ -262,9 +300,10 @@ function renderWeekStrip(date) {
       <span>${WEEKDAY_SHORT_NAMES[day.getDay()]}</span><strong>${day.getDate()}</strong>
     </button>`;
   }).join("");
-  return `<nav class="today-week-picker" aria-label="اختر يوماً من هذا الأسبوع">
+  const overviewClass = context === "اختر يوماً لعرض تفاصيله" ? " today-week-picker--overview" : "";
+  return `<nav class="today-week-picker${overviewClass}" aria-label="${escapeHtml(context)}">
     <button class="today-week-arrow" type="button" data-period-action="previous-week" aria-label="الأسبوع السابق">‹</button>
-    <div class="today-week-days">${days}</div>
+    <div class="today-week-content"><span class="today-week-caption">${escapeHtml(context)}</span><div class="today-week-days">${days}</div></div>
     <button class="today-week-arrow" type="button" data-period-action="next-week" aria-label="الأسبوع التالي">›</button>
   </nav>`;
 }
@@ -301,46 +340,38 @@ function renderTodayHabits(date, habits) {
   }).join("");
 }
 
+function calmStatCards(metrics, tones = ["tasks", "habits", "focus", "journal"]) {
+  return periodSummaryData(metrics)
+    .filter((card) => tones.includes(card.tone))
+    .map((card) => `<article class="today-calm-stat" data-tone="${card.tone}" style="--card-progress:${card.progress}%">
+      <span class="today-calm-stat-icon" aria-hidden="true">${card.icon}</span>
+      <div><strong>${card.title}</strong><span>${card.hint}</span></div>
+      <b data-count="${card.value}">٠</b><small>${card.suffix}</small><i aria-hidden="true"></i>
+    </article>`).join("");
+}
+
 function renderDailyHome(date) {
-  const habits = records.habits.filter((habit) =>
-    !habit.archived && isHabitScheduled(habit, date));
-  const completedHabits = habits.filter((habit) => dayProgress(habit, date).complete).length;
-  const dailyPercent = habits.length ? Math.round(completedHabits / habits.length * 100) : 0;
-  const dateObject = new Date(`${date}T12:00:00`);
-  const monthStart = dateString(localDate(dateObject.getFullYear(), dateObject.getMonth(), 1));
-  const monthEnd = dateString(localDate(dateObject.getFullYear(), dateObject.getMonth() + 1, 0));
-  const monthHabits = habitTotals(monthStart, monthEnd);
-  const monthPercent = monthHabits.scheduled
-    ? Math.round(monthHabits.completed / monthHabits.scheduled * 100)
-    : 0;
-  const habitHeading = habits.length
-    ? completedHabits === habits.length ? "يوم كامل، أحسنت!" : "كل خطوة تُحسب"
-    : "ابدأ بعادة بسيطة";
+  const metrics = periodMetrics();
+  const percent = periodCompletionPercent(metrics);
 
   return `<div class="today-day-content">
-    <section class="today-message-card" aria-label="رسالة اليوم">
+    <section class="today-calm-summary" aria-label="ملخص اليوم">
+      <div class="today-calm-hero">
+        <div><p class="today-section-kicker">ملخص اليوم</p><h3>${percent ? "إيقاعك واضح اليوم" : "مساحة هادئة لتبدأ"}</h3><span>${metrics.completedTasks} مهام · ${metrics.completed} عادات · ${metrics.focusMinutes} دقيقة تركيز</span></div>
+        <div class="today-calm-score"><strong>${percent}<small>%</small></strong><span>إنجاز اليوم</span></div>
+      </div>
+      <div class="today-calm-stats">${calmStatCards(metrics)}</div>
+    </section>
+    <section class="today-message-card today-message-card--calm" aria-label="تذكير اليوم">
       <span class="today-message-icon" aria-hidden="true">✦</span>
-      <div><span>رسالة اليوم</span><p>${messageForDate(date)}</p></div>
+      <div><span>تذكير اليوم</span><p>${messageForDate(date)}</p></div>
     </section>
-    <section class="today-habits-spotlight" aria-label="ملخص العادات">
-      <div class="today-habits-spotlight-copy">
-        <p class="today-section-kicker">عاداتك</p>
-        <h3>${habitHeading}</h3>
-        <p>${habits.length ? `${completedHabits} من ${habits.length} عادات مكتملة اليوم` : "أضف عادة صغيرة تحب الالتزام بها."}</p>
-        <div class="today-progress-tags">
-          <span>${monthPercent}% هذا الشهر</span>
-          <a href="#/reports">عرض تقدّمك</a>
-        </div>
-      </div>
-      <div class="today-progress-ring" role="progressbar" aria-label="إنجاز العادات اليوم" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${dailyPercent}" style="--progress:${dailyPercent}%">
-        <div><strong>${dailyPercent}<small>%</small></strong><span>${completedHabits} من ${habits.length} عادات</span></div>
-      </div>
-    </section>
-    <section class="today-habits-section" aria-label="عادات اليوم">
-      <header class="today-habits-heading"><div><h3>عاداتك اليوم</h3><span>${habits.length ? `${completedHabits} من ${habits.length} مكتملة` : "ابدأ بخطوة صغيرة"}</span></div><a href="#/habits">إدارة العادات</a></header>
-      <div class="today-habits-list">${renderTodayHabits(date, habits)}</div>
-    </section>
-    <section class="today-day-activity" aria-label="تفاصيل اليوم">${renderDayDetails(date)}</section>
+    <nav class="today-calm-links" aria-label="اختصارات اليوم">
+      <a href="#/journal"><span aria-hidden="true">▤</span><strong>التدوين</strong><small>سجّل لحظتك</small></a>
+      <a href="#/focus"><span aria-hidden="true">◉</span><strong>التركيز</strong><small>ابدأ جلسة</small></a>
+      <a href="#/goals"><span aria-hidden="true">◎</span><strong>الأهداف</strong><small>راجع اتجاهك</small></a>
+      <a href="#/reports"><span aria-hidden="true">▥</span><strong>تقدّمي</strong><small>شاهد أرقامك</small></a>
+    </nav>
   </div>`;
 }
 
@@ -390,14 +421,91 @@ function metricsForRange(start, end) {
 
 function renderPeriodContent() {
   const date = currentDate();
-  if (periodMode === "year") return renderMonthGrid();
-  if (periodMode === "month") return dayCalendar(date);
+  if (periodMode === "year") return renderYearOverview(date);
+  if (periodMode === "week") return renderWeekOverview(date);
+  if (periodMode === "month") return renderMonthOverview(date);
   return renderDailyHome(selectedDate);
+}
+
+function periodCompletionPercent(metrics) {
+  const taskTotal = metrics.completedTasks + metrics.plannedTasks;
+  const total = taskTotal + metrics.scheduled;
+  const completed = metrics.completedTasks + metrics.completed;
+  return total ? Math.round(completed / total * 100) : 0;
+}
+
+function renderProgressHero(metrics, label) {
+  const percent = periodCompletionPercent(metrics);
+  return `<section class="period-progress-hero" aria-label="ملخص ${escapeHtml(label)}">
+    <div class="period-progress-copy"><p class="today-section-kicker">إنجاز ${escapeHtml(label)}</p><h3>${percent ? "استمر، إيقاعك واضح" : "يلا نبدأ!"}</h3><span>${metrics.completedTasks} مهام · ${metrics.completed} عادات · ${metrics.focusMinutes} د تركيز</span>
+      <div class="period-progress-pills"><b>${metrics.completedTasks} مهام مكتملة</b><b>${metrics.completed} عادات مكتملة</b><b>${metrics.journalEntries} تدوينات</b></div>
+    </div>
+    <div class="period-progress-score" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><strong>${percent}<small>%</small></strong><span>منجز</span><i style="--progress:${percent}%"></i></div>
+  </section>`;
+}
+
+function renderPeriodStats(metrics, label) {
+  return `<section class="period-summary-section" aria-label="إحصائيات ${escapeHtml(label)}">
+    <header><div><p class="today-section-kicker">أرقام ${escapeHtml(label)}</p><h3>تفاصيل الفترة</h3></div><span>ملخص واحد بلا تكرار</span></header>
+    <div class="today-calm-stats period-calm-stats">${calmStatCards(metrics, ["tasks", "habits", "focus", "goals", "journal"])}</div>
+  </section>`;
+}
+
+function renderWeekOverview(date) {
+  const { start, end } = periodBounds("week", date);
+  const weekMetrics = periodMetrics();
+  return `<section class="period-week-overview" aria-label="ملخص الأسبوع">
+    ${renderProgressHero(weekMetrics, "الأسبوع")}
+    ${renderPeriodStats(weekMetrics, "الأسبوع")}
+    <header class="period-week-heading"><div><p class="today-section-kicker">إيقاع أسبوعك</p><h3>أسبوعك كامل بشاشة واحدة</h3></div><span>${escapeHtml(formatDate(start))} — ${escapeHtml(formatDate(end))}</span></header>
+    ${renderWeekStrip(currentDate(), "اختر يوماً لعرض تفاصيله")}
+  </section>`;
+}
+
+function renderMonthOverview(date) {
+  const { start, end } = periodBounds("month", date);
+  const metrics = periodMetrics();
+  const days = [];
+  const cursor = new Date(`${start}T12:00:00`);
+  while (cursor <= new Date(`${end}T12:00:00`)) {
+    const value = dateString(cursor);
+    const day = metricsForDate(value);
+    const total = day.completed + day.habitCompleted + day.planned;
+    days.push(`<button class="period-activity-day${total ? " has-activity" : ""}${value === selectedDate ? " is-selected" : ""}" type="button" data-select-day="${value}" aria-label="${escapeHtml(formatDate(value))}"><span>${cursor.getDate()}</span><i style="--day-progress:${Math.min(100, total * 25)}%"></i></button>`);
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return `<section class="period-long-overview" aria-label="ملخص الشهر">
+    ${renderProgressHero(metrics, "الشهر")}
+    ${renderPeriodStats(metrics, "الشهر")}
+    <section class="period-activity-card"><header><div><p class="today-section-kicker">نشاط الشهر</p><h3>إيقاعك خلال الأيام</h3></div><span>${escapeHtml(formatPeriod())}</span></header>
+      <div class="period-activity-grid">${days.join("")}</div>
+    </section>
+  </section>`;
+}
+
+function renderYearOverview(date) {
+  const year = date.getFullYear();
+  const monthCards = MONTH_NAMES.map((name, month) => {
+    const start = dateString(localDate(year, month, 1));
+    const end = dateString(localDate(year, month + 1, 0));
+    const metrics = metricsForRange(start, end);
+    const monthHabits = habitTotals(start, end);
+    const total = metrics.tasks + monthHabits.scheduled;
+    const completed = monthHabits.completed;
+    const percent = total ? Math.round(completed / total * 100) : 0;
+    return `<button class="period-year-card${month === date.getMonth() ? " is-selected" : ""}" type="button" data-select-month="${month}"><strong>${name}</strong><span>${metrics.tasks} عناصر</span><i style="--month-progress:${percent}%"></i><small>${percent}% نشاط</small></button>`;
+  }).join("");
+  return `<section class="period-long-overview" aria-label="ملخص السنة">
+    <section class="period-year-hero"><div><p class="today-section-kicker">إيقاع ${year}</p><h3>سنتك في لمحة</h3><span>تابع الأشهر النشطة بدل تقويم طويل.</span></div><strong>${year}</strong></section>
+    ${renderPeriodStats(periodMetrics(), "السنة")}
+    <section class="period-year-grid">${monthCards}</section>
+  </section>`;
 }
 
 function changePeriod(delta) {
   const date = currentDate();
   if (periodMode === "year") date.setFullYear(date.getFullYear() + delta, 0, 1);
+  else if (periodMode === "week") date.setDate(date.getDate() + delta * 7);
   else if (periodMode === "month") date.setMonth(date.getMonth() + delta, 1);
   else date.setDate(date.getDate() + delta);
   if (date.getFullYear() >= 1 && date.getFullYear() <= 9999) selectedDate = dateString(date);
@@ -410,8 +518,7 @@ function savePeriod() {
 
 function render() {
   if (!root) return;
-  const metrics = periodMetrics();
-  const modeNames = { day: "اليوم", month: "الشهر", year: "السنة" };
+  const modeNames = { day: "اليوم", week: "الأسبوع", month: "الشهر", year: "السنة" };
   const isDaily = periodMode === "day";
   root.innerHTML = `<section class="period-dashboard${isDaily ? " period-dashboard--today" : ""}" aria-label="لوحة الفترات">
     <header class="period-dashboard-heading">
@@ -421,13 +528,12 @@ function render() {
     <nav class="period-mode-switch" aria-label="طريقة عرض التاريخ">
       ${Object.entries(modeNames).map(([mode, label]) => `<button type="button" data-period-mode="${mode}" aria-pressed="${periodMode === mode}">${label}</button>`).join("")}
     </nav>
-    ${isDaily ? renderWeekStrip(currentDate()) : `
+    ${isDaily ? renderWeekStrip(currentDate(), "تنقّل سريع بين الأيام") : `
       <div class="period-controls">
         <button class="period-arrow" type="button" data-period-action="previous" aria-label="الفترة السابقة">‹</button>
         ${periodInput()}
         <button class="period-arrow" type="button" data-period-action="next" aria-label="الفترة التالية">›</button>
       </div>
-      <div class="period-summary-grid" aria-label="ملخص الفترة">${periodSummaryCards(metrics)}</div>
       <div class="period-content">${renderPeriodContent()}</div>
     `}
     ${isDaily ? `<div class="period-content">${renderPeriodContent()}</div>` : ""}

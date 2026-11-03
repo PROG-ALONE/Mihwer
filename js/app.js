@@ -8,8 +8,7 @@ import { mountJournalView, unmountJournalView } from "./views/journal.js";
 import { mountReportsView, unmountReportsView } from "./views/reports.js";
 import { mountTasksView, unmountTasksView } from "./views/tasks.js";
 import { bindSettingsActions } from "./views/settings.js";
-import { renderHelp } from "./views/help.js";
-import { mountPeriodDashboard } from "./views/dashboard.js";
+import { mountPeriodDashboard } from "./views/dashboard.js?v=97";
 
 const app = document.querySelector("#app");
 const navigation = document.querySelector("#primary-navigation");
@@ -18,37 +17,63 @@ const moreDialog = document.querySelector("#more-dialog");
 const pageTitle = document.querySelector("#page-title");
 const themeToggle = document.querySelector("#theme-toggle");
 const themeDialog = document.querySelector("#theme-dialog");
+const connectionStatus = document.querySelector("#connection-status");
 const themes = {
   dark: { label: "ليلي", color: "#11101e" },
   light: { label: "فاتح", color: "#f5f3fc" },
   sage: { label: "نعناعي", color: "#edf4ee" },
   ocean: { label: "بحري", color: "#eef5f8" },
   rose: { label: "وردي", color: "#fbf0f3" },
+  sand: { label: "رملي", color: "#f7f1e8" },
+  midnight: { label: "منتصف الليل", color: "#0c1220" },
 };
 
 let renderSequence = 0;
 let mountedRoute;
+const animatedCountSelector = "[data-count]";
+
+function arabicDigits(value) {
+  return String(value).replace(/\d/g, (digit) => "٠١٢٣٤٥٦٧٨٩"[digit]);
+}
+
+function animateCardCount(counter) {
+  const target = Number(counter.dataset.count);
+  if (!Number.isFinite(target) || target < 0) return;
+  if (counter._countAnimation) cancelAnimationFrame(counter._countAnimation);
+  const startedAt = performance.now();
+  const duration = 520;
+  const tick = (now) => {
+    const progress = Math.min(1, (now - startedAt) / duration);
+    const eased = 1 - ((1 - progress) ** 3);
+    counter.textContent = arabicDigits(Math.round(target * eased));
+    if (progress < 1) counter._countAnimation = requestAnimationFrame(tick);
+  };
+  counter.textContent = arabicDigits(0);
+  counter._countAnimation = requestAnimationFrame(tick);
+}
 
 async function render() {
   const sequence = ++renderSequence;
   const route = getRouteFromHash();
+  const taskView = route.id === "tasks"
+    && new URLSearchParams(window.location.hash.split("?")[1] ?? "").get("view") === "habits";
+  const routeKey = route.id === "tasks" ? `tasks:${taskView ? "habits" : "tasks"}` : route.id;
   document.querySelector("#page-scroll-container")?.scrollTo(0, 0);
   const periodDashboard = document.querySelector("#period-dashboard");
   if (periodDashboard) periodDashboard.hidden = route.id !== "today";
-  if (mountedRoute && mountedRoute !== route.id) {
+  if (mountedRoute && mountedRoute !== routeKey) {
     if (mountedRoute === "today") unmountTodayView();
     if (mountedRoute === "goals") unmountGoalsView();
-    if (mountedRoute === "habits") unmountHabitsView();
+    if (mountedRoute === "habits" || mountedRoute === "tasks:habits") unmountHabitsView();
     if (mountedRoute === "focus") unmountFocusView();
     if (mountedRoute === "journal") unmountJournalView();
     if (mountedRoute === "reports") unmountReportsView();
-    if (mountedRoute === "tasks") unmountTasksView();
+    if (mountedRoute === "tasks" || mountedRoute === "tasks:tasks") unmountTasksView();
     mountedRoute = undefined;
   }
   renderNavigation(navigation, moreNavigation, route);
   renderRoute(route, app, pageTitle);
   if (route.id === "settings") bindSettingsActions();
-  if (route.id === "help") renderHelp(app);
   if (route.id === "today") {
     await mountTodayView(() => sequence === renderSequence);
     if (sequence === renderSequence) mountedRoute = "today";
@@ -74,8 +99,9 @@ async function render() {
     if (sequence === renderSequence) mountedRoute = "reports";
   }
   if (route.id === "tasks") {
-    await mountTasksView(() => sequence === renderSequence);
-    if (sequence === renderSequence) mountedRoute = "tasks";
+    if (taskView) await mountHabitsView(() => sequence === renderSequence);
+    else await mountTasksView(() => sequence === renderSequence);
+    if (sequence === renderSequence) mountedRoute = routeKey;
   }
 }
 
@@ -90,9 +116,22 @@ function applyTheme(theme) {
   localStorage.setItem("mihwar-theme", selectedTheme);
 }
 
+function updateConnectionStatus() {
+  if (!connectionStatus) return;
+  const offline = !navigator.onLine;
+  connectionStatus.hidden = !offline;
+  connectionStatus.dataset.state = offline ? "offline" : "online";
+  connectionStatus.querySelector(".connection-status-label").textContent = offline
+    ? "تعمل دون اتصال — بياناتك محفوظة هنا"
+    : "متصل";
+}
+
 const storedTheme = localStorage.getItem("mihwar-theme");
 const initialTheme = storedTheme ?? "dark";
 applyTheme(initialTheme);
+updateConnectionStatus();
+window.addEventListener("online", updateConnectionStatus);
+window.addEventListener("offline", updateConnectionStatus);
 
 themeToggle.addEventListener("click", () => themeDialog.showModal());
 themeDialog.addEventListener("click", (event) => {
@@ -117,6 +156,12 @@ app.addEventListener("click", (event) => {
   if (!event.target.closest("[data-open-more]")) return;
   moreDialog.showModal();
   navigation.querySelector("[data-open-more]")?.setAttribute("aria-expanded", "true");
+});
+
+app.addEventListener("pointerover", (event) => {
+  const card = event.target.closest("article, .today-overview, .period-progress-hero");
+  if (!card || card.contains(event.relatedTarget)) return;
+  card.querySelectorAll(animatedCountSelector).forEach(animateCardCount);
 });
 moreNavigation.addEventListener("click", (event) => {
   if (event.target.closest("a.nav-link")) closeMoreDialog();

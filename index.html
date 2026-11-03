@@ -12,8 +12,8 @@
     <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="./css/tokens.css">
     <link rel="stylesheet" href="./css/base.css">
-    <link rel="stylesheet" href="./css/theme.css">
-    <script type="module" src="./js/app.js"></script>
+    <link rel="stylesheet" href="./css/theme.css?v=95">
+    <script type="module" src="./js/app.js?v=97"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -35,6 +35,10 @@
             <h1 id="page-title">اليوم</h1>
           </div>
           <div class="topbar-actions">
+            <div class="connection-status" id="connection-status" role="status" aria-live="polite" hidden>
+              <span class="connection-status-dot" aria-hidden="true"></span>
+              <span class="connection-status-label"></span>
+            </div>
             <button class="theme-toggle" id="theme-toggle" type="button" aria-label="اختيار المظهر" aria-haspopup="dialog">
               <span aria-hidden="true">◐</span>
               <span class="theme-toggle-label">المظهر</span>
@@ -78,6 +82,12 @@
           </button>
           <button class="theme-option" type="button" data-theme-choice="rose" aria-pressed="false">
             <span class="theme-swatch" style="--theme-swatch:#b55377"></span><span>وردي</span>
+          </button>
+          <button class="theme-option" type="button" data-theme-choice="sand" aria-pressed="false">
+            <span class="theme-swatch" style="--theme-swatch:#b46b3c"></span><span>رملي</span>
+          </button>
+          <button class="theme-option" type="button" data-theme-choice="midnight" aria-pressed="false">
+            <span class="theme-swatch" style="--theme-swatch:#6ea8ff"></span><span>منتصف الليل</span>
           </button>
         </div>
       </div>

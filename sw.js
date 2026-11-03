@@ -1,4 +1,4 @@
-const CACHE_NAME = "mihwar-shell-v81";
+const CACHE_NAME = "mihwar-shell-v98";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -66,6 +66,21 @@ self.addEventListener("fetch", (event) => {
         throw error;
       }
     }));
+    return;
+  }
+
+  if (["script", "style"].includes(request.destination)) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached ?? Response.error())),
+    );
     return;
   }
 

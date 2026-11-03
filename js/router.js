@@ -7,7 +7,6 @@ export const routes = [
   { id: "journal", label: "اليوميات", icon: "▤", title: "اليوميات والمراجعات" },
   { id: "reports", label: "تقدّمي", icon: "▥", title: "تقدّمي" },
   { id: "settings", label: "الإعدادات", icon: "⚙", title: "الإعدادات" },
-  { id: "help", label: "الدليل", icon: "?", title: "دليل الاستخدام" },
 ];
 
 const compactNavigation = window.matchMedia("(max-width: 720px)");
@@ -20,10 +19,8 @@ export function getRouteFromHash(hash = window.location.hash) {
 
 export function renderNavigation(navigation, moreNavigation, activeRoute) {
   navigationElements = { navigation, moreNavigation };
-  const visibleRoutes = routes.filter((route) => route.id !== "focus");
-  const primaryIds = new Set(compactNavigation.matches
-    ? ["today", "tasks", "goals", "reports"]
-    : ["today", "tasks", "goals", "reports", "settings"]);
+  const visibleRoutes = routes;
+  const primaryIds = new Set(["today", "tasks", "habits", "reports", "settings"]);
   const primaryRoutes = visibleRoutes.filter((route) => primaryIds.has(route.id));
   const moreRoutes = visibleRoutes.filter((route) => !primaryIds.has(route.id));
   const query = new URLSearchParams(window.location.hash.split("?")[1] ?? "");
@@ -38,15 +35,8 @@ export function renderNavigation(navigation, moreNavigation, activeRoute) {
         <span>${route.label}</span>
       </a>`;
   };
-  const activeMoreRoute = moreRoutes.find((route) => route.id === focusContextRoute);
-  navigation.innerHTML = `
-    ${primaryRoutes.map(renderLink).join("")}
-    <button class="nav-link nav-more-trigger${activeMoreRoute ? " is-active" : ""}" type="button" data-open-more
-      aria-haspopup="dialog" aria-controls="more-dialog" aria-expanded="false"${activeMoreRoute ? ` aria-label="المزيد، القسم الحالي: ${activeMoreRoute.label}"` : ""}>
-      <span class="nav-icon" aria-hidden="true">⋯</span>
-      <span>المزيد</span>
-    </button>`;
-  moreNavigation.innerHTML = moreRoutes.map(renderLink).join("");
+  navigation.innerHTML = primaryRoutes.map(renderLink).join("");
+  moreNavigation.innerHTML = "";
 }
 
 compactNavigation.addEventListener("change", () => {

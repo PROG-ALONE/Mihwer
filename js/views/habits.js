@@ -231,21 +231,22 @@ function renderHabit(habit) {
   const stats = consistency(habit);
   const linkedObjective = records.objectives.find((objective) => objective.id === habit.objectiveId);
   return `<article class="habit-card" data-habit-id="${escapeHtml(habit.id)}">
+    <span class="habit-color-dot" aria-hidden="true"></span>
     <div class="habit-card-heading">
       <button class="habit-today-toggle${checked ? " is-checked" : ""}" type="button" data-action="toggle-today" aria-pressed="${checked}" aria-label="${checked ? "إلغاء تحقق" : "تحقق"} ${escapeHtml(habit.title)}">
         <span aria-hidden="true">${checked ? "✓" : "+"}</span>
       </button>
-      <div class="habit-title-group"><h3>${escapeHtml(habit.title)}</h3><span>${linkedObjective ? `مرتبط بـ ${escapeHtml(linkedObjective.title)}` : habit.kind === "quit" ? "تقليل عادة" : "عادة بناء"}</span></div>
+      <div class="habit-title-group"><h3>${escapeHtml(habit.title)}</h3><span>${checked ? "مكتملة اليوم" : progress.mode === "count" ? `${progress.done}/${progress.total} ${unit}` : `${current} يوم متتالٍ`}</span></div>
       <button class="icon-button" type="button" data-action="edit" aria-label="تعديل ${escapeHtml(habit.title)}">✎</button>
       <button class="icon-button" type="button" data-action="archive" aria-label="أرشفة ${escapeHtml(habit.title)}">×</button>
-    </div>
-    <div class="habit-focus-strip">
-      <a class="habit-focus-link" href="#/focus?habit=${encodeURIComponent(habit.id)}">◉ ابدأ التركيز${habit.focusDurationMin ? ` · ${Number(habit.focusDurationMin)} د` : ""}</a>
-      <span>وقت تركيز مسجل: ${Number(habit.focusSpentMin) || 0} د</span>
     </div>
     <details class="habit-details" data-habit-details="${escapeHtml(habit.id)}"${expandedHabitDetails.has(habit.id) ? " open" : ""}>
       <summary><span>تفاصيل العادة</span><span class="habit-details-progress">${progress.mode === "items" ? `${progress.done}/${progress.total} بند` : progress.mode === "count" ? `${progress.done}/${progress.total} ${unit}` : checked ? "مكتملة اليوم" : "لم تكتمل اليوم"}</span></summary>
       <div class="habit-details-content">
+    <div class="habit-focus-strip">
+      <a class="habit-focus-link" href="#/focus?habit=${encodeURIComponent(habit.id)}">◉ ابدأ التركيز${habit.focusDurationMin ? ` · ${Number(habit.focusDurationMin)} د` : ""}</a>
+      <span>وقت تركيز مسجل: ${Number(habit.focusSpentMin) || 0} د</span>
+    </div>
     ${progress.mode === "count" ? `
     <div class="habit-counter">
       <button class="icon-button" type="button" data-action="count-dec" aria-label="إنقاص">−</button>
@@ -279,20 +280,12 @@ function render() {
   const app = document.querySelector("#app");
   if (!app) return;
   const habits = records.habits.filter((habit) => !habit.archived).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  const today = localDateString();
-  const scheduledToday = habits.filter((habit) => isScheduled(habit, today));
-  const completedToday = scheduledToday.filter((habit) => isCompleted(habit, today)).length;
   app.innerHTML = `
     <section class="habits-page" aria-label="متابعة العادات">
       <header class="habits-heading">
-        <div><p class="goals-kicker">تقدّم بلا ضغط</p><h2>عاداتك</h2><p class="goals-subtitle">تابع ما يهمك، ويمكنك تسجيل الأيام السابقة من الخريطة.</p></div>
-        <button class="button button-primary" type="button" data-action="new-habit">إضافة عادة</button>
+        <div><p class="goals-kicker">مساحة الإنجاز</p><h2>عاداتك</h2><p class="goals-subtitle">${habits.length} عادة · سجّل إنجازك بخطوة واحدة</p></div>
+        <button class="habits-heading-add" type="button" data-action="new-habit" aria-label="إضافة عادة"><span aria-hidden="true">＋</span></button>
       </header>
-      <div class="section-summary-grid habits-summary-grid" aria-label="ملخص العادات">
-        <article class="section-summary-card" data-tone="primary"><span>عادات نشطة</span><strong>${habits.length}</strong><small>تتابعها باستمرار</small></article>
-        <article class="section-summary-card" data-tone="success"><span>أُنجزت اليوم</span><strong>${completedToday}/${scheduledToday.length}</strong><small>من العادات المجدولة</small></article>
-        <article class="section-summary-card" data-tone="warm"><span>بانتظارك اليوم</span><strong>${scheduledToday.length - completedToday}</strong><small>خطوات صغيرة تصنع فرقاً</small></article>
-      </div>
       ${habits.length ? `<div class="habits-list">${habits.map(renderHabit).join("")}</div>` : `<div class="goals-empty">ابدأ بعادة صغيرة تريد بناءها. ويمكنك ربطها بهدف سنوي.</div>`}
       <p class="habits-status" role="status" aria-live="polite"></p>
       <dialog class="goal-dialog" id="habit-dialog">
@@ -358,6 +351,12 @@ function bindEvents(app) {
 
   app.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-action]");
+    const card = event.target.closest(".habit-card[data-habit-id]");
+    if (!button && card && !event.target.closest("a, input, label, details, summary, button")) {
+      const details = card.querySelector(":scope > .habit-details");
+      if (details) details.open = !details.open;
+      return;
+    }
     if (!button) return;
     const action = button.dataset.action;
     if (action === "new-habit") {
