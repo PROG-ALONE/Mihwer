@@ -1,4 +1,6 @@
-<p align="center">
+<div dir="rtl" align="center">
+
+<p align="center" dir="rtl">
   <img src="./assets/icons/icon.svg" alt="شعار مِحوَر" width="88">
 </p>
 
@@ -14,8 +16,17 @@
 
 تبدأ لوحة اليوم بملخص بصري واحد: نسبة الإنجاز، المهام، العادات، التركيز، واليوميات. لا تُعرض القوائم التفصيلية داخل اليوم حتى تبقى الصفحة خفيفة؛ تفتح التفاصيل الكاملة من تبويباتها المستقلة.
 
-<p align="center">
-  <img src="./assets/readme/periods.svg" alt="توزيع لوحة مِحوَر بين اليوم والأسبوع والشهر والسنة" width="100%">
+<p align="center" dir="rtl">
+  <img src="./assets/readme/today-real.png" alt="لقطة حقيقية من لوحة اليوم في مِحوَر" width="100%">
+</p>
+<p align="center" dir="rtl">
+  <img src="./assets/readme/week-real.png" alt="لقطة حقيقية من لوحة الأسبوع وبوكس الأيام السبعة" width="100%">
+</p>
+<p align="center" dir="rtl">
+  <img src="./assets/readme/month-real.png" alt="لقطة حقيقية من لوحة الشهر" width="100%">
+</p>
+<p align="center" dir="rtl">
+  <img src="./assets/readme/year-real.png" alt="لقطة حقيقية من لوحة السنة" width="100%">
 </p>
 
 - **اليوم:** إحصائيات مختصرة، تذكير اليوم، واختصارات سريعة للتدوين والتركيز والأهداف والتقدم.
@@ -56,3 +67,5 @@ python3 -m http.server 8000
 ```
 
 ثم افتح [localhost:8000](http://localhost:8000). يتطلب العمل دون اتصال خادماً محلياً أو HTTPS.
+
+</div>
