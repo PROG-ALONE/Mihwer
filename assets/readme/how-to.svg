@@ -10,7 +10,6 @@
   <text x="1135" y="46" text-anchor="end" direction="rtl" font-family="Tahoma, Arial, sans-serif" font-size="25" font-weight="800" fill="#f3f0ff">كيف تستخدم مِحوَر؟</text>
   <path d="M45 70H1155" stroke="#4a5359" stroke-width="2"/>
   <rect x="35" y="90" width="1130" height="350" rx="28" fill="#f7f6fc"/>
-  <text x="600" y="137" text-anchor="middle" direction="rtl" font-family="Tahoma, Arial, sans-serif" font-size="25" font-weight="800" fill="#24213a">كيف تستخدم مِحوَر؟</text>
   <g font-family="Tahoma, Arial, sans-serif" direction="rtl" text-anchor="middle" filter="url(#shadow)">
     <g>
       <rect x="80" y="175" width="245" height="215" rx="24" fill="#eee8ff"/>

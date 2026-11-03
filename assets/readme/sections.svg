@@ -14,49 +14,48 @@
   <text x="1135" y="48" text-anchor="end" direction="rtl" font-family="Tahoma, Arial, sans-serif" font-size="25" font-weight="800" fill="#f3f0ff">الأقسام</text>
   <path d="M45 70H1155" stroke="#4a5359" stroke-width="2"/>
   <rect x="35" y="90" width="1130" height="480" rx="28" fill="#f7f6fc"/>
-  <text x="600" y="137" text-anchor="middle" direction="rtl" font-family="Tahoma, Arial, sans-serif" font-size="25" font-weight="800" fill="#24213a">الأقسام</text>
   <g font-family="Tahoma, Arial, sans-serif" direction="rtl" filter="url(#shadow)">
     <g>
       <rect x="770" y="160" width="350" height="175" rx="24" fill="#eee8ff"/>
       <rect x="1092" y="160" width="28" height="175" rx="14" fill="#7354e8"/>
       <circle cx="1035" cy="198" r="27" fill="#f0ecff"/><text x="1035" y="207" text-anchor="middle" font-size="22" fill="#7354e8">✓</text>
-      <text x="1010" y="255" text-anchor="end" font-size="24" font-weight="800" fill="#24213a">المهام</text>
-      <text x="1010" y="288" text-anchor="end" font-size="15" fill="#79758f">أولويات ومواعيد ومهام فرعية.</text>
+      <text x="945" y="255" text-anchor="middle" font-size="24" font-weight="800" fill="#24213a">المهام</text>
+      <text x="945" y="288" text-anchor="middle" font-size="14" fill="#79758f">أولويات ومواعيد ومهام فرعية.</text>
     </g>
     <g>
       <rect x="425" y="160" width="350" height="175" rx="24" fill="#e1f7f0"/>
       <rect x="747" y="160" width="28" height="175" rx="14" fill="#24a889"/>
       <circle cx="690" cy="198" r="27" fill="#e8f7f2"/><text x="690" y="207" text-anchor="middle" font-size="22" fill="#24a889">✦</text>
-      <text x="665" y="255" text-anchor="end" font-size="24" font-weight="800" fill="#24213a">العادات</text>
-      <text x="665" y="288" text-anchor="end" font-size="15" fill="#79758f">سلاسل وإنجاز يومي.</text>
+      <text x="600" y="255" text-anchor="middle" font-size="24" font-weight="800" fill="#24213a">العادات</text>
+      <text x="600" y="288" text-anchor="middle" font-size="14" fill="#79758f">سلاسل وإنجاز يومي.</text>
     </g>
     <g>
       <rect x="80" y="160" width="350" height="175" rx="24" fill="#e5efff"/>
       <rect x="402" y="160" width="28" height="175" rx="14" fill="#4d78d4"/>
       <circle cx="345" cy="198" r="27" fill="#eaf1ff"/><text x="345" y="207" text-anchor="middle" font-size="22" fill="#4d78d4">◉</text>
-      <text x="320" y="255" text-anchor="end" font-size="24" font-weight="800" fill="#24213a">التركيز</text>
-      <text x="320" y="288" text-anchor="end" font-size="15" fill="#79758f">جلسات واستراحات قابلة للتخصيص.</text>
+      <text x="255" y="255" text-anchor="middle" font-size="24" font-weight="800" fill="#24213a">التركيز</text>
+      <text x="255" y="288" text-anchor="middle" font-size="14" fill="#79758f">جلسات واستراحات قابلة للتخصيص.</text>
     </g>
     <g>
       <rect x="770" y="370" width="350" height="175" rx="24" fill="#fff0d6"/>
       <rect x="1092" y="370" width="28" height="175" rx="14" fill="#d7952d"/>
       <circle cx="1035" cy="423" r="27" fill="#fff4df"/><text x="1035" y="432" text-anchor="middle" font-size="22" fill="#d7952d">▤</text>
-      <text x="1010" y="480" text-anchor="end" font-size="24" font-weight="800" fill="#24213a">اليوميات</text>
-      <text x="1010" y="513" text-anchor="end" font-size="15" fill="#79758f">تدوين سريع مرتبط بيومك.</text>
+      <text x="945" y="480" text-anchor="middle" font-size="24" font-weight="800" fill="#24213a">اليوميات</text>
+      <text x="945" y="513" text-anchor="middle" font-size="14" fill="#79758f">تدوين سريع مرتبط بيومك.</text>
     </g>
     <g>
       <rect x="425" y="370" width="350" height="175" rx="24" fill="#f2e7ff"/>
       <rect x="747" y="370" width="28" height="175" rx="14" fill="#a14fd4"/>
       <circle cx="690" cy="423" r="27" fill="#f7eeff"/><text x="690" y="432" text-anchor="middle" font-size="22" fill="#a14fd4">◎</text>
-      <text x="665" y="480" text-anchor="end" font-size="24" font-weight="800" fill="#24213a">الأهداف</text>
-      <text x="665" y="513" text-anchor="end" font-size="15" fill="#79758f">اتجاه واضح لما تريد إنجازه.</text>
+      <text x="600" y="480" text-anchor="middle" font-size="24" font-weight="800" fill="#24213a">الأهداف</text>
+      <text x="600" y="513" text-anchor="middle" font-size="14" fill="#79758f">اتجاه واضح لما تريد إنجازه.</text>
     </g>
     <g>
       <rect x="80" y="370" width="350" height="175" rx="24" fill="#e1f7f0"/>
       <rect x="402" y="370" width="28" height="175" rx="14" fill="#269f82"/>
       <circle cx="345" cy="423" r="27" fill="#eaf9f4"/><text x="345" y="432" text-anchor="middle" font-size="22" fill="#269f82">↗</text>
-      <text x="320" y="480" text-anchor="end" font-size="24" font-weight="800" fill="#24213a">التقدم</text>
-      <text x="320" y="513" text-anchor="end" font-size="15" fill="#79758f">إحصائيات وتقارير وتصدير.</text>
+      <text x="255" y="480" text-anchor="middle" font-size="24" font-weight="800" fill="#24213a">التقدم</text>
+      <text x="255" y="513" text-anchor="middle" font-size="14" fill="#79758f">إحصائيات وتقارير وتصدير.</text>
     </g>
   </g>
 </svg>

@@ -36,13 +36,9 @@
 
 [![لوحة السنة كاملة](./assets/readme/year-real.png)](./assets/readme/year-real.png)
 
-## كيف تستخدم مِحوَر؟
+[![أربع بطاقات تشرح إضافة المهمة ومتابعة اليوم والتسجيل والمراجعة](./assets/readme/how-to.svg?v=4)](./assets/readme/how-to.svg?v=4)
 
-[![أربع بطاقات تشرح إضافة المهمة ومتابعة اليوم والتسجيل والمراجعة](./assets/readme/how-to.svg?v=3)](./assets/readme/how-to.svg?v=3)
-
-## الأقسام
-
-[![بطاقات أقسام المهام والعادات والتركيز واليوميات والأهداف والتقدم](./assets/readme/sections.svg?v=3)](./assets/readme/sections.svg?v=3)
+[![بطاقات أقسام المهام والعادات والتركيز واليوميات والأهداف والتقدم](./assets/readme/sections.svg?v=4)](./assets/readme/sections.svg?v=4)
 
 ## بياناتك
 
