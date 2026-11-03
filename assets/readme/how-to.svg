@@ -1,44 +1,50 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 430" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title description">
   <title id="title">كيف تستخدم مِحوَر؟</title>
-  <desc id="description">أربع بطاقات ملونة: أضف، تابع، سجّل، راجع.</desc>
+  <desc id="description">مسار بصري من اليمين إلى اليسار لأربع خطوات: أضف، تابع، سجّل، راجع.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#f8f6ff"/>
-      <stop offset="1" stop-color="#eef8f5"/>
+      <stop stop-color="#211b3c"/>
+      <stop offset="1" stop-color="#3d3269"/>
     </linearGradient>
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
-      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#4c3a86" flood-opacity=".12"/>
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#080611" flood-opacity=".28"/>
     </filter>
   </defs>
-  <rect width="1200" height="430" rx="34" fill="url(#bg)"/>
-  <text x="600" y="58" text-anchor="middle" direction="rtl" font-family="Tahoma, Arial, sans-serif" font-size="29" font-weight="800" fill="#24213a">كيف تستخدم مِحوَر؟</text>
-  <g font-family="Tahoma, Arial, sans-serif" direction="rtl" text-anchor="middle" filter="url(#shadow)">
-    <rect x="895" y="105" width="255" height="245" rx="26" fill="#f0ecff"/>
-    <circle cx="1022" cy="170" r="34" fill="#7354e8"/>
-    <text x="1022" y="181" font-size="30" fill="#fff">١</text>
-    <text x="1022" y="244" font-size="24" font-weight="800" fill="#24213a">أضف</text>
-    <text x="1022" y="282" font-size="16" fill="#79758f">اكتب المهمة وحدد</text>
-    <text x="1022" y="308" font-size="16" fill="#79758f">الأولوية.</text>
-
-    <rect x="615" y="105" width="255" height="245" rx="26" fill="#e8f7f2"/>
-    <circle cx="742" cy="170" r="34" fill="#24a889"/>
-    <text x="742" y="181" font-size="30" fill="#fff">٢</text>
-    <text x="742" y="244" font-size="24" font-weight="800" fill="#24213a">تابع</text>
-    <text x="742" y="282" font-size="16" fill="#79758f">راجع يومك أو</text>
-    <text x="742" y="308" font-size="16" fill="#79758f">أسبوعك.</text>
-
-    <rect x="335" y="105" width="255" height="245" rx="26" fill="#fff4df"/>
-    <circle cx="462" cy="170" r="34" fill="#d7952d"/>
-    <text x="462" y="181" font-size="30" fill="#fff">٣</text>
-    <text x="462" y="244" font-size="24" font-weight="800" fill="#24213a">سجّل</text>
-    <text x="462" y="282" font-size="16" fill="#79758f">أضف عادة أو جلسة</text>
-    <text x="462" y="308" font-size="16" fill="#79758f">تركيز أو يومية.</text>
-
-    <rect x="55" y="105" width="255" height="245" rx="26" fill="#eaf1ff"/>
-    <circle cx="182" cy="170" r="34" fill="#4d78d4"/>
-    <text x="182" y="181" font-size="30" fill="#fff">٤</text>
-    <text x="182" y="244" font-size="24" font-weight="800" fill="#24213a">راجع</text>
-    <text x="182" y="282" font-size="16" fill="#79758f">اقرأ أرقامك</text>
-    <text x="182" y="308" font-size="16" fill="#79758f">وصدّر تقاريرك.</text>
+  <rect width="1200" height="620" rx="34" fill="url(#bg)"/>
+  <circle cx="1100" cy="50" r="220" fill="#b9e2c3" opacity=".08"/>
+  <circle cx="80" cy="590" r="180" fill="#62d5b5" opacity=".08"/>
+  <text x="600" y="70" text-anchor="middle" direction="rtl" font-family="Tahoma, Arial, sans-serif" font-size="31" font-weight="800" fill="#f8f6ff">كيف تستخدم مِحوَر؟</text>
+  <text x="600" y="105" text-anchor="middle" direction="rtl" font-family="Tahoma, Arial, sans-serif" font-size="16" fill="#c6b8ff">مسار بسيط من الإضافة إلى المراجعة</text>
+  <path d="M920 295H280M920 295V445H280" fill="none" stroke="#a99aff" stroke-width="4" stroke-linecap="round" stroke-dasharray="8 12"/>
+  <path d="m300 282-20 13 20 13M300 432l-20 13 20 13" fill="none" stroke="#a99aff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <g font-family="Tahoma, Arial, sans-serif" direction="rtl" filter="url(#shadow)">
+    <g>
+      <rect x="760" y="160" width="300" height="175" rx="26" fill="#f0ecff"/>
+      <circle cx="1005" cy="210" r="28" fill="#7354e8"/>
+      <text x="1005" y="220" text-anchor="middle" font-size="24" fill="#fff">١</text>
+      <text x="980" y="270" text-anchor="end" font-size="24" font-weight="800" fill="#24213a">أضف</text>
+      <text x="980" y="302" text-anchor="end" font-size="15" fill="#79758f">اكتب المهمة وحدد الأولوية.</text>
+    </g>
+    <g>
+      <rect x="140" y="160" width="300" height="175" rx="26" fill="#e8f7f2"/>
+      <circle cx="385" cy="210" r="28" fill="#24a889"/>
+      <text x="385" y="220" text-anchor="middle" font-size="24" fill="#fff">٢</text>
+      <text x="360" y="270" text-anchor="end" font-size="24" font-weight="800" fill="#24213a">تابع</text>
+      <text x="360" y="302" text-anchor="end" font-size="15" fill="#79758f">راجع يومك أو أسبوعك.</text>
+    </g>
+    <g>
+      <rect x="760" y="385" width="300" height="175" rx="26" fill="#fff4df"/>
+      <circle cx="1005" cy="435" r="28" fill="#d7952d"/>
+      <text x="1005" y="445" text-anchor="middle" font-size="24" fill="#fff">٣</text>
+      <text x="980" y="495" text-anchor="end" font-size="24" font-weight="800" fill="#24213a">سجّل</text>
+      <text x="980" y="527" text-anchor="end" font-size="15" fill="#79758f">أضف عادة أو تركيزًا أو يومية.</text>
+    </g>
+    <g>
+      <rect x="140" y="385" width="300" height="175" rx="26" fill="#eaf1ff"/>
+      <circle cx="385" cy="435" r="28" fill="#4d78d4"/>
+      <text x="385" y="445" text-anchor="middle" font-size="24" fill="#fff">٤</text>
+      <text x="360" y="495" text-anchor="end" font-size="24" font-weight="800" fill="#24213a">راجع</text>
+      <text x="360" y="527" text-anchor="end" font-size="15" fill="#79758f">اقرأ أرقامك وصدّر تقاريرك.</text>
+    </g>
   </g>
 </svg>
