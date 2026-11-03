@@ -13,32 +13,32 @@
   <rect width="1200" height="430" rx="34" fill="url(#bg)"/>
   <text x="600" y="58" text-anchor="middle" direction="rtl" font-family="Tahoma, Arial, sans-serif" font-size="29" font-weight="800" fill="#24213a">كيف تستخدم مِحوَر؟</text>
   <g font-family="Tahoma, Arial, sans-serif" direction="rtl" text-anchor="middle" filter="url(#shadow)">
-    <rect x="55" y="105" width="255" height="245" rx="26" fill="#f0ecff"/>
-    <circle cx="182" cy="170" r="34" fill="#7354e8"/>
-    <text x="182" y="181" font-size="30" fill="#fff">١</text>
-    <text x="182" y="244" font-size="24" font-weight="800" fill="#24213a">أضف</text>
-    <text x="182" y="282" font-size="16" fill="#79758f">اكتب المهمة وحدد</text>
-    <text x="182" y="308" font-size="16" fill="#79758f">الأولوية.</text>
+    <rect x="895" y="105" width="255" height="245" rx="26" fill="#f0ecff"/>
+    <circle cx="1022" cy="170" r="34" fill="#7354e8"/>
+    <text x="1022" y="181" font-size="30" fill="#fff">١</text>
+    <text x="1022" y="244" font-size="24" font-weight="800" fill="#24213a">أضف</text>
+    <text x="1022" y="282" font-size="16" fill="#79758f">اكتب المهمة وحدد</text>
+    <text x="1022" y="308" font-size="16" fill="#79758f">الأولوية.</text>
 
-    <rect x="335" y="105" width="255" height="245" rx="26" fill="#e8f7f2"/>
-    <circle cx="462" cy="170" r="34" fill="#24a889"/>
-    <text x="462" y="181" font-size="30" fill="#fff">٢</text>
-    <text x="462" y="244" font-size="24" font-weight="800" fill="#24213a">تابع</text>
-    <text x="462" y="282" font-size="16" fill="#79758f">راجع يومك أو</text>
-    <text x="462" y="308" font-size="16" fill="#79758f">أسبوعك.</text>
+    <rect x="615" y="105" width="255" height="245" rx="26" fill="#e8f7f2"/>
+    <circle cx="742" cy="170" r="34" fill="#24a889"/>
+    <text x="742" y="181" font-size="30" fill="#fff">٢</text>
+    <text x="742" y="244" font-size="24" font-weight="800" fill="#24213a">تابع</text>
+    <text x="742" y="282" font-size="16" fill="#79758f">راجع يومك أو</text>
+    <text x="742" y="308" font-size="16" fill="#79758f">أسبوعك.</text>
 
-    <rect x="615" y="105" width="255" height="245" rx="26" fill="#fff4df"/>
-    <circle cx="742" cy="170" r="34" fill="#d7952d"/>
-    <text x="742" y="181" font-size="30" fill="#fff">٣</text>
-    <text x="742" y="244" font-size="24" font-weight="800" fill="#24213a">سجّل</text>
-    <text x="742" y="282" font-size="16" fill="#79758f">أضف عادة أو جلسة</text>
-    <text x="742" y="308" font-size="16" fill="#79758f">تركيز أو يومية.</text>
+    <rect x="335" y="105" width="255" height="245" rx="26" fill="#fff4df"/>
+    <circle cx="462" cy="170" r="34" fill="#d7952d"/>
+    <text x="462" y="181" font-size="30" fill="#fff">٣</text>
+    <text x="462" y="244" font-size="24" font-weight="800" fill="#24213a">سجّل</text>
+    <text x="462" y="282" font-size="16" fill="#79758f">أضف عادة أو جلسة</text>
+    <text x="462" y="308" font-size="16" fill="#79758f">تركيز أو يومية.</text>
 
-    <rect x="895" y="105" width="255" height="245" rx="26" fill="#eaf1ff"/>
-    <circle cx="1022" cy="170" r="34" fill="#4d78d4"/>
-    <text x="1022" y="181" font-size="30" fill="#fff">٤</text>
-    <text x="1022" y="244" font-size="24" font-weight="800" fill="#24213a">راجع</text>
-    <text x="1022" y="282" font-size="16" fill="#79758f">اقرأ أرقامك</text>
-    <text x="1022" y="308" font-size="16" fill="#79758f">وصدّر تقاريرك.</text>
+    <rect x="55" y="105" width="255" height="245" rx="26" fill="#eaf1ff"/>
+    <circle cx="182" cy="170" r="34" fill="#4d78d4"/>
+    <text x="182" y="181" font-size="30" fill="#fff">٤</text>
+    <text x="182" y="244" font-size="24" font-weight="800" fill="#24213a">راجع</text>
+    <text x="182" y="282" font-size="16" fill="#79758f">اقرأ أرقامك</text>
+    <text x="182" y="308" font-size="16" fill="#79758f">وصدّر تقاريرك.</text>
   </g>
 </svg>
