@@ -1,6 +1,6 @@
 <div dir="rtl" align="center">
 
-[![مِحوَر — مساحة هادئة لتنظيم يومك](./assets/readme/cover.svg)](https://prog-alone.github.io/Mihwer/)
+[![مِحوَر — مساحة هادئة لتنظيم يومك](./assets/readme/cover.svg?v=2)](https://prog-alone.github.io/Mihwer/)
 
 [**افتح التطبيق**](https://prog-alone.github.io/Mihwer/) · [**دليل الاستخدام داخل التطبيق**](https://prog-alone.github.io/Mihwer/#/help)
 
@@ -38,11 +38,11 @@
 
 ## كيف تستخدم مِحوَر؟
 
-[![أربع بطاقات تشرح إضافة المهمة ومتابعة اليوم والتسجيل والمراجعة](./assets/readme/how-to.svg)](./assets/readme/how-to.svg)
+[![أربع بطاقات تشرح إضافة المهمة ومتابعة اليوم والتسجيل والمراجعة](./assets/readme/how-to.svg?v=2)](./assets/readme/how-to.svg?v=2)
 
 ## الأقسام
 
-[![بطاقات أقسام المهام والعادات والتركيز واليوميات والأهداف والتقدم](./assets/readme/sections.svg)](./assets/readme/sections.svg)
+[![بطاقات أقسام المهام والعادات والتركيز واليوميات والأهداف والتقدم](./assets/readme/sections.svg?v=2)](./assets/readme/sections.svg?v=2)
 
 ## بياناتك
 
