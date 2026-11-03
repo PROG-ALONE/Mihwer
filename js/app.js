@@ -7,7 +7,7 @@ import { mountFocusView, unmountFocusView } from "./views/focus.js";
 import { mountJournalView, unmountJournalView } from "./views/journal.js";
 import { mountReportsView, unmountReportsView } from "./views/reports.js";
 import { mountTasksView, unmountTasksView } from "./views/tasks.js";
-import { bindSettingsActions } from "./views/settings.js";
+import { bindSettingsActions, checkBackupReminder } from "./views/settings.js";
 import { mountPeriodDashboard } from "./views/dashboard.js?v=97";
 
 const app = document.querySelector("#app");
@@ -203,7 +203,10 @@ if (!window.location.hash) {
 }
 
 initializeStore()
-  .then(() => mountPeriodDashboard())
+  .then(() => {
+    mountPeriodDashboard();
+    checkBackupReminder();
+  })
   .catch((error) => {
     console.error("تعذّر تهيئة قاعدة البيانات أو لوحة الفترات:", error);
   });

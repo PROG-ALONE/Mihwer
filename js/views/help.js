@@ -78,7 +78,7 @@ export function renderHelp(app) {
           <span class="guide-section-chevron" aria-hidden="true">⌄</span>
         </summary>
         <div class="guide-section-body">
-          <p>يمكنك تصدير نسخة احتياطية أو استعادتها من الإعدادات. المزامنة اختيارية عبر GitHub Gist خاص، ولا تُفعّل إلا بإرادتك.</p>
+          <p>يمكنك تصدير نسخة احتياطية أو استعادتها من الإعدادات. سيذكّرك مِحوَر كل جمعة، ويسمّي الملف باسم اليوم والتاريخ. المزامنة اختيارية عبر GitHub Gist خاص.</p>
         </div>
       </details>
       <footer class="guide-footer">

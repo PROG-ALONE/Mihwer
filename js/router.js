@@ -121,8 +121,18 @@ export function renderRoute(route, app, title) {
         <article class="settings-card">
           <span class="settings-icon" aria-hidden="true">⇧</span>
           <h2>نسخة احتياطية</h2>
-          <p>نزّل نسخة JSON من بياناتك للاحتفاظ بها أو نقلها إلى جهاز آخر.</p>
+          <p>احفظ نسخة JSON في المكان الذي تختاره. سيُقترح اسم يحتوي على يوم النسخة وتاريخها.</p>
           <button class="button button-primary" id="export-data" type="button">تصدير البيانات</button>
+        </article>
+        <article class="settings-card updates-card">
+          <span class="settings-icon" aria-hidden="true">✦</span>
+          <h2>آخر التحديثات</h2>
+          <ul class="settings-updates">
+            <li>تذكير أسبوعي يوم الجمعة بالنسخ الاحتياطي.</li>
+            <li>اختيار مكان حفظ النسخة عند توفره في المتصفح.</li>
+            <li>تسمية كل نسخة باسم اليوم والتاريخ لتسهيل العثور عليها.</li>
+            <li>لوحات اليوم والأسبوع والشهر والسنة مع إحصائيات أوضح.</li>
+          </ul>
         </article>
         <article class="settings-card">
           <span class="settings-icon" aria-hidden="true">⇩</span>

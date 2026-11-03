@@ -2850,6 +2850,19 @@ button:disabled {
   line-height: 1.75;
 }
 
+.settings-updates {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding-inline-start: 1.2rem;
+  color: var(--color-muted);
+  line-height: 1.75;
+}
+
+.settings-updates li::marker {
+  color: var(--color-accent);
+}
+
 .settings-icon {
   display: grid;
   width: 44px;

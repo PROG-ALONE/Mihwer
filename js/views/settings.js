@@ -3,6 +3,7 @@ import { getRecords, add, update } from "../store.js";
 import { getPlanConfig, getObjectivePeriod, setObjectivePeriod } from "../utils/plans.js";
 import { logSync, syncAll, testGitHubConnection } from "../sync.js";
 import { showToast } from "../utils/notifications.js";
+import { localDateString } from "../utils/dates.js";
 
 const BACKUP_VERSION = 1;
 
@@ -22,6 +23,11 @@ function setStatus(message, isError = false) {
   status.dataset.state = isError ? "error" : "success";
 }
 
+function backupFileName(date = new Date()) {
+  const weekday = new Intl.DateTimeFormat("ar", { weekday: "long" }).format(date).replace(/\s+/g, "-");
+  return `مِحوَر-نسخة-احتياطية-${weekday}-${localDateString(date)}.json`;
+}
+
 async function exportBackup() {
   const data = await getAllData();
   const backup = {
@@ -31,13 +37,40 @@ async function exportBackup() {
     stores: withoutCredentials(data),
   };
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+  const fileName = backupFileName();
+  if ("showSaveFilePicker" in window) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: fileName,
+        types: [{ description: "نسخة مِحوَر الاحتياطية", accept: { "application/json": [".json"] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      setStatus(`تم حفظ النسخة باسم ${fileName}.`);
+      return;
+    } catch (error) {
+      if (error.name === "AbortError") {
+        setStatus("أُلغي حفظ النسخة الاحتياطية.");
+        return;
+      }
+      throw error;
+    }
+  }
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `mihwar-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  link.download = fileName;
   link.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-  setStatus("تم تنزيل النسخة الاحتياطية بنجاح.");
+  setStatus(`تم تنزيل النسخة باسم ${fileName}.`);
+}
+
+export function checkBackupReminder() {
+  const today = new Date();
+  if (today.getDay() !== 5 || localStorage.getItem("mihwar-backup-reminder-date") === localDateString(today)) return;
+  localStorage.setItem("mihwar-backup-reminder-date", localDateString(today));
+  showToast("اليوم الجمعة — خذ نسخة احتياطية من الإعدادات للحفاظ على بياناتك.", { duration: 9000 });
 }
 
 function parseBackup(text) {
