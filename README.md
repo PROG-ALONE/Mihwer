@@ -10,36 +10,45 @@
 
 </div>
 
-## التجربة في أربع صور تفاعلية ببيانات حقيقية
+## التبويبات كما تظهر على iPad
 
-هذه صور SVG تفاعلية بنمط سطح المكتب العريض، مبنية على أرقام حقيقية من بيانات التطبيق الحالية. اضغط على أي صورة لفتحها بالحجم الكامل.
+هذه لقطات حقيقية من واجهة التطبيق بحجم iPad، بعد تعبئتها ببيانات واضحة حتى تظهر ألوان الإنجاز والإحصائيات والبطاقات كما هي داخل النظام. اضغط على أي لقطة لفتحها بالحجم الكامل.
 
+<div dir="rtl">
 <table align="center" cellpadding="18" cellspacing="0">
   <tr>
     <td align="center" valign="top">
       <strong>اليوم</strong><br>
-      <sub>ملخص سريع وإحصائيات واختصارات</sub><br><br>
-      <a href="./assets/readme/today-new.svg?v=2"><img src="./assets/readme/today-new.svg?v=2" width="520" alt="لوحة اليوم التفاعلية"></a>
+      <sub>ألوان الأيام ونسبة إنجاز اليوم</sub><br><br>
+      <a href="./assets/readme/ipad-today.png?v=1"><img src="./assets/readme/ipad-today.png?v=1" width="360" alt="لقطة iPad لتبويب اليوم"></a>
     </td>
     <td align="center" valign="top">
-      <strong>الأسبوع</strong><br>
-      <sub>ألوان الأيام ونسبة إنجاز الأسبوع</sub><br><br>
-      <a href="./assets/readme/week-new.svg?v=2"><img src="./assets/readme/week-new.svg?v=2" width="520" alt="لوحة الأسبوع التفاعلية"></a>
+      <strong>المهام</strong><br>
+      <sub>مهام مكتملة ومفتوحة بألوان الأولوية</sub><br><br>
+      <a href="./assets/readme/ipad-tasks.png?v=1"><img src="./assets/readme/ipad-tasks.png?v=1" width="360" alt="لقطة iPad لتبويب المهام"></a>
     </td>
   </tr>
   <tr>
     <td align="center" valign="top">
-      <strong>الشهر</strong><br>
-      <sub>شبكة النشاط وتدرج الإنجاز اليومي</sub><br><br>
-      <a href="./assets/readme/month-new.svg?v=2"><img src="./assets/readme/month-new.svg?v=2" width="520" alt="لوحة الشهر التفاعلية"></a>
+      <strong>العادات</strong><br>
+      <sub>سلاسل العادات ونسب الإنجاز اليومية</sub><br><br>
+      <a href="./assets/readme/ipad-habits.png?v=1"><img src="./assets/readme/ipad-habits.png?v=1" width="360" alt="لقطة iPad لتبويب العادات"></a>
     </td>
     <td align="center" valign="top">
-      <strong>السنة</strong><br>
-      <sub>نظرة هادئة على الأشهر والنشاط</sub><br><br>
-      <a href="./assets/readme/year-new.svg?v=2"><img src="./assets/readme/year-new.svg?v=2" width="520" alt="لوحة السنة التفاعلية"></a>
+      <strong>تقدّمي</strong><br>
+      <sub>الأرقام والتقارير والتصدير المنظم</sub><br><br>
+      <a href="./assets/readme/ipad-reports.png?v=1"><img src="./assets/readme/ipad-reports.png?v=1" width="360" alt="لقطة iPad لتبويب تقدّمي"></a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top" colspan="2">
+      <strong>الإعدادات</strong><br>
+      <sub>التخطيط ومدد التركيز والنسخ الاحتياطي والمزامنة</sub><br><br>
+      <a href="./assets/readme/ipad-settings.png?v=1"><img src="./assets/readme/ipad-settings.png?v=1" width="360" alt="لقطة iPad لتبويب الإعدادات"></a>
     </td>
   </tr>
 </table>
+</div>
 
 [![أربع بطاقات تشرح إضافة المهمة ومتابعة اليوم والتسجيل والمراجعة](./assets/readme/how-to.svg?v=6)](./assets/readme/how-to.svg?v=6)
 
