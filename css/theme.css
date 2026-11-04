@@ -12124,6 +12124,29 @@ details.objective-card .goal-progress-line {
     font-size: 1.1rem;
   }
 
+  .period-dashboard--today .today-calm-stat,
+  .period-calm-stats .today-calm-stat {
+    min-height: 100px;
+  }
+
+  .period-dashboard--today .today-calm-stat > div strong,
+  .period-calm-stats .today-calm-stat > div strong {
+    font-size: .82rem;
+  }
+
+  .period-dashboard--today .today-calm-stat > div span,
+  .period-dashboard--today .today-calm-stat > small,
+  .period-calm-stats .today-calm-stat > div span,
+  .period-calm-stats .today-calm-stat > small {
+    font-size: .72rem;
+  }
+
+  .period-progress-pills b {
+    max-width: 100%;
+    font-size: .72rem;
+    white-space: normal;
+  }
+
   .period-week-overview .today-week-day {
     min-height: 58px;
     font-size: .7rem;
