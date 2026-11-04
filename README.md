@@ -12,31 +12,34 @@
 
 ## التجربة في أربع لقطات حقيقية من الهاتف
 
-هذه لقطات مباشرة من التطبيق بعرض جوال، وليست رسومات توضيحية. تظهر الواجهة المتجاوبة، شريط التنقل السفلي، وبطاقات الأرقام والنسب كما تظهر أثناء الاستخدام.
+هذه لقطات مباشرة من التطبيق بعرض جوال، وليست رسومات توضيحية. رتبتها بحجم هادئ ومسافات واضحة حتى يمكن مشاهدة كل فترة دون ازدحام.
 
-### اليوم
-
-ملخص سريع لما يهمك الآن: نسبة الإنجاز، الإحصائيات، والاختصارات اليومية. تتحرك الأرقام ونسب الإنجاز عند المرور عليها لتوضيح ما يمكن التفاعل معه.
-
-[![لوحة اليوم على الهاتف](./assets/readme/today-mobile.png?v=1)](./assets/readme/today-mobile.png?v=1)
-
-### الأسبوع
-
-بطاقة إنجاز واحدة وبوكس مدموج للأيام السبعة، دون تكرار أو ازدحام. يتغير لون كل يوم حسب إنجازه وتظهر الحركة عند المرور.
-
-[![لوحة الأسبوع على الهاتف وبطاقات الأيام](./assets/readme/week-mobile.png?v=1)](./assets/readme/week-mobile.png?v=1)
-
-### الشهر
-
-شبكة نشاط واضحة تساعدك على رؤية إيقاع الشهر. تملأ البطاقة كاملة حسب النسبة: أحمر حتى ٤٩٪، كهرماني من ٥٠٪ إلى ٧٥٪، وأخضر فوق ٧٥٪.
-
-[![لوحة الشهر على الهاتف](./assets/readme/month-mobile.png?v=1)](./assets/readme/month-mobile.png?v=1)
-
-### السنة
-
-ملخص خفيف للأشهر ونسبة النشاط خلال السنة، مع شريط تقدم متحرك عند التفاعل.
-
-[![لوحة السنة على الهاتف](./assets/readme/year-mobile.png?v=1)](./assets/readme/year-mobile.png?v=1)
+<table align="center" cellpadding="18" cellspacing="0">
+  <tr>
+    <td align="center" valign="top">
+      <strong>اليوم</strong><br>
+      <sub>ملخص سريع وإحصائيات واختصارات</sub><br><br>
+      <a href="./assets/readme/today-mobile.png?v=2"><img src="./assets/readme/today-mobile.png?v=2" width="250" alt="لوحة اليوم على الهاتف"></a>
+    </td>
+    <td align="center" valign="top">
+      <strong>الأسبوع</strong><br>
+      <sub>ألوان الأيام ونسبة إنجاز الأسبوع</sub><br><br>
+      <a href="./assets/readme/week-mobile.png?v=2"><img src="./assets/readme/week-mobile.png?v=2" width="250" alt="لوحة الأسبوع على الهاتف"></a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top">
+      <strong>الشهر</strong><br>
+      <sub>شبكة النشاط وتدرج الإنجاز اليومي</sub><br><br>
+      <a href="./assets/readme/month-mobile.png?v=2"><img src="./assets/readme/month-mobile.png?v=2" width="250" alt="لوحة الشهر على الهاتف"></a>
+    </td>
+    <td align="center" valign="top">
+      <strong>السنة</strong><br>
+      <sub>نظرة هادئة على الأشهر والنشاط</sub><br><br>
+      <a href="./assets/readme/year-mobile.png?v=2"><img src="./assets/readme/year-mobile.png?v=2" width="250" alt="لوحة السنة على الهاتف"></a>
+    </td>
+  </tr>
+</table>
 
 [![أربع بطاقات تشرح إضافة المهمة ومتابعة اليوم والتسجيل والمراجعة](./assets/readme/how-to.svg?v=6)](./assets/readme/how-to.svg?v=6)
 
