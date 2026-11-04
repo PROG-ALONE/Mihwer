@@ -12,13 +12,11 @@
 
 ## صور النظام والقيم المتحركة
 
-صورة واحدة مختصرة بنفس أسلوب قسم «ما الجديد في النمط الحالي؟»، وتجمع الفترات الأربع والقيم الحالية مع حركة هادئة للنسب والأشرطة.
+صورة واحدة مختصرة بنفس أسلوب قسم «ما الجديد في النمط الحالي؟»، وتحاكي بطاقات النظام مباشرة من دون تكرار لقطات أو فراغات كبيرة. تجمع الفترات الأربع والقيم الحالية مع حركة هادئة للنسب والأشرطة.
 
 <div align="center">
   <img src="./assets/readme/periods-animated.svg?v=1" width="900" alt="الفترات الأربع في مِحوَر بقيم متحركة">
 </div>
-
-لقطات iPad الكاملة للتفاصيل: [اليوم](./assets/readme/ipad-today.png) · [المهام](./assets/readme/ipad-tasks.png) · [العادات](./assets/readme/ipad-habits.png) · [تقدّمي](./assets/readme/ipad-reports.png) · [الإعدادات](./assets/readme/ipad-settings.png) · [الأسبوع](./assets/readme/ipad-week.png) · [الشهر](./assets/readme/ipad-month.png) · [السنة](./assets/readme/ipad-year.png)
 
 [![أربع بطاقات تشرح إضافة المهمة ومتابعة اليوم والتسجيل والمراجعة](./assets/readme/how-to.svg?v=6)](./assets/readme/how-to.svg?v=6)
 
