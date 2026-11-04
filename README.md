@@ -16,29 +16,29 @@
 
 ملخص سريع لما يهمك الآن: نسبة الإنجاز، الإحصائيات، والاختصارات اليومية. تتحرك الأرقام ونسب الإنجاز عند المرور عليها لتوضيح ما يمكن التفاعل معه.
 
-[![لوحة اليوم كاملة](./assets/readme/today-real.png)](./assets/readme/today-real.png)
+[![لوحة اليوم كاملة](./assets/readme/today-real.png?v=2)](./assets/readme/today-real.png?v=2)
 
 ### الأسبوع
 
 بطاقة إنجاز واحدة وبوكس مدموج للأيام السبعة، دون تكرار أو ازدحام. يتغير لون كل يوم حسب إنجازه وتظهر الحركة عند المرور.
 
-[![لوحة الأسبوع كاملة وبوكس الأيام السبعة](./assets/readme/week-real.png)](./assets/readme/week-real.png)
+[![لوحة الأسبوع كاملة وبوكس الأيام السبعة](./assets/readme/week-real.png?v=2)](./assets/readme/week-real.png?v=2)
 
 ### الشهر
 
 شبكة نشاط واضحة تساعدك على رؤية إيقاع الشهر. تملأ البطاقة كاملة حسب النسبة: أحمر حتى ٤٩٪، كهرماني من ٥٠٪ إلى ٧٥٪، وأخضر فوق ٧٥٪.
 
-[![لوحة الشهر كاملة](./assets/readme/month-real.png)](./assets/readme/month-real.png)
+[![لوحة الشهر كاملة](./assets/readme/month-real.png?v=2)](./assets/readme/month-real.png?v=2)
 
 ### السنة
 
 ملخص خفيف للأشهر ونسبة النشاط خلال السنة، مع شريط تقدم متحرك عند التفاعل.
 
-[![لوحة السنة كاملة](./assets/readme/year-real.png)](./assets/readme/year-real.png)
+[![لوحة السنة كاملة](./assets/readme/year-real.png?v=2)](./assets/readme/year-real.png?v=2)
 
-[![أربع بطاقات تشرح إضافة المهمة ومتابعة اليوم والتسجيل والمراجعة](./assets/readme/how-to.svg?v=5)](./assets/readme/how-to.svg?v=5)
+[![أربع بطاقات تشرح إضافة المهمة ومتابعة اليوم والتسجيل والمراجعة](./assets/readme/how-to.svg?v=6)](./assets/readme/how-to.svg?v=6)
 
-[![بطاقات أقسام المهام والعادات والتركيز واليوميات والأهداف والتقدم](./assets/readme/sections.svg?v=5)](./assets/readme/sections.svg?v=5)
+[![بطاقات أقسام المهام والعادات والتركيز واليوميات والأهداف والتقدم](./assets/readme/sections.svg?v=6)](./assets/readme/sections.svg?v=6)
 
 ## ما الجديد في النمط الحالي؟
 

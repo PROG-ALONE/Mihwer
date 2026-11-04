@@ -13,26 +13,26 @@
   <text x="600" y="137" text-anchor="middle" direction="rtl" font-family="Tahoma, Arial, sans-serif" font-size="25" font-weight="800" fill="#24213a">كيف تستخدم مِحوَر؟</text>
   <g font-family="Tahoma, Arial, sans-serif" direction="rtl" text-anchor="middle" filter="url(#shadow)">
     <g>
-      <rect x="80" y="175" width="245" height="215" rx="24" fill="#eee8ff"/>
-      <circle cx="202" cy="225" r="28" fill="#7354e8"/><text x="202" y="235" font-size="24" fill="#fff">١</text>
+      <rect x="80" y="175" width="245" height="215" rx="24" fill="#fff0ef"/>
+      <circle cx="202" cy="225" r="28" fill="#d9534f"/><text x="202" y="235" font-size="24" fill="#fff">١</text>
       <text x="202" y="285" font-size="23" font-weight="800" fill="#24213a">أضف</text>
       <text x="202" y="320" font-size="14" fill="#79758f">اكتب المهمة وحدد</text><text x="202" y="345" font-size="14" fill="#79758f">الأولوية.</text>
     </g>
     <g>
       <rect x="345" y="175" width="245" height="215" rx="24" fill="#e1f7f0"/>
-      <circle cx="467" cy="225" r="28" fill="#24a889"/><text x="467" y="235" font-size="24" fill="#fff">٢</text>
+      <circle cx="467" cy="225" r="28" fill="#249b78"/><text x="467" y="235" font-size="24" fill="#fff">٢</text>
       <text x="467" y="285" font-size="23" font-weight="800" fill="#24213a">تابع</text>
       <text x="467" y="320" font-size="14" fill="#79758f">راجع يومك أو</text><text x="467" y="345" font-size="14" fill="#79758f">أسبوعك.</text>
     </g>
     <g>
-      <rect x="610" y="175" width="245" height="215" rx="24" fill="#fff0d6"/>
-      <circle cx="732" cy="225" r="28" fill="#d7952d"/><text x="732" y="235" font-size="24" fill="#fff">٣</text>
+      <rect x="610" y="175" width="245" height="215" rx="24" fill="#fff3d9"/>
+      <circle cx="732" cy="225" r="28" fill="#d89b2b"/><text x="732" y="235" font-size="24" fill="#fff">٣</text>
       <text x="732" y="285" font-size="23" font-weight="800" fill="#24213a">سجّل</text>
       <text x="732" y="320" font-size="14" fill="#79758f">أضف عادة أو جلسة</text><text x="732" y="345" font-size="14" fill="#79758f">تركيز أو يومية.</text>
     </g>
     <g>
-      <rect x="875" y="175" width="245" height="215" rx="24" fill="#e5efff"/>
-      <circle cx="997" cy="225" r="28" fill="#4d78d4"/><text x="997" y="235" font-size="24" fill="#fff">٤</text>
+      <rect x="875" y="175" width="245" height="215" rx="24" fill="#e8efff"/>
+      <circle cx="997" cy="225" r="28" fill="#7354e8"/><text x="997" y="235" font-size="24" fill="#fff">٤</text>
       <text x="997" y="285" font-size="23" font-weight="800" fill="#24213a">راجع</text>
       <text x="997" y="320" font-size="14" fill="#79758f">اقرأ أرقامك</text><text x="997" y="345" font-size="14" fill="#79758f">وصدّر تقاريرك.</text>
     </g>
