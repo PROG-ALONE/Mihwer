@@ -10,78 +10,15 @@
 
 </div>
 
-## التبويبات كما تظهر على iPad
+## صور النظام والقيم المتحركة
 
-هذه لقطات حقيقية من واجهة التطبيق بحجم iPad، بعد تعبئتها ببيانات واضحة حتى تظهر ألوان الإنجاز والإحصائيات والبطاقات كما هي داخل النظام. اضغط على أي لقطة لفتحها بالحجم الكامل.
+صورة واحدة مختصرة بنفس أسلوب قسم «ما الجديد في النمط الحالي؟»، وتجمع الفترات الأربع والقيم الحالية مع حركة هادئة للنسب والأشرطة.
 
-<div dir="rtl">
-<table align="center" cellpadding="18" cellspacing="0">
-  <tr>
-    <td align="center" valign="top">
-      <strong>اليوم</strong><br>
-      <sub>ألوان الأيام ونسبة إنجاز اليوم</sub><br><br>
-      <a href="./assets/readme/ipad-today.png?v=1"><img src="./assets/readme/ipad-today.png?v=1" width="360" alt="لقطة iPad لتبويب اليوم"></a>
-    </td>
-    <td align="center" valign="top">
-      <strong>المهام</strong><br>
-      <sub>مهام مكتملة ومفتوحة بألوان الأولوية</sub><br><br>
-      <a href="./assets/readme/ipad-tasks.png?v=1"><img src="./assets/readme/ipad-tasks.png?v=1" width="360" alt="لقطة iPad لتبويب المهام"></a>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" valign="top">
-      <strong>العادات</strong><br>
-      <sub>سلاسل العادات ونسب الإنجاز اليومية</sub><br><br>
-      <a href="./assets/readme/ipad-habits.png?v=1"><img src="./assets/readme/ipad-habits.png?v=1" width="360" alt="لقطة iPad لتبويب العادات"></a>
-    </td>
-    <td align="center" valign="top">
-      <strong>تقدّمي</strong><br>
-      <sub>الأرقام والتقارير والتصدير المنظم</sub><br><br>
-      <a href="./assets/readme/ipad-reports.png?v=1"><img src="./assets/readme/ipad-reports.png?v=1" width="360" alt="لقطة iPad لتبويب تقدّمي"></a>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" valign="top" colspan="2">
-      <strong>الإعدادات</strong><br>
-      <sub>التخطيط ومدد التركيز والنسخ الاحتياطي والمزامنة</sub><br><br>
-      <a href="./assets/readme/ipad-settings.png?v=1"><img src="./assets/readme/ipad-settings.png?v=1" width="360" alt="لقطة iPad لتبويب الإعدادات"></a>
-    </td>
-  </tr>
-</table>
+<div align="center">
+  <img src="./assets/readme/periods-animated.svg?v=1" width="900" alt="الفترات الأربع في مِحوَر بقيم متحركة">
 </div>
 
-### الفترات والقيم المتحركة
-
-هذه اللقطات تحاكي شاشة الفترات نفسها، بينما تعرض البطاقات المتحركة تحتها القيمة والنسبة بتدرّج هادئ. القيم محدثة لتطابق بيانات العرض: اليوم **٦٧٪**، الأسبوع **٥٧٪**، الشهر **٢٥ مهمة**، والسنة **١٥ مهمة نشطة**.
-
-<div dir="rtl">
-<table align="center" cellpadding="18" cellspacing="0">
-  <tr>
-    <td align="center" valign="top">
-      <strong>اليوم</strong><br>
-      <a href="./assets/readme/ipad-day.png?v=1"><img src="./assets/readme/ipad-day.png?v=1" width="300" alt="لقطة iPad للفترة اليومية"></a><br>
-      <a href="./assets/readme/today-new.svg?v=3"><img src="./assets/readme/today-new.svg?v=3" width="420" alt="قيمة اليوم المتحركة"></a>
-    </td>
-    <td align="center" valign="top">
-      <strong>الأسبوع</strong><br>
-      <a href="./assets/readme/ipad-week.png?v=1"><img src="./assets/readme/ipad-week.png?v=1" width="300" alt="لقطة iPad للفترة الأسبوعية"></a><br>
-      <a href="./assets/readme/week-new.svg?v=3"><img src="./assets/readme/week-new.svg?v=3" width="420" alt="قيمة الأسبوع المتحركة"></a>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" valign="top">
-      <strong>الشهر</strong><br>
-      <a href="./assets/readme/ipad-month.png?v=1"><img src="./assets/readme/ipad-month.png?v=1" width="300" alt="لقطة iPad للفترة الشهرية"></a><br>
-      <a href="./assets/readme/month-new.svg?v=3"><img src="./assets/readme/month-new.svg?v=3" width="420" alt="قيمة الشهر المتحركة"></a>
-    </td>
-    <td align="center" valign="top">
-      <strong>السنة</strong><br>
-      <a href="./assets/readme/ipad-year.png?v=1"><img src="./assets/readme/ipad-year.png?v=1" width="300" alt="لقطة iPad للفترة السنوية"></a><br>
-      <a href="./assets/readme/year-new.svg?v=3"><img src="./assets/readme/year-new.svg?v=3" width="420" alt="قيمة السنة المتحركة"></a>
-    </td>
-  </tr>
-</table>
-</div>
+لقطات iPad الكاملة للتفاصيل: [اليوم](./assets/readme/ipad-today.png) · [المهام](./assets/readme/ipad-tasks.png) · [العادات](./assets/readme/ipad-habits.png) · [تقدّمي](./assets/readme/ipad-reports.png) · [الإعدادات](./assets/readme/ipad-settings.png) · [الأسبوع](./assets/readme/ipad-week.png) · [الشهر](./assets/readme/ipad-month.png) · [السنة](./assets/readme/ipad-year.png)
 
 [![أربع بطاقات تشرح إضافة المهمة ومتابعة اليوم والتسجيل والمراجعة](./assets/readme/how-to.svg?v=6)](./assets/readme/how-to.svg?v=6)
 
