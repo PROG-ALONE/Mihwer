@@ -7018,6 +7018,9 @@ details.objective-card > .objective-details-content {
 }
 
 .report-stat-top {
+  position: relative;
+  min-width: 0;
+  justify-content: flex-start;
   color: var(--color-muted);
   font-size: 0.76rem;
   font-weight: 650;
@@ -7033,9 +7036,10 @@ details.objective-card > .objective-details-content {
 }
 
 .report-stat-dot {
+  position: absolute;
+  inset-inline-start: 0;
   width: 9px;
   height: 9px;
-  flex: 0 0 auto;
   border-radius: 50%;
   background: var(--stat-color);
   box-shadow: 0 0 0 5px color-mix(in srgb, var(--stat-color) 13%, transparent);
@@ -7083,6 +7087,14 @@ details.objective-card > .objective-details-content {
   font-size: 0.7rem;
   overflow-wrap: break-word;
   word-break: normal;
+}
+
+.report-empty {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: normal;
+  white-space: normal;
 }
 
 .report-analytics-section {
@@ -10913,6 +10925,11 @@ details.objective-card .goal-progress-line {
     padding-inline-start: 88px;
   }
 
+  .report-stat-card.has-ring .report-stat-top {
+    width: max-content;
+    min-width: max-content;
+  }
+
   .report-stat-ring {
     inset-inline-start: 12px;
     width: 62px;
@@ -12186,9 +12203,17 @@ details.objective-card .goal-progress-line {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 20%, transparent);
 }
 
+.today-week-day.is-today:not(.is-selected),
+.period-day-cell.is-today:not(.is-selected),
+.period-activity-day.is-today:not(.is-selected) {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
+}
+
 .period-year-card.is-current-month {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 16%, transparent);
 }
 
 @media (max-width: 520px) {
