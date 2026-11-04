@@ -319,10 +319,9 @@ function messageForDate(date) {
 
 function progressTone(percent) {
   if (percent >= 100) return "progress-complete";
-  if (percent >= 75) return "progress-high";
-  if (percent >= 40) return "progress-medium";
-  if (percent > 0) return "progress-low";
-  return "progress-none";
+  if (percent > 75) return "progress-high";
+  if (percent >= 50) return "progress-medium";
+  return "progress-low";
 }
 
 function dailyProgress(metrics) {
