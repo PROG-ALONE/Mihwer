@@ -674,13 +674,22 @@ function bindEvents(app) {
       return;
     }
     const priority = Number(form.elements.priority.value);
+    const scheduledInput = form.elements.scheduled.value || null;
+    const dueInput = form.elements.due.value || null;
+    const datesWereLinked = Boolean(task.scheduled && task.scheduled === task.due);
+    const scheduledChanged = scheduledInput !== (task.scheduled || null);
+    const dueChanged = dueInput !== (task.due || null);
+    let scheduled = scheduledInput;
+    let due = dueInput;
+    if (datesWereLinked && scheduledChanged && !dueChanged) due = scheduled;
+    if (datesWereLinked && dueChanged && !scheduledChanged) scheduled = due;
     try {
       await update("tasks", {
         ...task,
         title: form.elements.title.value.trim(),
         notes: form.elements.notes.value.trim(),
-        scheduled: form.elements.scheduled.value || null,
-        due: form.elements.due.value || null,
+        scheduled,
+        due,
         dueTime: form.elements.dueTime.value || null,
         important: priority === 0 || priority === 1,
         urgent: priority === 0 || priority === 2,
