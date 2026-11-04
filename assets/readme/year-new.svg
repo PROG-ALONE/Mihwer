@@ -7,12 +7,12 @@
     <rect x="54" y="44" width="1092" height="472" rx="28" fill="#f7f6fc"/>
     <text x="1080" y="94" fill="#7354e8" font-size="18" font-weight="700">إيقاع ٢٠٢٦</text>
     <text x="1080" y="136" fill="#24213a" font-size="32" font-weight="800">سنتك في لمحة</text>
-    <text x="120" y="112" fill="#79758f" font-size="18">تابع الأشهر النشطة</text>
+    <text x="120" y="112" fill="#79758f" font-size="18">١٨ مهمة نشطة · نوفمبر ٥٥٪</text>
     <g text-anchor="middle" font-size="18" font-weight="800">
-      <g><rect x="870" y="190" width="220" height="105" rx="20" fill="#d9534f"/><text x="980" y="232" fill="#fff">يناير</text><text x="980" y="267" fill="#fff">٣٠٪ نشاط</text></g>
-      <g><rect x="635" y="190" width="220" height="105" rx="20" fill="#d89b2b"/><text x="745" y="232" fill="#fff">فبراير</text><text x="745" y="267" fill="#fff">٦٠٪ نشاط</text></g>
-      <g><rect x="400" y="190" width="220" height="105" rx="20" fill="#249b78"/><text x="510" y="232" fill="#fff">مارس</text><text x="510" y="267" fill="#fff">٨٠٪ نشاط</text></g>
-      <g><rect x="165" y="190" width="220" height="105" rx="20" fill="#249b78" stroke="#24c7a2" stroke-width="4"/><text x="275" y="232" fill="#fff">أبريل</text><text x="275" y="267" fill="#fff">١٠٠٪ نشاط</text></g>
+      <g><rect x="870" y="190" width="220" height="105" rx="20" fill="#f0edfa"/><text x="980" y="232" fill="#24213a">يناير</text><text x="980" y="267" fill="#79758f">لا بيانات بعد</text></g>
+      <g><rect x="635" y="190" width="220" height="105" rx="20" fill="#f0edfa"/><text x="745" y="232" fill="#24213a">فبراير</text><text x="745" y="267" fill="#79758f">لا بيانات بعد</text></g>
+      <g><rect x="400" y="190" width="220" height="105" rx="20" fill="#f0edfa"/><text x="510" y="232" fill="#24213a">مارس</text><text x="510" y="267" fill="#79758f">لا بيانات بعد</text></g>
+      <g><rect x="165" y="190" width="220" height="105" rx="20" fill="#249b78" stroke="#24c7a2" stroke-width="4"/><text x="275" y="232" fill="#fff">نوفمبر</text><text x="275" y="267" fill="#fff">٥٥٪ نشاط<animate attributeName="opacity" values=".6;1;.6" dur="2.8s" repeatCount="indefinite"/></text></g>
       <g><rect x="870" y="330" width="220" height="105" rx="20" fill="#f0edfa"/><text x="980" y="372" fill="#24213a">مايو</text><text x="980" y="407" fill="#79758f">لا بيانات بعد</text></g>
       <g><rect x="635" y="330" width="220" height="105" rx="20" fill="#f0edfa"/><text x="745" y="372" fill="#24213a">يونيو</text><text x="745" y="407" fill="#79758f">لا بيانات بعد</text></g>
       <g><rect x="400" y="330" width="220" height="105" rx="20" fill="#f0edfa"/><text x="510" y="372" fill="#24213a">يوليو</text><text x="510" y="407" fill="#79758f">لا بيانات بعد</text></g>

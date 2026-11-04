@@ -9,18 +9,18 @@
     <text x="1080" y="132" fill="#24213a" font-size="32" font-weight="800">أسبوعك كامل بشاشة واحدة</text>
     <rect x="84" y="166" width="1032" height="104" rx="22" fill="#fff" stroke="#d7ccfa" stroke-width="2"/>
     <text x="1038" y="207" fill="#79758f" font-size="15">إنجاز الأسبوع</text>
-    <text x="1038" y="247" fill="#7354e8" font-size="38" font-weight="800">٦٤٪</text>
+    <text x="1038" y="247" fill="#7354e8" font-size="38" font-weight="800">٤٩٪<animate attributeName="opacity" values=".65;1;.65" dur="2.8s" repeatCount="indefinite"/></text>
     <rect x="125" y="218" width="560" height="12" rx="6" fill="#f0edfa"/>
-    <rect x="125" y="218" width="358" height="12" rx="6" fill="#d89b2b"/>
+    <rect x="125" y="218" width="275" height="12" rx="6" fill="#d9534f"><animate attributeName="width" values="260;275;260" dur="3s" repeatCount="indefinite"/></rect>
     <text x="1080" y="318" fill="#24213a" font-size="20" font-weight="800">أيام الأسبوع</text>
     <g text-anchor="middle" font-size="17" font-weight="800">
-      <g><rect x="88" y="350" width="130" height="106" rx="18" fill="#d9534f"/><text x="153" y="394" fill="#fff">الأحد</text><text x="153" y="428" fill="#fff">٢٠٪</text></g>
-      <g><rect x="235" y="350" width="130" height="106" rx="18" fill="#d89b2b"/><text x="300" y="394" fill="#fff">الاثنين</text><text x="300" y="428" fill="#fff">٥٠٪</text></g>
-      <g><rect x="382" y="350" width="130" height="106" rx="18" fill="#249b78"/><text x="447" y="394" fill="#fff">الثلاثاء</text><text x="447" y="428" fill="#fff">٨٠٪</text></g>
-      <g><rect x="529" y="350" width="130" height="106" rx="18" fill="#28a77f" stroke="#24c7a2" stroke-width="4"/><text x="594" y="394" fill="#fff">الأربعاء</text><text x="594" y="428" fill="#fff">١٠٠٪</text></g>
-      <g><rect x="676" y="350" width="130" height="106" rx="18" fill="#249b78"/><text x="741" y="394" fill="#fff">الخميس</text><text x="741" y="428" fill="#fff">٧٦٪</text></g>
-      <g><rect x="823" y="350" width="130" height="106" rx="18" fill="#d9534f"/><text x="888" y="394" fill="#fff">الجمعة</text><text x="888" y="428" fill="#fff">٣٠٪</text></g>
-      <g><rect x="970" y="350" width="130" height="106" rx="18" fill="#d89b2b"/><text x="1035" y="394" fill="#fff">السبت</text><text x="1035" y="428" fill="#fff">٦٠٪</text></g>
+      <g><rect x="88" y="350" width="130" height="106" rx="18" fill="#d9534f"/><text x="153" y="394" fill="#fff">الأحد</text><text x="153" y="428" fill="#fff">٠٪</text></g>
+      <g><rect x="235" y="350" width="130" height="106" rx="18" fill="#d9534f"/><text x="300" y="394" fill="#fff">الاثنين</text><text x="300" y="428" fill="#fff">٢٠٪</text></g>
+      <g><rect x="382" y="350" width="130" height="106" rx="18" fill="#d89b2b"/><text x="447" y="394" fill="#fff">الثلاثاء</text><text x="447" y="428" fill="#fff">٤٠٪</text></g>
+      <g><rect x="529" y="350" width="130" height="106" rx="18" fill="#d89b2b" stroke="#24c7a2" stroke-width="4"/><text x="594" y="394" fill="#fff">الأربعاء</text><text x="594" y="428" fill="#fff">٦٠٪</text></g>
+      <g><rect x="676" y="350" width="130" height="106" rx="18" fill="#249b78"/><text x="741" y="394" fill="#fff">الخميس</text><text x="741" y="428" fill="#fff">٨٠٪</text></g>
+      <g><rect x="823" y="350" width="130" height="106" rx="18" fill="#d89b2b"/><text x="888" y="394" fill="#fff">الجمعة</text><text x="888" y="428" fill="#fff">٤٠٪</text></g>
+      <g><rect x="970" y="350" width="130" height="106" rx="18" fill="#249b78"/><text x="1035" y="394" fill="#fff">السبت</text><text x="1035" y="428" fill="#fff">١٠٠٪</text></g>
     </g>
   </g>
 </svg>

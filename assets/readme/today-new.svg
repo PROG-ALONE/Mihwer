@@ -17,15 +17,15 @@
     <rect x="88" y="164" width="1024" height="142" rx="24" fill="#fff" stroke="#d7ccfa" stroke-width="2" filter="url(#shadow)"/>
     <text x="1058" y="203" text-anchor="start" fill="#7354e8" font-size="17" font-weight="700">ملخص اليوم</text>
     <text x="1058" y="246" text-anchor="start" fill="#24213a" font-size="30" font-weight="800">مساحة هادئة لتبدأ</text>
-    <text x="1058" y="278" text-anchor="start" fill="#79758f" font-size="15">٠ مهام · ٠ عادات · ٠ دقيقة تركيز</text>
-    <text x="150" y="248" fill="#7354e8" font-size="60" font-weight="800">٠<tspan font-size="24">٪</tspan></text>
+    <text x="1058" y="278" text-anchor="start" fill="#79758f" font-size="15">٣ مهام · ٠ عادات · ٠ دقيقة تركيز</text>
+    <text x="150" y="248" fill="#7354e8" font-size="60" font-weight="800">٦٠<tspan font-size="24">٪</tspan><animate attributeName="opacity" values=".65;1;.65" dur="2.8s" repeatCount="indefinite"/></text>
     <text x="150" y="278" fill="#79758f" font-size="14">إنجاز اليوم</text>
     <rect x="88" y="332" width="1024" height="104" rx="20" fill="#f0edfa"/>
     <g fill="#24213a" font-size="18" font-weight="700">
       <text x="1015" y="372">المهام</text><text x="760" y="372">العادات</text><text x="505" y="372">التركيز</text><text x="250" y="372">اليوميات</text>
     </g>
     <g fill="#79758f" font-size="14">
-      <text x="1015" y="402">٠ قيد الإنجاز</text><text x="760" y="402">٠ مجدولة</text><text x="505" y="402">٠ دقيقة</text><text x="250" y="402">٠ تدوينات</text>
+      <text x="1015" y="402">٢ قيد الإنجاز</text><text x="760" y="402">٠ مجدولة</text><text x="505" y="402">٠ دقيقة</text><text x="250" y="402">٠ تدوينات</text>
     </g>
     <rect x="88" y="466" width="1024" height="70" rx="18" fill="#eee9ff"/>
     <text x="1058" y="509" text-anchor="start" fill="#7354e8" font-size="18" font-weight="700">تذكير اليوم</text>

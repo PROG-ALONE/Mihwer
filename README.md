@@ -10,33 +10,33 @@
 
 </div>
 
-## التجربة في أربع لقطات حقيقية
+## التجربة في أربع صور تفاعلية ببيانات حقيقية
 
-هذه لقطات مباشرة من التطبيق بنمط سطح المكتب العريض، وتعرض التبويبات الرئيسية كما تظهر على شاشة الحاسوب.
+هذه صور SVG تفاعلية بنمط سطح المكتب العريض، مبنية على أرقام حقيقية من بيانات التطبيق الحالية. اضغط على أي صورة لفتحها بالحجم الكامل.
 
 <table align="center" cellpadding="18" cellspacing="0">
   <tr>
     <td align="center" valign="top">
       <strong>اليوم</strong><br>
       <sub>ملخص سريع وإحصائيات واختصارات</sub><br><br>
-      <a href="./assets/readme/today-real.png?v=3"><img src="./assets/readme/today-real.png?v=3" width="520" alt="لوحة اليوم على الحاسوب"></a>
+      <a href="./assets/readme/today-new.svg?v=2"><img src="./assets/readme/today-new.svg?v=2" width="520" alt="لوحة اليوم التفاعلية"></a>
     </td>
     <td align="center" valign="top">
       <strong>الأسبوع</strong><br>
       <sub>ألوان الأيام ونسبة إنجاز الأسبوع</sub><br><br>
-      <a href="./assets/readme/week-real.png?v=3"><img src="./assets/readme/week-real.png?v=3" width="520" alt="لوحة الأسبوع على الحاسوب"></a>
+      <a href="./assets/readme/week-new.svg?v=2"><img src="./assets/readme/week-new.svg?v=2" width="520" alt="لوحة الأسبوع التفاعلية"></a>
     </td>
   </tr>
   <tr>
     <td align="center" valign="top">
       <strong>الشهر</strong><br>
       <sub>شبكة النشاط وتدرج الإنجاز اليومي</sub><br><br>
-      <a href="./assets/readme/month-real.png?v=3"><img src="./assets/readme/month-real.png?v=3" width="520" alt="لوحة الشهر على الحاسوب"></a>
+      <a href="./assets/readme/month-new.svg?v=2"><img src="./assets/readme/month-new.svg?v=2" width="520" alt="لوحة الشهر التفاعلية"></a>
     </td>
     <td align="center" valign="top">
       <strong>السنة</strong><br>
       <sub>نظرة هادئة على الأشهر والنشاط</sub><br><br>
-      <a href="./assets/readme/year-real.png?v=3"><img src="./assets/readme/year-real.png?v=3" width="520" alt="لوحة السنة على الحاسوب"></a>
+      <a href="./assets/readme/year-new.svg?v=2"><img src="./assets/readme/year-new.svg?v=2" width="520" alt="لوحة السنة التفاعلية"></a>
     </td>
   </tr>
 </table>
