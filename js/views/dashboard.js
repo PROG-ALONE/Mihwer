@@ -325,6 +325,13 @@ function progressTone(percent) {
   return "progress-none";
 }
 
+function dailyProgress(metrics) {
+  const total = metrics.planned + metrics.completed + metrics.habitScheduled;
+  return total
+    ? Math.round((metrics.completed + metrics.habitCompleted) / total * 100)
+    : 0;
+}
+
 function renderWeekStrip(date, context = "اختر يوماً") {
   const sunday = localDate(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
   const days = Array.from({ length: 7 }, (_item, index) => {
@@ -333,9 +340,10 @@ function renderWeekStrip(date, context = "اختر يوماً") {
     const selected = value === selectedDate;
     const metrics = metricsForDate(value);
     const complete = metrics.planned + metrics.completed > 0 && metrics.taskProgress === 100;
-    const tone = progressTone(metrics.taskProgress);
+    const progress = dailyProgress(metrics);
+    const tone = progressTone(progress);
     const today = value === localDateString();
-    return `<button class="today-week-day ${tone}${today ? " is-today" : ""}${selected ? " is-selected" : ""}${complete ? " is-task-complete" : ""}" type="button" data-select-day="${value}" style="--day-progress:${metrics.taskProgress}%" aria-pressed="${selected}" aria-label="${escapeHtml(formatDate(value))}">
+    return `<button class="today-week-day ${tone}${today ? " is-today" : ""}${selected ? " is-selected" : ""}${complete ? " is-task-complete" : ""}" type="button" data-select-day="${value}" style="--day-progress:${progress}%" aria-pressed="${selected}" aria-label="${escapeHtml(formatDate(value))}">
       <span>${WEEKDAY_SHORT_NAMES[day.getDay()]}</span><strong>${day.getDate()}</strong>
     </button>`;
   }).join("");
@@ -427,9 +435,10 @@ function dayCalendar(date) {
     const selected = selectedDate === dateValue;
     const hasActivity = metrics.planned + metrics.completed + metrics.habitCompleted + metrics.focusMinutes > 0;
     const complete = metrics.planned + metrics.completed > 0 && metrics.taskProgress === 100;
-    const tone = progressTone(metrics.taskProgress);
+    const progress = dailyProgress(metrics);
+    const tone = progressTone(progress);
     const today = dateValue === localDateString();
-    return `<button class="period-day-cell ${tone}${today ? " is-today" : ""}${selected ? " is-selected" : ""}${hasActivity ? " has-activity" : ""}${complete ? " is-task-complete" : ""}" type="button" data-select-day="${dateValue}" style="--day-progress:${metrics.taskProgress}%" aria-label="${escapeHtml(formatDate(dateValue))}: ${metrics.planned} مهام، ${metrics.habitCompleted} عادات مكتملة">
+    return `<button class="period-day-cell ${tone}${today ? " is-today" : ""}${selected ? " is-selected" : ""}${hasActivity ? " has-activity" : ""}${complete ? " is-task-complete" : ""}" type="button" data-select-day="${dateValue}" style="--day-progress:${progress}%" aria-label="${escapeHtml(formatDate(dateValue))}: ${metrics.planned} مهام، ${metrics.habitCompleted} عادات مكتملة">
       <span>${day}</span><small>${metrics.planned + metrics.completed || ""}</small>
     </button>`;
   }).join("");
@@ -516,9 +525,10 @@ function renderMonthOverview(date) {
     const day = metricsForDate(value);
     const total = day.completed + day.habitCompleted + day.planned;
     const complete = day.planned + day.completed > 0 && day.taskProgress === 100;
-    const tone = progressTone(day.taskProgress);
+    const progress = dailyProgress(day);
+    const tone = progressTone(progress);
     const today = value === localDateString();
-    days.push(`<button class="period-activity-day ${tone}${today ? " is-today" : ""}${total ? " has-activity" : ""}${complete ? " is-task-complete" : ""}${value === selectedDate ? " is-selected" : ""}" type="button" data-select-day="${value}" aria-label="${escapeHtml(formatDate(value))}"><span>${cursor.getDate()}</span><i style="--day-progress:${day.taskProgress}%"></i></button>`);
+    days.push(`<button class="period-activity-day ${tone}${today ? " is-today" : ""}${total ? " has-activity" : ""}${complete ? " is-task-complete" : ""}${value === selectedDate ? " is-selected" : ""}" type="button" data-select-day="${value}" aria-label="${escapeHtml(formatDate(value))}"><span>${cursor.getDate()}</span><i style="--day-progress:${progress}%"></i></button>`);
     cursor.setDate(cursor.getDate() + 1);
   }
   return `<section class="period-long-overview" aria-label="ملخص الشهر">

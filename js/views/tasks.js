@@ -274,7 +274,6 @@ function render() {
           </details>
           <div class="dialog-actions">
             <a class="button button-secondary" id="task-focus-action" href="#/focus">ابدأ التركيز</a>
-            <button class="button button-secondary" type="button" data-action="delete-current-task">حذف المهمة</button>
             <button class="button button-primary" type="submit">حفظ التعديلات</button>
           </div>
         </form>
@@ -366,10 +365,68 @@ async function toggleTask(task) {
   }
 }
 
+async function deleteTask(task) {
+  await remove("tasks", task.id);
+  expandedTaskSubtasks.delete(task.id);
+  expandedTaskDetails.delete(task.id);
+  setStatus("حُذفت المهمة.");
+}
+
 function bindEvents(app) {
   eventController?.abort();
   eventController = new AbortController();
   const { signal } = eventController;
+  let swipeState = null;
+  let suppressClickUntil = 0;
+
+  app.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "mouse" || event.target.closest("a, input, label, details, summary, button")) return;
+    const card = event.target.closest(".task-card[data-task-id]");
+    if (!card) return;
+    swipeState = { card, startX: event.clientX, startY: event.clientY, moved: false };
+    card.classList.add("is-swipe-ready");
+  }, { signal });
+
+  app.addEventListener("pointermove", (event) => {
+    if (!swipeState) return;
+    const deltaX = event.clientX - swipeState.startX;
+    const deltaY = event.clientY - swipeState.startY;
+    if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
+      swipeState = null;
+      return;
+    }
+    if (Math.abs(deltaX) < 8) return;
+    swipeState.moved = true;
+    const distance = Math.max(-150, Math.min(150, deltaX));
+    swipeState.card.style.transform = `translateX(${distance}px)`;
+    swipeState.card.classList.toggle("is-swipe-delete", Math.abs(distance) >= 90);
+    event.preventDefault();
+  }, { signal, passive: false });
+
+  app.addEventListener("pointerup", async () => {
+    if (!swipeState) return;
+    const { card, moved } = swipeState;
+    const shouldDelete = card.classList.contains("is-swipe-delete");
+    const task = records.tasks.find((item) => item.id === card.dataset.taskId);
+    swipeState = null;
+    if (moved) suppressClickUntil = Date.now() + 700;
+    card.classList.remove("is-swipe-ready", "is-swipe-delete");
+    card.style.transform = "";
+    if (!moved || !shouldDelete || !task || !window.confirm(`هل تريد حذف «${task.title}»؟`)) return;
+    try {
+      await deleteTask(task);
+    } catch (error) {
+      console.error("تعذّر حذف المهمة بالسحب:", error);
+      setStatus(error.message, true);
+    }
+  }, { signal });
+
+  app.addEventListener("pointercancel", () => {
+    if (!swipeState) return;
+    swipeState.card.classList.remove("is-swipe-ready", "is-swipe-delete");
+    swipeState.card.style.transform = "";
+    swipeState = null;
+  }, { signal });
 
   app.querySelector("[data-task-search]")?.addEventListener("input", (event) => {
     taskQuery = event.currentTarget.value;
@@ -452,6 +509,7 @@ function bindEvents(app) {
   }, { signal });
 
   app.addEventListener("click", async (event) => {
+    if (Date.now() < suppressClickUntil) return;
     const card = event.target.closest(".task-card[data-task-id]");
     const button = event.target.closest("[data-action], [data-layout]");
     if (!button && card && !event.target.closest("a, input, label, details, summary, button")) {
@@ -574,19 +632,6 @@ function bindEvents(app) {
     if (button.dataset.action === "close-editor") {
       app.querySelector("#task-dialog")?.close();
       return;
-    }
-    if (button.dataset.action === "delete-current-task") {
-      const taskId = app.querySelector("#task-editor-form")?.elements.id.value;
-      const task = records.tasks.find((item) => item.id === taskId);
-      if (!task || !window.confirm(`هل تريد حذف «${task.title}»؟`)) return;
-      try {
-        await remove("tasks", task.id);
-        expandedTaskSubtasks.delete(task.id);
-        setStatus("حُذفت المهمة.");
-      } catch (error) {
-        console.error("تعذّر حذف المهمة:", error);
-        setStatus(error.message, true);
-      }
     }
   }, { signal });
 
