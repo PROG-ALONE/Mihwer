@@ -21,7 +21,7 @@
 ولرؤية الوظيفة داخل بعض الشاشات، تعرض البطاقات التالية ملخص اليوم وقائمة المهام ولوحة التقدم بشكل متحرك:
 
 <div align="center">
-  <img src="./assets/readme/tab-previews-animated.svg?v=1" width="1000" alt="بطاقات متحركة توضح تبويبات اليوم والمهام وتقدّمي">
+  <img src="./assets/readme/tab-previews-animated.svg?v=2" width="1000" alt="بطاقات متحركة توضح تبويبات اليوم والمهام وتقدّمي">
 </div>
 
 ## بياناتك
