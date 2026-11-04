@@ -12175,6 +12175,26 @@ details.objective-card .goal-progress-line {
   background: color-mix(in srgb, var(--day-tone) 22%, var(--color-surface));
 }
 
+.today-week-day.progress-complete.is-selected,
+.period-day-cell.progress-complete.is-selected,
+.period-activity-day.progress-complete.is-selected,
+.period-year-card.progress-complete.is-selected {
+  color: #fff;
+  border-color: var(--color-success);
+  background: var(--color-success);
+  background-image: none;
+}
+
+.period-week-overview .today-week-picker--overview .today-week-day.progress-complete.is-selected {
+  background: var(--color-success) !important;
+  background-image: none !important;
+}
+
+.today-week-day.progress-complete.is-selected > span,
+.today-week-day.progress-complete.is-selected > strong {
+  color: #fff;
+}
+
 .period-activity-day.progress-low > i,
 .period-year-card.progress-low > i {
   background: linear-gradient(90deg, #e2a04b var(--day-progress, var(--month-progress)), var(--color-surface-muted) var(--day-progress, var(--month-progress)));
