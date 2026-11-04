@@ -9,7 +9,7 @@ import { mountReportsView, unmountReportsView } from "./views/reports.js";
 import { mountTasksView, unmountTasksView } from "./views/tasks.js";
 import { bindSettingsActions, checkBackupReminder } from "./views/settings.js";
 import { showToast } from "./utils/notifications.js";
-import { mountPeriodDashboard } from "./views/dashboard.js?v=102";
+import { mountPeriodDashboard } from "./views/dashboard.js?v=103";
 
 const app = document.querySelector("#app");
 const navigation = document.querySelector("#primary-navigation");

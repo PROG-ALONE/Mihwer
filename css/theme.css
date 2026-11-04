@@ -12107,6 +12107,75 @@ details.objective-card .goal-progress-line {
   background: color-mix(in srgb, var(--color-accent) 15%, var(--color-surface));
 }
 
+.today-week-day.progress-low,
+.period-day-cell.progress-low,
+.period-activity-day.progress-low,
+.period-year-card.progress-low {
+  --day-tone: #e2a04b;
+  border-color: color-mix(in srgb, var(--day-tone) 45%, var(--color-border));
+  background: color-mix(in srgb, var(--day-tone) 12%, var(--color-surface));
+}
+
+.today-week-day.progress-medium,
+.period-day-cell.progress-medium,
+.period-activity-day.progress-medium,
+.period-year-card.progress-medium {
+  --day-tone: #5da7d9;
+  border-color: color-mix(in srgb, var(--day-tone) 48%, var(--color-border));
+  background: color-mix(in srgb, var(--day-tone) 14%, var(--color-surface));
+}
+
+.today-week-day.progress-high,
+.period-day-cell.progress-high,
+.period-activity-day.progress-high,
+.period-year-card.progress-high {
+  --day-tone: #48ad91;
+  border-color: color-mix(in srgb, var(--day-tone) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--day-tone) 16%, var(--color-surface));
+}
+
+.today-week-day.progress-complete,
+.period-day-cell.progress-complete,
+.period-activity-day.progress-complete,
+.period-year-card.progress-complete {
+  --day-tone: var(--color-success);
+  border-color: var(--day-tone);
+  background: color-mix(in srgb, var(--day-tone) 22%, var(--color-surface));
+}
+
+.period-activity-day.progress-low > i,
+.period-year-card.progress-low > i {
+  background: linear-gradient(90deg, #e2a04b var(--day-progress, var(--month-progress)), var(--color-surface-muted) var(--day-progress, var(--month-progress)));
+}
+
+.period-activity-day.progress-medium > i,
+.period-year-card.progress-medium > i {
+  background: linear-gradient(90deg, #5da7d9 var(--day-progress, var(--month-progress)), var(--color-surface-muted) var(--day-progress, var(--month-progress)));
+}
+
+.period-activity-day.progress-high > i,
+.period-year-card.progress-high > i {
+  background: linear-gradient(90deg, #48ad91 var(--day-progress, var(--month-progress)), var(--color-surface-muted) var(--day-progress, var(--month-progress)));
+}
+
+.period-activity-day.progress-complete > i,
+.period-year-card.progress-complete > i {
+  background: var(--color-success);
+}
+
+.today-week-day.is-today,
+.period-day-cell.is-today,
+.period-activity-day.is-today {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 14%, transparent);
+}
+
+.period-year-card.is-current-month {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 @media (max-width: 520px) {
   .period-dashboard--today {
     padding: 12px;
