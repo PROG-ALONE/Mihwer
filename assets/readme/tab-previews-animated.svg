@@ -9,16 +9,13 @@
   <g font-family="Tahoma,Arial,sans-serif" direction="rtl">
     <text x="1120" y="46" text-anchor="start" fill="#6d52da" font-size="17" font-weight="700">داخل التبويبات</text>
     <text x="1120" y="77" text-anchor="start" fill="#24213a" font-size="27" font-weight="800">كل شاشة تخدم خطوة واحدة بوضوح</text>
-    <text x="960" y="104" text-anchor="middle" fill="#7354e8" font-size="24" font-weight="800">٦٧٪<animate attributeName="opacity" values=".5;1;.5" dur="2.4s" repeatCount="indefinite"/></text>
-    <text x="600" y="104" text-anchor="middle" fill="#b57913" font-size="24" font-weight="800">٤٠ مهمة<animate attributeName="opacity" values=".5;1;.5" dur="2.4s" begin=".3s" repeatCount="indefinite"/></text>
-    <text x="240" y="104" text-anchor="middle" fill="#249b78" font-size="24" font-weight="800">٥٧٪<animate attributeName="opacity" values=".5;1;.5" dur="2.4s" begin=".6s" repeatCount="indefinite"/></text>
-
     <g filter="url(#shadow)">
       <g>
         <rect x="790" y="110" width="340" height="230" rx="22" fill="#fff" stroke="#cfc3fb" stroke-width="2"/>
         <rect x="790" y="110" width="340" height="8" rx="4" fill="#7354e8"/>
         <text x="1088" y="150" text-anchor="start" fill="#7354e8" font-size="19" font-weight="800">اليوم</text>
         <text x="1088" y="177" text-anchor="start" fill="#79758f" font-size="13">إيقاعك واضح الآن</text>
+        <text x="842" y="219" fill="#7354e8" font-size="34" font-weight="800">٦٧٪<animate attributeName="opacity" values=".5;1;.5" dur="2.4s" repeatCount="indefinite"/></text>
         <text x="1088" y="211" text-anchor="start" fill="#24213a" font-size="15" font-weight="700">إنجاز اليوم</text>
         <rect x="842" y="235" width="230" height="11" rx="5" fill="#eee9ff"/>
         <rect x="842" y="235" width="150" height="11" rx="5" fill="#7354e8"><animate attributeName="width" values="110;185;110" dur="3s" repeatCount="indefinite"/></rect>
@@ -30,7 +27,7 @@
         <rect x="430" y="110" width="340" height="230" rx="22" fill="#fff" stroke="#efd6a4" stroke-width="2"/>
         <rect x="430" y="110" width="340" height="8" rx="4" fill="#d89b2b"/>
         <text x="728" y="150" text-anchor="start" fill="#b57913" font-size="19" font-weight="800">المهام</text>
-        <text x="728" y="177" text-anchor="start" fill="#79758f" font-size="13">نفّذ الأهم أولًا</text>
+        <text x="728" y="177" text-anchor="start" fill="#79758f" font-size="13">٤٠ مهمة · نفّذ الأهم أولًا</text>
         <g font-size="14">
           <rect x="465" y="198" width="270" height="34" rx="11" fill="#fff8e9"/><circle cx="490" cy="215" r="8" fill="#d89b2b"/><text x="515" y="220" fill="#24213a">إنهاء المهمة الأساسية</text>
           <rect x="465" y="243" width="270" height="34" rx="11" fill="#eef9f5"/><circle cx="490" cy="260" r="8" fill="#249b78"/><text x="515" y="265" fill="#24213a">جلسة تعلم قصيرة</text>
@@ -45,6 +42,7 @@
         <text x="368" y="150" text-anchor="start" fill="#18785d" font-size="19" font-weight="800">تقدّمي</text>
         <text x="368" y="177" text-anchor="start" fill="#79758f" font-size="13">افهم الاتجاه بالأرقام</text>
         <text x="122" y="224" fill="#24213a" font-size="14" font-weight="700">الأسبوع</text>
+        <text x="122" y="268" fill="#249b78" font-size="34" font-weight="800">٥٧٪<animate attributeName="opacity" values=".5;1;.5" dur="2.4s" begin=".4s" repeatCount="indefinite"/></text>
         <g>
           <rect x="245" y="294" width="28" height="20" rx="5" fill="#d9534f"><animate attributeName="height" values="20;34;20" dur="2.5s" repeatCount="indefinite"/></rect>
           <rect x="282" y="278" width="28" height="36" rx="5" fill="#d89b2b"><animate attributeName="height" values="36;22;36" dur="2.5s" begin=".2s" repeatCount="indefinite"/></rect>
