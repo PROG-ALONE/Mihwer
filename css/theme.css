@@ -12050,3 +12050,90 @@ details.objective-card .goal-progress-line {
   min-width: 0;
   min-height: 66px;
 }
+
+.period-day-cell.is-task-complete,
+.period-activity-day.is-task-complete,
+.period-year-card.is-task-complete {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
+}
+
+.period-day-cell.is-task-complete {
+  color: color-mix(in srgb, var(--color-accent) 70%, var(--color-text));
+}
+
+.period-activity-day.is-task-complete > i,
+.period-year-card.is-task-complete > i {
+  background: var(--color-accent);
+}
+
+.today-week-day.is-task-complete {
+  border-color: var(--color-accent);
+  color: color-mix(in srgb, var(--color-accent) 75%, var(--color-text));
+  background: color-mix(in srgb, var(--color-accent) 15%, var(--color-surface));
+}
+
+@media (max-width: 520px) {
+  .period-dashboard--today {
+    padding: 12px;
+  }
+
+  .today-calm-hero,
+  .period-progress-hero {
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .today-calm-hero h3,
+  .period-progress-copy h3 {
+    font-size: clamp(1.05rem, 5vw, 1.35rem);
+  }
+
+  .today-calm-hero > div:first-child > span,
+  .period-progress-copy > span {
+    display: block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    font-size: .72rem;
+  }
+
+  .today-calm-stats,
+  .period-calm-stats {
+    gap: 6px;
+  }
+
+  .today-calm-stat,
+  .period-summary-card {
+    min-width: 0;
+    padding: 9px;
+  }
+
+  .today-calm-stat > div,
+  .period-summary-card small {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .today-calm-stat > div span,
+  .period-summary-card small {
+    white-space: normal;
+    line-height: 1.35;
+  }
+
+  .today-calm-stat b {
+    font-size: 1.1rem;
+  }
+
+  .period-week-overview .today-week-day {
+    min-height: 58px;
+    font-size: .7rem;
+  }
+
+  .period-day-cell {
+    min-height: 40px;
+  }
+
+  .task-card-summary .task-title {
+    overflow-wrap: anywhere;
+  }
+}

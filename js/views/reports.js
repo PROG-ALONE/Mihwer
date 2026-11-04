@@ -56,7 +56,9 @@ function dateRange() {
 }
 
 function inRange(value, start, end) {
-  const date = String(value ?? "").slice(0, 10);
+  const text = String(value ?? "");
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(text) ? null : new Date(text);
+  const date = parsed && !Number.isNaN(parsed.getTime()) ? localDateString(parsed) : text.slice(0, 10);
   return date >= start && date <= end;
 }
 

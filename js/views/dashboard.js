@@ -62,8 +62,39 @@ function localDate(year, month = 0, day = 1) {
 }
 
 function dateWithin(value, start, end) {
-  const date = String(value ?? "").slice(0, 10);
+  const date = localDatePart(value);
   return date >= start && date <= end;
+}
+
+function localDatePart(value) {
+  const text = String(value ?? "");
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+  const parsed = new Date(text);
+  return Number.isNaN(parsed.getTime()) ? text.slice(0, 10) : localDateString(parsed);
+}
+
+function taskDateMatches(value, date) {
+  return localDatePart(value) === date;
+}
+
+function isTaskPlannedOn(task, date) {
+  return task.status !== "done" && (taskDateMatches(task.scheduled, date) || taskDateMatches(task.due, date));
+}
+
+function isTaskCompletedOn(task, date) {
+  if (task.status !== "done") return false;
+  if (task.completedAt) return taskDateMatches(task.completedAt, date);
+  return taskDateMatches(task.scheduled, date) || taskDateMatches(task.due, date);
+}
+
+function taskIsPlannedInRange(task, start, end) {
+  return task.status !== "done" && (dateWithin(task.scheduled, start, end) || dateWithin(task.due, start, end));
+}
+
+function taskIsCompletedInRange(task, start, end) {
+  if (task.status !== "done") return false;
+  if (task.completedAt) return dateWithin(task.completedAt, start, end);
+  return dateWithin(task.scheduled, start, end) || dateWithin(task.due, start, end);
 }
 
 function periodBounds(mode = periodMode, date = currentDate()) {
@@ -150,16 +181,17 @@ function habitTotals(start, end) {
 }
 
 function metricsForDate(date) {
-  const planned = records.tasks.filter((task) =>
-    task.status !== "done" && (task.scheduled === date || task.due === date));
-  const completedTasks = records.tasks.filter((task) =>
-    task.status === "done" && (task.completedAt?.slice(0, 10) === date || task.scheduled === date || task.due === date));
+  const planned = records.tasks.filter((task) => isTaskPlannedOn(task, date));
+  const completedTasks = records.tasks.filter((task) => isTaskCompletedOn(task, date));
   const habits = records.habits.filter((habit) => !habit.archived && isHabitScheduled(habit, date));
   const completedHabits = habits.filter((habit) => dayProgress(habit, date).complete).length;
   const focusMinutes = completedFocusMinutes(date, date);
   return {
     planned: planned.length,
     completed: completedTasks.length,
+    taskProgress: planned.length + completedTasks.length
+      ? Math.round(completedTasks.length / (planned.length + completedTasks.length) * 100)
+      : 0,
     habitScheduled: habits.length,
     habitCompleted: completedHabits,
     focusMinutes,
@@ -169,11 +201,8 @@ function metricsForDate(date) {
 
 function periodMetrics() {
   const { start, end } = periodBounds();
-  const plannedTasks = records.tasks.filter((task) =>
-    task.status !== "done" && (dateWithin(task.scheduled, start, end) || dateWithin(task.due, start, end)));
-  const completedTasks = records.tasks.filter((task) =>
-    task.status === "done" && (dateWithin(task.completedAt, start, end) ||
-      (!task.completedAt && (dateWithin(task.scheduled, start, end) || dateWithin(task.due, start, end)))));
+  const plannedTasks = records.tasks.filter((task) => taskIsPlannedInRange(task, start, end));
+  const completedTasks = records.tasks.filter((task) => taskIsCompletedInRange(task, start, end));
   const habits = habitTotals(start, end);
   const focusMinutes = completedFocusMinutes(start, end);
   const journalEntries = records.journal.filter((entry) => dateWithin(entry.date, start, end)).length;
@@ -231,10 +260,8 @@ function periodSummaryCards(metrics) {
 
 function renderDayDetails(date) {
   const metrics = metricsForDate(date);
-  const planned = records.tasks.filter((task) =>
-    task.status !== "done" && (task.scheduled === date || task.due === date));
-  const completed = records.tasks.filter((task) =>
-    task.status === "done" && (task.completedAt?.slice(0, 10) === date || task.scheduled === date || task.due === date));
+  const planned = records.tasks.filter((task) => isTaskPlannedOn(task, date));
+  const completed = records.tasks.filter((task) => isTaskCompletedOn(task, date));
   const focusSessions = records.sessions.filter((session) =>
     session.type !== "break" && dateWithin(session.start, date, date));
   const journal = records.journal.find((entry) => entry.date === date);
@@ -296,7 +323,9 @@ function renderWeekStrip(date, context = "اختر يوماً") {
     const day = localDate(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + index);
     const value = dateString(day);
     const selected = value === selectedDate;
-    return `<button class="today-week-day${selected ? " is-selected" : ""}" type="button" data-select-day="${value}" aria-pressed="${selected}" aria-label="${escapeHtml(formatDate(value))}">
+    const metrics = metricsForDate(value);
+    const complete = metrics.planned + metrics.completed > 0 && metrics.taskProgress === 100;
+    return `<button class="today-week-day${selected ? " is-selected" : ""}${complete ? " is-task-complete" : ""}" type="button" data-select-day="${value}" style="--day-progress:${metrics.taskProgress}%" aria-pressed="${selected}" aria-label="${escapeHtml(formatDate(value))}">
       <span>${WEEKDAY_SHORT_NAMES[day.getDay()]}</span><strong>${day.getDate()}</strong>
     </button>`;
   }).join("");
@@ -387,7 +416,8 @@ function dayCalendar(date) {
     const metrics = metricsForDate(dateValue);
     const selected = selectedDate === dateValue;
     const hasActivity = metrics.planned + metrics.completed + metrics.habitCompleted + metrics.focusMinutes > 0;
-    return `<button class="period-day-cell${selected ? " is-selected" : ""}${hasActivity ? " has-activity" : ""}" type="button" data-select-day="${dateValue}" aria-label="${escapeHtml(formatDate(dateValue))}: ${metrics.planned} مهام، ${metrics.habitCompleted} عادات مكتملة">
+    const complete = metrics.planned + metrics.completed > 0 && metrics.taskProgress === 100;
+    return `<button class="period-day-cell${selected ? " is-selected" : ""}${hasActivity ? " has-activity" : ""}${complete ? " is-task-complete" : ""}" type="button" data-select-day="${dateValue}" style="--day-progress:${metrics.taskProgress}%" aria-label="${escapeHtml(formatDate(dateValue))}: ${metrics.planned} مهام، ${metrics.habitCompleted} عادات مكتملة">
       <span>${day}</span><small>${metrics.planned + metrics.completed || ""}</small>
     </button>`;
   }).join("");
@@ -411,10 +441,12 @@ function renderMonthGrid() {
 }
 
 function metricsForRange(start, end) {
-  const tasks = records.tasks.filter((task) =>
-    dateWithin(task.scheduled, start, end) || dateWithin(task.due, start, end) || dateWithin(task.completedAt, start, end));
+  const plannedTasks = records.tasks.filter((task) => taskIsPlannedInRange(task, start, end));
+  const completedTasks = records.tasks.filter((task) => taskIsCompletedInRange(task, start, end));
   return {
-    tasks: tasks.length,
+    tasks: plannedTasks.length + completedTasks.length,
+    plannedTasks: plannedTasks.length,
+    completedTasks: completedTasks.length,
     focusMinutes: completedFocusMinutes(start, end),
   };
 }
@@ -471,7 +503,8 @@ function renderMonthOverview(date) {
     const value = dateString(cursor);
     const day = metricsForDate(value);
     const total = day.completed + day.habitCompleted + day.planned;
-    days.push(`<button class="period-activity-day${total ? " has-activity" : ""}${value === selectedDate ? " is-selected" : ""}" type="button" data-select-day="${value}" aria-label="${escapeHtml(formatDate(value))}"><span>${cursor.getDate()}</span><i style="--day-progress:${Math.min(100, total * 25)}%"></i></button>`);
+    const complete = day.planned + day.completed > 0 && day.taskProgress === 100;
+    days.push(`<button class="period-activity-day${total ? " has-activity" : ""}${complete ? " is-task-complete" : ""}${value === selectedDate ? " is-selected" : ""}" type="button" data-select-day="${value}" aria-label="${escapeHtml(formatDate(value))}"><span>${cursor.getDate()}</span><i style="--day-progress:${day.taskProgress}%"></i></button>`);
     cursor.setDate(cursor.getDate() + 1);
   }
   return `<section class="period-long-overview" aria-label="ملخص الشهر">
@@ -491,9 +524,10 @@ function renderYearOverview(date) {
     const metrics = metricsForRange(start, end);
     const monthHabits = habitTotals(start, end);
     const total = metrics.tasks + monthHabits.scheduled;
-    const completed = monthHabits.completed;
+    const completed = metrics.completedTasks + monthHabits.completed;
     const percent = total ? Math.round(completed / total * 100) : 0;
-    return `<button class="period-year-card${month === date.getMonth() ? " is-selected" : ""}" type="button" data-select-month="${month}"><strong>${name}</strong><span>${metrics.tasks} عناصر</span><i style="--month-progress:${percent}%"></i><small>${percent}% نشاط</small></button>`;
+    const taskComplete = metrics.tasks > 0 && metrics.completedTasks === metrics.tasks;
+    return `<button class="period-year-card${month === date.getMonth() ? " is-selected" : ""}${taskComplete ? " is-task-complete" : ""}" type="button" data-select-month="${month}"><strong>${name}</strong><span>${metrics.tasks} عناصر</span><i style="--month-progress:${percent}%"></i><small>${percent}% نشاط</small></button>`;
   }).join("");
   return `<section class="period-long-overview" aria-label="ملخص السنة">
     <section class="period-year-hero"><div><p class="today-section-kicker">إيقاع ${year}</p><h3>سنتك في لمحة</h3><span>تابع الأشهر النشطة بدل تقويم طويل.</span></div><strong>${year}</strong></section>
