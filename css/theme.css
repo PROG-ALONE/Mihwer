@@ -7025,6 +7025,8 @@ details.objective-card > .objective-details-content {
 
 .report-stat-top > span:first-child {
   min-width: 0;
+  flex: 0 0 auto;
+  width: max-content;
   overflow: visible;
   white-space: nowrap;
   word-break: normal;
