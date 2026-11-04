@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 390" role="img" aria-labelledby="title description">
+  <title id="title">معاينة متحركة لتبويبات مِحوَر</title>
+  <desc id="description">ثلاث بطاقات توضح تبويبات اليوم والمهام وتقدّمي بطريقة متحركة.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f6f3ff"/><stop offset="1" stop-color="#e8e4fa"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#6552b2" flood-opacity=".16"/></filter>
+  </defs>
+  <rect width="1200" height="390" rx="28" fill="url(#background)"/>
+  <g font-family="Tahoma,Arial,sans-serif" direction="rtl">
+    <text x="1120" y="46" text-anchor="start" fill="#6d52da" font-size="17" font-weight="700">داخل التبويبات</text>
+    <text x="1120" y="77" text-anchor="start" fill="#24213a" font-size="27" font-weight="800">كل شاشة تخدم خطوة واحدة بوضوح</text>
+
+    <g filter="url(#shadow)">
+      <g>
+        <rect x="790" y="110" width="340" height="230" rx="22" fill="#fff" stroke="#cfc3fb" stroke-width="2"/>
+        <rect x="790" y="110" width="340" height="8" rx="4" fill="#7354e8"/>
+        <text x="1088" y="150" text-anchor="start" fill="#7354e8" font-size="19" font-weight="800">اليوم</text>
+        <text x="1088" y="177" text-anchor="start" fill="#79758f" font-size="13">إيقاعك واضح الآن</text>
+        <text x="842" y="212" fill="#7354e8" font-size="38" font-weight="800">٦٧٪<animate attributeName="opacity" values=".5;1;.5" dur="2.4s" repeatCount="indefinite"/></text>
+        <text x="1088" y="211" text-anchor="start" fill="#24213a" font-size="15" font-weight="700">إنجاز اليوم</text>
+        <rect x="842" y="235" width="230" height="11" rx="5" fill="#eee9ff"/>
+        <rect x="842" y="235" width="150" height="11" rx="5" fill="#7354e8"><animate attributeName="width" values="110;185;110" dur="3s" repeatCount="indefinite"/></rect>
+        <rect x="842" y="270" width="105" height="35" rx="12" fill="#e1f7f0"/><text x="894" y="293" text-anchor="middle" fill="#18785d" font-size="13">٣ مهام</text>
+        <rect x="960" y="270" width="105" height="35" rx="12" fill="#fff3d9"/><text x="1012" y="293" text-anchor="middle" fill="#a16b12" font-size="13">٣ عادات</text>
+      </g>
+
+      <g>
+        <rect x="430" y="110" width="340" height="230" rx="22" fill="#fff" stroke="#efd6a4" stroke-width="2"/>
+        <rect x="430" y="110" width="340" height="8" rx="4" fill="#d89b2b"/>
+        <text x="728" y="150" text-anchor="start" fill="#b57913" font-size="19" font-weight="800">المهام</text>
+        <text x="728" y="177" text-anchor="start" fill="#79758f" font-size="13">نفّذ الأهم أولًا</text>
+        <g font-size="14">
+          <rect x="465" y="198" width="270" height="34" rx="11" fill="#fff8e9"/><circle cx="490" cy="215" r="8" fill="#d89b2b"/><text x="515" y="220" fill="#24213a">إنهاء المهمة الأساسية</text>
+          <rect x="465" y="243" width="270" height="34" rx="11" fill="#eef9f5"/><circle cx="490" cy="260" r="8" fill="#249b78"/><text x="515" y="265" fill="#24213a">جلسة تعلم قصيرة</text>
+          <rect x="465" y="288" width="270" height="34" rx="11" fill="#fff0ef"/><circle cx="490" cy="305" r="8" fill="#d9534f"/><text x="515" y="310" fill="#24213a">مراجعة نهاية اليوم</text>
+        </g>
+        <circle cx="704" cy="215" r="8" fill="#d89b2b"><animate attributeName="opacity" values=".3;1;.3" dur="1.8s" repeatCount="indefinite"/></circle>
+      </g>
+
+      <g>
+        <rect x="70" y="110" width="340" height="230" rx="22" fill="#fff" stroke="#b8dacf" stroke-width="2"/>
+        <rect x="70" y="110" width="340" height="8" rx="4" fill="#249b78"/>
+        <text x="368" y="150" text-anchor="start" fill="#18785d" font-size="19" font-weight="800">تقدّمي</text>
+        <text x="368" y="177" text-anchor="start" fill="#79758f" font-size="13">افهم الاتجاه بالأرقام</text>
+        <text x="122" y="224" fill="#24213a" font-size="14" font-weight="700">الأسبوع</text>
+        <text x="122" y="268" fill="#249b78" font-size="38" font-weight="800">٥٧٪<animate attributeName="opacity" values=".5;1;.5" dur="2.4s" begin=".4s" repeatCount="indefinite"/></text>
+        <g>
+          <rect x="245" y="294" width="28" height="20" rx="5" fill="#d9534f"><animate attributeName="height" values="20;34;20" dur="2.5s" repeatCount="indefinite"/></rect>
+          <rect x="282" y="278" width="28" height="36" rx="5" fill="#d89b2b"><animate attributeName="height" values="36;22;36" dur="2.5s" begin=".2s" repeatCount="indefinite"/></rect>
+          <rect x="319" y="254" width="28" height="60" rx="5" fill="#249b78"><animate attributeName="height" values="60;72;60" dur="2.5s" begin=".4s" repeatCount="indefinite"/></rect>
+          <rect x="356" y="269" width="28" height="45" rx="5" fill="#7354e8"><animate attributeName="height" values="45;30;45" dur="2.5s" begin=".6s" repeatCount="indefinite"/></rect>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
