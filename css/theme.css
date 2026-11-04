@@ -12275,6 +12275,83 @@ details.objective-card .goal-progress-line {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 16%, transparent);
 }
 
+@media (hover: hover) {
+  .today-week-day,
+  .period-day-cell,
+  .period-activity-day,
+  .period-year-card {
+    transition: transform 180ms ease, filter 180ms ease, box-shadow 220ms ease;
+  }
+
+  .today-week-day:hover,
+  .period-day-cell:hover,
+  .period-activity-day:hover,
+  .period-year-card:hover {
+    position: relative;
+    z-index: 1;
+    filter: saturate(1.12);
+    transform: translateY(-4px) scale(1.04);
+    box-shadow: 0 10px 20px color-mix(in srgb, var(--day-tone, var(--color-primary)) 24%, transparent);
+  }
+
+  .period-activity-day:hover > i,
+  .period-year-card:hover > i {
+    transform: scaleX(1.1);
+  }
+
+  .period-progress-score,
+  .today-calm-score {
+    transition: transform 180ms ease, box-shadow 220ms ease;
+  }
+
+  .period-progress-score:hover,
+  .today-calm-score:hover {
+    transform: translateY(-3px);
+  }
+
+  .period-progress-score:hover strong,
+  .today-calm-score:hover strong,
+  .period-dashboard--today .today-calm-stat:hover > b,
+  .period-summary-card:hover .period-summary-value > b,
+  .period-detail-card:hover .period-detail-stat > strong,
+  .report-stat-card:hover .report-stat-value > strong {
+    animation: progress-number-pulse 520ms ease both;
+  }
+
+  .progress-track span,
+  .report-stat-track span,
+  .goal-progress-line span,
+  .key-result-progress span,
+  .subtask-progress span,
+  .task-day-progress-track span,
+  .period-progress-score > i,
+  .period-activity-day > i,
+  .period-year-card > i {
+    transition: transform 220ms ease, filter 220ms ease;
+    transform-origin: center;
+  }
+
+  .period-progress-score:hover > i,
+  .period-activity-day:hover > i,
+  .period-year-card:hover > i {
+    filter: brightness(1.12);
+    transform: scaleY(1.5);
+  }
+}
+
+@keyframes progress-number-pulse {
+  0% { transform: scale(.9); opacity: .55; }
+  55% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .period-dashboard *,
+  .page-content * {
+    animation: none !important;
+  }
+}
+
 @media (max-width: 520px) {
   .period-dashboard--today {
     padding: 12px;
