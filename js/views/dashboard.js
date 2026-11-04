@@ -43,6 +43,10 @@ function escapeHtml(value = "") {
   })[char]);
 }
 
+function formatCount(value) {
+  return String(value).replace(/\d/g, (digit) => "٠١٢٣٤٥٦٧٨٩"[Number(digit)]);
+}
+
 function currentDate() {
   return new Date(`${selectedDate}T12:00:00`);
 }
@@ -252,7 +256,7 @@ function periodSummaryCards(metrics) {
   return periodSummaryData(metrics).map((card) => `<article class="period-summary-card" data-tone="${card.tone}" style="--card-progress:${card.progress}%">
     <header><span class="period-summary-icon" aria-hidden="true">${card.icon}</span><strong>${card.title}</strong></header>
     <div class="period-summary-value period-summary-chart" role="progressbar" aria-label="${escapeHtml(card.title)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${card.progress}">
-      <div class="period-summary-chart-inner"><b data-count="${card.value}">٠</b><span>${card.suffix}</span></div>
+      <div class="period-summary-chart-inner"><b data-count="${card.value}">${formatCount(card.value)}</b><span>${card.suffix}</span></div>
     </div>
     <small>${card.hint}</small>
   </article>`).join("");
@@ -291,9 +295,9 @@ function renderDayDetails(date) {
     }).join("")}</ul>`
     : `<p class="period-empty">لا توجد جلسات تركيز مكتملة.</p>`;
   return `<div class="period-day-details">
-    <section class="period-detail-card detail-tone-tasks"><header><h3>المهام</h3><span class="period-detail-icon">✓</span></header><div class="period-detail-stat"><strong data-count="${metrics.completed}">٠</strong><span>مكتملة</span><em>${metrics.planned} متبقية</em></div>${taskList(planned, "لا توجد مهام مجدولة.")}<details class="period-completed-details"><summary>عرض المنجزة (${completed.length})</summary>${taskList(completed, "لا توجد مهام منجزة.")}</details></section>
-    <section class="period-detail-card detail-tone-focus"><header><h3>التركيز</h3><span class="period-detail-icon">◉</span></header><div class="period-detail-stat"><strong data-count="${metrics.focusMinutes}">٠</strong><span>دقيقة</span><em>${focusSessions.length} جلسات</em></div>${sessions}</section>
-    <section class="period-detail-card detail-tone-journal"><header><h3>اليوميات</h3><span class="period-detail-icon">▤</span></header><div class="period-detail-stat"><strong data-count="${metrics.journalEntries}">٠</strong><span>تدوينات</span><em>${journal ? "تم التسجيل" : "لم تسجل بعد"}</em></div>${journal
+    <section class="period-detail-card detail-tone-tasks"><header><h3>المهام</h3><span class="period-detail-icon">✓</span></header><div class="period-detail-stat"><strong data-count="${metrics.completed}">${formatCount(metrics.completed)}</strong><span>مكتملة</span><em>${formatCount(metrics.planned)} متبقية</em></div>${taskList(planned, "لا توجد مهام مجدولة.")}<details class="period-completed-details"><summary>عرض المنجزة (${formatCount(completed.length)})</summary>${taskList(completed, "لا توجد مهام منجزة.")}</details></section>
+    <section class="period-detail-card detail-tone-focus"><header><h3>التركيز</h3><span class="period-detail-icon">◉</span></header><div class="period-detail-stat"><strong data-count="${metrics.focusMinutes}">${formatCount(metrics.focusMinutes)}</strong><span>دقيقة</span><em>${formatCount(focusSessions.length)} جلسات</em></div>${sessions}</section>
+    <section class="period-detail-card detail-tone-journal"><header><h3>اليوميات</h3><span class="period-detail-icon">▤</span></header><div class="period-detail-stat"><strong data-count="${metrics.journalEntries}">${formatCount(metrics.journalEntries)}</strong><span>تدوينات</span><em>${journal ? "تم التسجيل" : "لم تسجل بعد"}</em></div>${journal
       ? `<a class="period-journal-entry" href="#/journal"><strong>${escapeHtml(journal.title || "تدوينة اليوم")}</strong><span>${escapeHtml(journal.highlight || journal.text || "تم تسجيل تدوينة لهذا اليوم.")}</span></a>`
       : `<p class="period-empty">لا توجد تدوينة لهذا اليوم.</p>`}</section>
   </div>`;
@@ -392,7 +396,7 @@ function calmStatCards(metrics, tones = ["tasks", "habits", "focus", "journal"])
     .map((card) => `<article class="today-calm-stat" data-tone="${card.tone}" style="--card-progress:${card.progress}%">
       <span class="today-calm-stat-icon" aria-hidden="true">${card.icon}</span>
       <div><strong>${card.title}</strong><span>${card.hint}</span></div>
-      <b data-count="${card.value}">٠</b><small>${card.suffix}</small><i aria-hidden="true"></i>
+      <b data-count="${card.value}">${formatCount(card.value)}</b><small>${card.suffix}</small><i aria-hidden="true"></i>
     </article>`).join("");
 }
 
