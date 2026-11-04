@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 390" role="img" aria-labelledby="title description">
+  <title id="title">النمط الحالي في مِحوَر</title>
+  <desc id="description">بطاقات متحركة توضّح ألوان الإنجاز ونسب التقدم والتفاعل.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#11101e"/><stop offset="1" stop-color="#25213b"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#3d2c75" flood-opacity=".18"/></filter>
+  </defs>
+  <rect width="1200" height="390" rx="30" fill="url(#background)"/>
+  <g font-family="Tahoma,Arial,sans-serif" direction="rtl">
+    <text x="1115" y="52" text-anchor="start" fill="#c6b8ff" font-size="18" font-weight="700">ما الجديد في النمط الحالي؟</text>
+    <text x="1115" y="89" text-anchor="start" fill="#f3f0ff" font-size="28" font-weight="800">تقدّم واضح، وتفاعل هادئ</text>
+    <g filter="url(#shadow)">
+      <g>
+        <rect x="70" y="130" width="250" height="190" rx="22" fill="#fff0ef"/>
+        <rect x="70" y="130" width="250" height="9" rx="4" fill="#d9534f"/>
+        <text x="285" y="178" text-anchor="start" fill="#24213a" font-size="19" font-weight="800">حتى ٤٩٪</text>
+        <text x="285" y="207" text-anchor="start" fill="#79758f" font-size="14">إنجاز يحتاج دفعة</text>
+        <rect x="105" y="250" width="180" height="10" rx="5" fill="#ffd7d4"/>
+        <rect x="105" y="250" width="62" height="10" rx="5" fill="#d9534f">
+          <animate attributeName="width" values="45;100;45" dur="3s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+      <g>
+        <rect x="350" y="130" width="250" height="190" rx="22" fill="#fff3d9"/>
+        <rect x="350" y="130" width="250" height="9" rx="4" fill="#d89b2b"/>
+        <text x="565" y="178" text-anchor="start" fill="#24213a" font-size="19" font-weight="800">٥٠٪ — ٧٥٪</text>
+        <text x="565" y="207" text-anchor="start" fill="#79758f" font-size="14">تقدم متوازن</text>
+        <rect x="385" y="250" width="180" height="10" rx="5" fill="#ffe5ae"/>
+        <rect x="385" y="250" width="112" height="10" rx="5" fill="#d89b2b">
+          <animate attributeName="width" values="90;145;90" dur="3s" begin=".35s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+      <g>
+        <rect x="630" y="130" width="250" height="190" rx="22" fill="#e1f7f0"/>
+        <rect x="630" y="130" width="250" height="9" rx="4" fill="#249b78"/>
+        <text x="845" y="178" text-anchor="start" fill="#24213a" font-size="19" font-weight="800">فوق ٧٥٪</text>
+        <text x="845" y="207" text-anchor="start" fill="#79758f" font-size="14">إنجاز مرتفع وواضح</text>
+        <rect x="665" y="250" width="180" height="10" rx="5" fill="#c9ecdf"/>
+        <rect x="665" y="250" width="155" height="10" rx="5" fill="#249b78">
+          <animate attributeName="width" values="135;180;135" dur="3s" begin=".7s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+      <g>
+        <rect x="910" y="130" width="220" height="190" rx="22" fill="#eee9ff"/>
+        <text x="1095" y="178" text-anchor="start" fill="#7354e8" font-size="19" font-weight="800">تفاعل</text>
+        <text x="1095" y="207" text-anchor="start" fill="#79758f" font-size="14">مرر على البطاقة</text>
+        <text x="1020" y="272" fill="#7354e8" font-size="42" font-weight="800">
+          ٦٤٪
+          <animate attributeName="opacity" values=".55;1;.55" dur="2.2s" repeatCount="indefinite"/>
+        </text>
+      </g>
+    </g>
+  </g>
+</svg>

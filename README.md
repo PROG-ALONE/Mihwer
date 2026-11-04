@@ -10,33 +10,33 @@
 
 </div>
 
-## التجربة في أربع لقطات حقيقية من الهاتف
+## التجربة في أربع لقطات حقيقية
 
-هذه لقطات مباشرة من التطبيق بعرض جوال، وليست رسومات توضيحية. رتبتها بحجم هادئ ومسافات واضحة حتى يمكن مشاهدة كل فترة دون ازدحام.
+هذه لقطات مباشرة من التطبيق بنمط سطح المكتب العريض، وتعرض التبويبات الرئيسية كما تظهر على شاشة الحاسوب.
 
 <table align="center" cellpadding="18" cellspacing="0">
   <tr>
     <td align="center" valign="top">
       <strong>اليوم</strong><br>
       <sub>ملخص سريع وإحصائيات واختصارات</sub><br><br>
-      <a href="./assets/readme/today-mobile.png?v=2"><img src="./assets/readme/today-mobile.png?v=2" width="250" alt="لوحة اليوم على الهاتف"></a>
+      <a href="./assets/readme/today-real.png?v=3"><img src="./assets/readme/today-real.png?v=3" width="520" alt="لوحة اليوم على الحاسوب"></a>
     </td>
     <td align="center" valign="top">
       <strong>الأسبوع</strong><br>
       <sub>ألوان الأيام ونسبة إنجاز الأسبوع</sub><br><br>
-      <a href="./assets/readme/week-mobile.png?v=2"><img src="./assets/readme/week-mobile.png?v=2" width="250" alt="لوحة الأسبوع على الهاتف"></a>
+      <a href="./assets/readme/week-real.png?v=3"><img src="./assets/readme/week-real.png?v=3" width="520" alt="لوحة الأسبوع على الحاسوب"></a>
     </td>
   </tr>
   <tr>
     <td align="center" valign="top">
       <strong>الشهر</strong><br>
       <sub>شبكة النشاط وتدرج الإنجاز اليومي</sub><br><br>
-      <a href="./assets/readme/month-mobile.png?v=2"><img src="./assets/readme/month-mobile.png?v=2" width="250" alt="لوحة الشهر على الهاتف"></a>
+      <a href="./assets/readme/month-real.png?v=3"><img src="./assets/readme/month-real.png?v=3" width="520" alt="لوحة الشهر على الحاسوب"></a>
     </td>
     <td align="center" valign="top">
       <strong>السنة</strong><br>
       <sub>نظرة هادئة على الأشهر والنشاط</sub><br><br>
-      <a href="./assets/readme/year-mobile.png?v=2"><img src="./assets/readme/year-mobile.png?v=2" width="250" alt="لوحة السنة على الهاتف"></a>
+      <a href="./assets/readme/year-real.png?v=3"><img src="./assets/readme/year-real.png?v=3" width="520" alt="لوحة السنة على الحاسوب"></a>
     </td>
   </tr>
 </table>
@@ -47,11 +47,27 @@
 
 ## ما الجديد في النمط الحالي؟
 
+<div align="center">
+  <img src="./assets/readme/new-style-animated.svg?v=1" width="900" alt="ألوان الإنجاز والتفاعل في النمط الحالي">
+</div>
+
 - **ألوان الإنجاز:** أحمر للنسب من ٠٪ إلى ٤٩٪، كهرماني من ٥٠٪ إلى ٧٥٪، وأخضر لما يتجاوز ٧٥٪.
 - **بطاقات الأيام:** لون الإنجاز يملأ البطاقة كاملة، مع إطار واضح لليوم الحالي.
 - **تفاعل هادئ:** ارتفاع خفيف للبطاقات، نبضة للأرقام، وإبراز لشريط النسبة عند المرور.
 - **تقدّم قابل للقراءة:** تظهر النسب والإحصائيات في لوحة اليوم والأسبوع والشهر والسنة وتبويب «تقدّمي».
 - **تصدير منظم:** التقارير قابلة للتصدير بصيغ CSV وJSON وExcel والطباعة.
+
+## التبويبات المهمة
+
+| التبويب | ماذا تفعل فيه؟ |
+|---|---|
+| **اليوم** | راجع ما يجب إنجازه الآن، نسبة اليوم، العادات، التركيز، واليوميات من شاشة واحدة. |
+| **المهام** | أضف المهام وحدد التاريخ والأولوية والموعد، وأنجزها أو احذفها بالسحب على الهاتف. |
+| **العادات** | أنشئ العادات اليومية وتابع السلاسل ونسبة الثبات دون خلطها مع المهام. |
+| **تقدّمي** | اقرأ الإحصائيات التفصيلية، راقب الفترات، واستخرج تقاريرك بصيغ متعددة. |
+| **التركيز** | ابدأ جلسة تركيز مرتبطة بمهمة وسجّل الوقت المنجز والاستراحات. |
+| **اليوميات** | دوّن ملاحظاتك وامتنانك ومراجعتك اليومية مع ربطها بتاريخ اليوم. |
+| **الإعدادات** | اختر المظهر، النسخ الاحتياطي، التصدير، وتفضيلات التطبيق. |
 
 ## بياناتك
 
