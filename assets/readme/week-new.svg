@@ -9,7 +9,7 @@
     <text x="1080" y="132" fill="#24213a" font-size="32" font-weight="800">أسبوعك كامل بشاشة واحدة</text>
     <rect x="84" y="166" width="1032" height="104" rx="22" fill="#fff" stroke="#d7ccfa" stroke-width="2"/>
     <text x="1038" y="207" fill="#79758f" font-size="15">إنجاز الأسبوع</text>
-    <text x="1038" y="247" fill="#7354e8" font-size="38" font-weight="800">٤٩٪<animate attributeName="opacity" values=".65;1;.65" dur="2.8s" repeatCount="indefinite"/></text>
+    <text x="1038" y="247" fill="#7354e8" font-size="38" font-weight="800">٥٧٪<animate attributeName="opacity" values=".65;1;.65" dur="2.8s" repeatCount="indefinite"/></text>
     <rect x="125" y="218" width="560" height="12" rx="6" fill="#f0edfa"/>
     <rect x="125" y="218" width="275" height="12" rx="6" fill="#d9534f"><animate attributeName="width" values="260;275;260" dur="3s" repeatCount="indefinite"/></rect>
     <text x="1080" y="318" fill="#24213a" font-size="20" font-weight="800">أيام الأسبوع</text>

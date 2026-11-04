@@ -7,7 +7,7 @@
     <rect x="54" y="44" width="1092" height="522" rx="28" fill="#f7f6fc"/>
     <text x="1080" y="94" fill="#7354e8" font-size="18" font-weight="700">نشاط الشهر</text>
     <text x="1080" y="136" fill="#24213a" font-size="32" font-weight="800">إيقاعك خلال الأيام</text>
-    <text x="120" y="112" fill="#79758f" font-size="18">نوفمبر ٢٠٢٦ · ٢٢ مهمة</text>
+    <text x="120" y="112" fill="#79758f" font-size="18">نوفمبر ٢٠٢٦ · ٢٥ مهمة</text>
     <g fill="#79758f" font-size="15" font-weight="700" text-anchor="middle"><text x="1030" y="190">الأحد</text><text x="885" y="190">الاثنين</text><text x="740" y="190">الثلاثاء</text><text x="595" y="190">الأربعاء</text><text x="450" y="190">الخميس</text><text x="305" y="190">الجمعة</text><text x="160" y="190">السبت</text></g>
     <g text-anchor="middle" font-size="20" font-weight="800">
       <g><rect x="970" y="215" width="120" height="75" rx="16" fill="#d9534f"/><text x="1030" y="248" fill="#fff">١</text><text x="1030" y="273" fill="#fff" font-size="14">٠٪</text></g>

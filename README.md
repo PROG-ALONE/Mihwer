@@ -50,6 +50,39 @@
 </table>
 </div>
 
+### الفترات والقيم المتحركة
+
+هذه اللقطات تحاكي شاشة الفترات نفسها، بينما تعرض البطاقات المتحركة تحتها القيمة والنسبة بتدرّج هادئ. القيم محدثة لتطابق بيانات العرض: اليوم **٦٧٪**، الأسبوع **٥٧٪**، الشهر **٢٥ مهمة**، والسنة **١٥ مهمة نشطة**.
+
+<div dir="rtl">
+<table align="center" cellpadding="18" cellspacing="0">
+  <tr>
+    <td align="center" valign="top">
+      <strong>اليوم</strong><br>
+      <a href="./assets/readme/ipad-day.png?v=1"><img src="./assets/readme/ipad-day.png?v=1" width="300" alt="لقطة iPad للفترة اليومية"></a><br>
+      <a href="./assets/readme/today-new.svg?v=3"><img src="./assets/readme/today-new.svg?v=3" width="420" alt="قيمة اليوم المتحركة"></a>
+    </td>
+    <td align="center" valign="top">
+      <strong>الأسبوع</strong><br>
+      <a href="./assets/readme/ipad-week.png?v=1"><img src="./assets/readme/ipad-week.png?v=1" width="300" alt="لقطة iPad للفترة الأسبوعية"></a><br>
+      <a href="./assets/readme/week-new.svg?v=3"><img src="./assets/readme/week-new.svg?v=3" width="420" alt="قيمة الأسبوع المتحركة"></a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top">
+      <strong>الشهر</strong><br>
+      <a href="./assets/readme/ipad-month.png?v=1"><img src="./assets/readme/ipad-month.png?v=1" width="300" alt="لقطة iPad للفترة الشهرية"></a><br>
+      <a href="./assets/readme/month-new.svg?v=3"><img src="./assets/readme/month-new.svg?v=3" width="420" alt="قيمة الشهر المتحركة"></a>
+    </td>
+    <td align="center" valign="top">
+      <strong>السنة</strong><br>
+      <a href="./assets/readme/ipad-year.png?v=1"><img src="./assets/readme/ipad-year.png?v=1" width="300" alt="لقطة iPad للفترة السنوية"></a><br>
+      <a href="./assets/readme/year-new.svg?v=3"><img src="./assets/readme/year-new.svg?v=3" width="420" alt="قيمة السنة المتحركة"></a>
+    </td>
+  </tr>
+</table>
+</div>
+
 [![أربع بطاقات تشرح إضافة المهمة ومتابعة اليوم والتسجيل والمراجعة](./assets/readme/how-to.svg?v=6)](./assets/readme/how-to.svg?v=6)
 
 [![بطاقات أقسام المهام والعادات والتركيز واليوميات والأهداف والتقدم](./assets/readme/sections.svg?v=6)](./assets/readme/sections.svg?v=6)

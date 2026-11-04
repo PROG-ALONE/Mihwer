@@ -18,7 +18,7 @@
     <text x="1058" y="203" text-anchor="start" fill="#7354e8" font-size="17" font-weight="700">ملخص اليوم</text>
     <text x="1058" y="246" text-anchor="start" fill="#24213a" font-size="30" font-weight="800">مساحة هادئة لتبدأ</text>
     <text x="1058" y="278" text-anchor="start" fill="#79758f" font-size="15">٣ مهام · ٠ عادات · ٠ دقيقة تركيز</text>
-    <text x="150" y="248" fill="#7354e8" font-size="60" font-weight="800">٦٠<tspan font-size="24">٪</tspan><animate attributeName="opacity" values=".65;1;.65" dur="2.8s" repeatCount="indefinite"/></text>
+    <text x="150" y="248" fill="#7354e8" font-size="60" font-weight="800">٦٧<tspan font-size="24">٪</tspan><animate attributeName="opacity" values=".65;1;.65" dur="2.8s" repeatCount="indefinite"/></text>
     <text x="150" y="278" fill="#79758f" font-size="14">إنجاز اليوم</text>
     <rect x="88" y="332" width="1024" height="104" rx="20" fill="#f0edfa"/>
     <g fill="#24213a" font-size="18" font-weight="700">
