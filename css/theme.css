@@ -2107,21 +2107,35 @@ button:disabled {
 
 .tasks-heading-add {
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: 52px;
+  height: 52px;
   place-items: center;
-  border: 1px solid var(--color-border);
+  border: 0;
   border-radius: 50%;
-  color: var(--color-primary);
-  background: var(--color-surface);
+  color: #fff;
+  background: linear-gradient(145deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 72%, #141a35));
   font: inherit;
-  font-size: 1.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--color-primary) 32%, transparent);
   cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
 }
 
 .tasks-heading-add:hover {
-  border-color: var(--color-primary);
-  background: var(--color-primary-soft);
+  filter: brightness(1.08);
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--color-primary) 42%, transparent);
+  transform: translateY(-2px);
+}
+
+.tasks-heading-add:active {
+  transform: translateY(1px) scale(.96);
+}
+
+.tasks-heading-add:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  outline-offset: 4px;
 }
 
 .tasks-overview {
@@ -9279,8 +9293,10 @@ body {
   }
 
   .tasks-heading-add {
-    padding-inline: 10px;
-    font-size: .72rem;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    font-size: 1.85rem;
   }
 
   .task-toolbar {

@@ -301,7 +301,7 @@ async function createTask(input, priorityOverride = null, dueDate = "", dueTime 
   if (focusDurationMin !== null && (!Number.isInteger(focusDurationMin) || focusDurationMin < 1 || focusDurationMin > 180)) {
     throw new Error("مدة التركيز يجب أن تكون بين دقيقة واحدة و3 ساعات.");
   }
-  const taskDate = dueDate || parsed.due || parsed.scheduled || (dueTime ? localDateString() : null);
+  const taskDate = dueDate || parsed.due || parsed.scheduled || localDateString();
   const task = {
     id: crypto.randomUUID(),
     title: parsed.title,

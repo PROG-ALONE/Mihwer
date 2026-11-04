@@ -1,4 +1,4 @@
-const CACHE_NAME = "mihwar-shell-v103";
+const CACHE_NAME = "mihwar-shell-v104";
 const APP_SHELL = [
   "./",
   "./index.html",
