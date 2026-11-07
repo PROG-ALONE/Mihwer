@@ -7,6 +7,7 @@ import { dayProgress } from "./habits.js";
 import { downloadCsv } from "../export/csv.js";
 import { downloadXlsx } from "../export/xlsx.js";
 import { printReport } from "../export/pdf.js";
+import { completedSubtaskCount, formatDuration, manualTaskMinutes, totalRecordedTaskMinutes } from "../utils/task-metrics.js";
 
 const DAY_MS = 86_400_000;
 const DATE_RANGES = {
@@ -93,7 +94,10 @@ function matchesFocusFilters(session) {
 function filteredTasks() {
   const { start, end } = dateRange();
   return records.tasks.filter((task) => {
-    const taskDates = [task.completedAt, task.due, task.scheduled, task.createdAt].filter(Boolean);
+    const subtaskDates = (Array.isArray(task.checklist) ? task.checklist : []).flatMap((item) =>
+      typeof item === "string" ? [] : (Array.isArray(item.completionLog) ? item.completionLog : [])
+        .filter((entry) => entry?.completed).map((entry) => entry.date));
+    const taskDates = [task.completedAt, task.due, task.scheduled, task.createdAt, ...subtaskDates].filter(Boolean);
     return taskDates.some((date) => inRange(date, start, end)) && matchesTaskFilters(task);
   });
 }
@@ -221,24 +225,30 @@ function reportSummary(tasks, start, end) {
 }
 
 function renderSummaryCards(sections, activityTotal) {
-  const stats = [
+  const primaryStats = [
     { label: "المهام", value: `${sections.tasks.metrics[1].value}/${sections.tasks.metrics[0].value}`, detail: `${sections.tasks.metrics[2].value} مفتوحة`, percent: sections.tasks.metrics[1].percent, tone: "primary" },
-    { label: "الأهداف والنتائج", value: sections.objectives.metrics[0].value, detail: `${sections.objectives.metrics[3].value} نتيجة رئيسية`, tone: "blue" },
+    { label: "المهام الفرعية", value: sections.tasks.metrics[5]?.value ?? "0", detail: "إنجازات محسوبة في يومها", tone: "blue" },
+    { label: "الوقت المسجّل", value: sections.tasks.metrics[3].value, detail: "وقت يدوي وجلسات تركيز", tone: "accent" },
     { label: "العادات", value: sections.habits.metrics[0].value, detail: `${sections.habits.metrics[3].value} ثبات`, percent: sections.habits.metrics[3].percent, tone: "gold" },
+  ];
+  const extraStats = [
+    { label: "الأهداف والنتائج", value: sections.objectives.metrics[0].value, detail: `${sections.objectives.metrics[3].value} نتيجة رئيسية`, tone: "blue" },
     { label: "التركيز", value: sections.focus.metrics[1].value, detail: `${sections.focus.metrics[0].value} جلسات`, tone: "accent" },
     { label: "اليوميات", value: sections.journal.metrics[0].value, detail: `${sections.journal.metrics[2].value} متوسط المزاج`, tone: "rose" },
     { label: "المراجعات", value: sections.reviews.metrics[0].value, detail: "مراجعات محفوظة", tone: "blue" },
     { label: "المشاريع", value: sections.projects.metrics[0].value, detail: `${sections.projects.metrics[1].value} نشطة`, tone: "primary" },
     { label: "النشاط", value: activityTotal, detail: "إنجازات وجلسات وعادات", tone: "accent" },
   ];
-  return `<section class="report-overview" aria-label="مؤشرات جميع الأقسام"><h3>مؤشرات جميع الأقسام</h3><div class="report-summary-grid">${stats.map((stat) => `
+  const renderStats = (stats) => stats.map((stat) => `
     <article class="report-stat-card tone-${stat.tone}${stat.label === "العادات" ? " has-ring" : ""}"${stat.label === "العادات" ? ` style="--report-progress:${stat.percent}%;"` : ""}>
       <div class="report-stat-top"><span>${stat.label}</span><span class="report-stat-dot" aria-hidden="true"></span></div>
       <div class="report-stat-value"><strong>${escapeHtml(stat.value)}</strong></div>
       ${stat.label === "العادات" ? `<div class="report-stat-ring" role="img" aria-label="الالتزام بالعادات ${stat.percent}%"><span>${stat.percent}%</span></div>` : ""}
       ${Number.isFinite(stat.percent) ? `<div class="report-stat-track" role="progressbar" aria-label="${stat.label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stat.percent}"><span style="width:${stat.percent}%"></span></div>` : ""}
       <p>${escapeHtml(stat.detail)}</p>
-    </article>`).join("")}</div></section>`;
+    </article>`).join("");
+  return `<section class="report-overview" aria-label="ملخص تقدّمي"><h3>ملخص تقدّمي</h3><div class="report-summary-grid">${renderStats(primaryStats)}</div>
+    <details class="report-extra-stats"><summary>مؤشرات إضافية</summary><div class="report-summary-grid">${renderStats(extraStats)}</div></details></section>`;
 }
 
 function renderActivityHeatmap(activity) {
@@ -321,7 +331,8 @@ function dailyCompletions(tasks, start, end) {
   const last = new Date(`${end}T12:00:00`);
   while (cursor <= last && days.length < 366) {
     const date = localDateString(cursor);
-    const count = tasks.filter((task) => task.status === "done" && task.completedAt?.slice(0, 10) === date).length;
+    const count = tasks.filter((task) => task.status === "done" && task.completedAt?.slice(0, 10) === date).length
+      + completedSubtaskCount(tasks, date, date);
     days.push({ date, value: count, label: new Intl.DateTimeFormat("ar", { day: "numeric", month: "short" }).format(cursor) });
     cursor.setDate(cursor.getDate() + 1);
   }
@@ -364,7 +375,8 @@ function renderReportCharts(tasks) {
       <details class="report-entity-details"><summary>التفاصيل والمجاميع لكل سجل <span>${section.details.length}</span></summary>${renderEntityCards(section.details)}</details>
     </section>`;
   }).join("");
-  return `${renderSummaryCards(analytics.sections, analytics.activity.reduce((sum, day) => sum + day.value, 0))}${renderActivityHeatmap(analytics.activity)}${sections}`;
+  return `${renderSummaryCards(analytics.sections, analytics.activity.reduce((sum, day) => sum + day.value, 0))}
+    <details class="report-analysis-details"><summary>الرسوم والتحليل التفصيلي</summary>${renderActivityHeatmap(analytics.activity)}${sections}</details>`;
 }
 
 function render() {
@@ -381,7 +393,7 @@ function render() {
         <button class="report-export-option" type="button" data-export="json"><strong>JSON</strong><span>بيانات كاملة للاحتفاظ أو التكامل</span></button>
         <button class="report-export-option is-primary" type="button" data-export="pdf"><strong>طباعة / PDF</strong><span>نسخة مرئية جاهزة للمشاركة</span></button>
       </div></details></header>
-      <section class="today-panel reports-filters">
+      <details class="report-filter-details"><summary>الفترة والتصفية</summary><section class="today-panel reports-filters">
         <label>الفترة<select id="report-range">
           <option value="day"${range === "day" ? " selected" : ""}>اليوم</option><option value="week"${range === "week" ? " selected" : ""}>أسبوع</option><option value="month"${range === "month" ? " selected" : ""}>شهر</option><option value="quarter"${range === "quarter" ? " selected" : ""}>ربع سنة</option><option value="year"${range === "year" ? " selected" : ""}>سنة</option><option value="plan"${range === "plan" ? " selected" : ""}>فترة التخطيط (${plan.columns.length} فترات)</option><option value="custom"${range === "custom" ? " selected" : ""}>مخصص</option><option value="all"${range === "all" ? " selected" : ""}>كامل الفترة</option>
         </select></label>
@@ -399,12 +411,12 @@ function render() {
         <label>المجال<select id="report-area"><option value="">كل المجالات</option>${records.lifeAreas.filter((area) => !area.archived).map((area) => `<option value="${escapeHtml(area.id)}"${lifeAreaId === area.id ? " selected" : ""}>${escapeHtml(area.name)}</option>`).join("")}</select></label>
         <label>المشروع<select id="report-project"><option value="">كل المشاريع</option>${records.projects.filter((project) => !project.archived).map((project) => `<option value="${escapeHtml(project.id)}"${projectId === project.id ? " selected" : ""}>${escapeHtml(project.name)}</option>`).join("")}</select></label>
         <label>الهدف<select id="report-objective"><option value="">كل الأهداف</option>${records.objectives.filter((objective) => objective.status !== "archived").map((objective) => `<option value="${escapeHtml(objective.id)}"${objectiveId === objective.id ? " selected" : ""}>${escapeHtml(objective.title)}</option>`).join("")}</select></label>
-      </section>
+      </section></details>
       <div class="report-period-label">${range === "all" ? "كامل الفترة · المخططات تعرض آخر 12 شهراً" : `${escapeHtml(start)} — ${escapeHtml(end)}`} · ${tasks.filter((task) => task.status === "done").length} مهام مكتملة · ${escapeHtml(EXPORT_SCOPE_LABELS[exportScope])}</div>
       ${renderReportCharts(tasks)}
       <details class="report-table-details">
         <summary>سجل المهام بالتفصيل <span>${tasks.length} مهمة</span></summary>
-        <section class="today-panel report-table-wrap">${tasks.length ? `<table class="report-table"><thead><tr><th>المهمة</th><th>الحالة</th><th>التاريخ</th><th>الوقت</th><th>الدقائق</th><th>المشروع</th></tr></thead><tbody>${tasks.slice().sort((a, b) => (b.completedAt ?? b.due ?? "").localeCompare(a.completedAt ?? a.due ?? "")).map((task) => `<tr><td>${escapeHtml(task.title)}</td><td>${task.status === "done" ? "مكتملة" : "مفتوحة"}</td><td>${escapeHtml((task.completedAt ?? task.due ?? task.scheduled ?? "").slice(0, 10))}</td><td>${escapeHtml(task.dueTime ?? "—")}</td><td>${Number(task.timeSpentMin ?? 0)}</td><td>${escapeHtml(records.projects.find((project) => project.id === task.projectId)?.name ?? "—")}</td></tr>`).join("")}</tbody></table>` : `<p class="report-empty">لا توجد مهام ضمن هذه الفترة والفلاتر.</p>`}</section>
+        <section class="today-panel report-table-wrap">${tasks.length ? `<table class="report-table"><thead><tr><th>المهمة</th><th>الحالة</th><th>التاريخ</th><th>الوقت</th><th>الدقائق</th><th>المشروع</th></tr></thead><tbody>${tasks.slice().sort((a, b) => (b.completedAt ?? b.due ?? "").localeCompare(a.completedAt ?? a.due ?? "")).map((task) => `<tr><td>${escapeHtml(task.title)}</td><td>${task.status === "done" ? "مكتملة" : "مفتوحة"}</td><td>${escapeHtml((task.completedAt ?? task.due ?? task.scheduled ?? "").slice(0, 10))}</td><td>${escapeHtml(task.dueTime ?? "—")}</td><td>${totalRecordedTaskMinutes(task)}</td><td>${escapeHtml(records.projects.find((project) => project.id === task.projectId)?.name ?? "—")}</td></tr>`).join("")}</tbody></table>` : `<p class="report-empty">لا توجد مهام ضمن هذه الفترة والفلاتر.</p>`}</section>
       </details>
       <p class="reports-status" role="status" aria-live="polite"></p>
     </section>`;
@@ -424,7 +436,7 @@ function taskRows(tasks) {
     rows: [headers, ...tasks.map((task) => [
       task.id, task.title, task.notes, task.status, task.createdAt, task.updatedAt,
       task.scheduled, task.due, task.dueTime, task.completedAt, Boolean(task.important), Boolean(task.urgent),
-      task.estimateMin, task.timeSpentMin, (task.tags ?? []).join("، "),
+      task.estimateMin, totalRecordedTaskMinutes(task), (task.tags ?? []).join("، "),
       records.projects.find((item) => item.id === task.projectId)?.name ?? "", task.projectId,
       objectiveForTask(task)?.title ?? "", objectiveForTask(task)?.id ?? "",
       records.keyResults.find((item) => item.id === task.keyResultId)?.title ?? "", task.keyResultId,
@@ -594,11 +606,7 @@ function buildExportAnalytics(tasks) {
   const { start, end } = rangeForCharts();
   const summary = reportSummary(tasks, selectedRange.start, selectedRange.end);
   const charts = [];
-  const completedTasks = dailyCompletions(
-    tasks.filter((task) => task.status === "done" && inRange(task.completedAt, start, end)),
-    start,
-    end,
-  );
+  const completedTasks = dailyCompletions(tasks, start, end);
   charts.push({ section: "tasks", title: "إنجاز المهام عبر الزمن", type: "line", unit: "مهمة", values: completedTasks });
   const openTasks = tasks.filter((task) => task.status !== "done");
   charts.push({
@@ -805,10 +813,20 @@ function buildExportAnalytics(tasks) {
   const cursor = new Date(`${start}T12:00:00`);
   const last = new Date(`${end}T12:00:00`);
   const taskCounts = new Map();
+  const subtaskCounts = new Map();
   for (const task of tasks) {
     if (task.status !== "done" || !inRange(task.completedAt, start, end)) continue;
     const date = task.completedAt.slice(0, 10);
     taskCounts.set(date, (taskCounts.get(date) ?? 0) + 1);
+  }
+  for (const task of tasks) {
+    for (const item of Array.isArray(task.checklist) ? task.checklist : []) {
+      if (typeof item === "string") continue;
+      for (const entry of Array.isArray(item.completionLog) ? item.completionLog : []) {
+        if (!entry?.completed || !inRange(entry.date, start, end)) continue;
+        subtaskCounts.set(entry.date, (subtaskCounts.get(entry.date) ?? 0) + 1);
+      }
+    }
   }
   const focusCounts = new Map();
   for (const session of focusSessions) {
@@ -822,7 +840,7 @@ function buildExportAnalytics(tasks) {
     activity.push({
       date,
       label: new Intl.DateTimeFormat("ar", { day: "numeric", month: "short" }).format(cursor),
-      value: (taskCounts.get(date) ?? 0) + doneHabits + (focusCounts.get(date) ?? 0),
+      value: (taskCounts.get(date) ?? 0) + (subtaskCounts.get(date) ?? 0) + doneHabits + (focusCounts.get(date) ?? 0),
     });
     cursor.setDate(cursor.getDate() + 1);
   }
@@ -846,6 +864,10 @@ function buildExportAnalytics(tasks) {
   const scheduledHabitDays = habitPerformance.reduce((sum, item) => sum + item.scheduled, 0);
   const completedHabitDays = habitPerformance.reduce((sum, item) => sum + item.completed, 0);
   const totalFocusMinutes = focusSessions.reduce((sum, session) => sum + Math.max(0, Number(session.durationMin) || 0), 0);
+  const taskFocusMinutes = focusSessions
+    .filter((session) => session.taskId)
+    .reduce((sum, session) => sum + Math.max(0, Number(session.durationMin) || 0), 0);
+  const totalTaskMinutes = manualTaskMinutes(tasks, selectedRange.start, selectedRange.end) + taskFocusMinutes;
   const moodEntries = journalEntries.filter((entry) => Number(entry.mood) >= 1 && Number(entry.mood) <= 5);
   const averageMood = moodEntries.length
     ? Number((moodEntries.reduce((sum, entry) => sum + Number(entry.mood), 0) / moodEntries.length).toFixed(1))
@@ -857,11 +879,11 @@ function buildExportAnalytics(tasks) {
     return {
       title: task.title,
       value: checklist.length ? `${done}/${checklist.length} فرعية` : task.status === "done" ? "مكتملة" : "مفتوحة",
-      detail: [task.notes?.trim(), `الوقت: ${Math.max(0, Number(task.timeSpentMin) || 0)} د · المتوقع: ${Math.max(0, Number(task.estimateMin) || 0)} د`].filter(Boolean).join(" · "),
+      detail: [task.notes?.trim(), `الوقت المسجّل: ${formatDuration(totalRecordedTaskMinutes(task))} · المتوقع: ${Math.max(0, Number(task.estimateMin) || 0)} د`].filter(Boolean).join(" · "),
       subtaskTotal: checklist.length,
       subtaskDone: done,
       metrics: [
-        { label: "الوقت المنفّذ", value: `${Math.max(0, Number(task.timeSpentMin) || 0)} د` },
+        { label: "الوقت المنفّذ", value: formatDuration(totalRecordedTaskMinutes(task)) },
         { label: "الوقت المتوقع", value: `${Math.max(0, Number(task.estimateMin) || 0)} د` },
         ...(checklist.length ? [{ label: "المهام الفرعية", value: `${done} من ${checklist.length}` }] : []),
       ],
@@ -1019,7 +1041,7 @@ function buildExportAnalytics(tasks) {
       metrics: [
         { label: "المهام", value: relatedTasks.length },
         { label: "المكتملة", value: relatedTasks.filter((task) => task.status === "done").length },
-        { label: "الوقت المسجل", value: `${relatedTasks.reduce((sum, task) => sum + Math.max(0, Number(task.timeSpentMin) || 0), 0)} د` },
+        { label: "الوقت المسجل", value: formatDuration(relatedTasks.reduce((sum, task) => sum + totalRecordedTaskMinutes(task), 0)) },
       ],
     };
   });
@@ -1031,8 +1053,9 @@ function buildExportAnalytics(tasks) {
         { label: "إجمالي المهام", value: tasks.length, detail: "ضمن الفترة والفلاتر" },
         { label: "المكتملة", value: summary.completedTasks, detail: `${summary.completionRate}% من الإجمالي`, percent: summary.completionRate },
         { label: "المفتوحة", value: openTasks.length, detail: "بحاجة إلى إنجاز" },
-        { label: "وقت العمل المسجّل", value: `${tasks.reduce((sum, task) => sum + Math.max(0, Number(task.timeSpentMin) || 0), 0)} د`, detail: "مجموع الوقت المنفّذ" },
-        { label: "المهام الفرعية", value: `${taskDetails.reduce((sum, task) => sum + task.subtaskDone, 0)} من ${taskDetails.reduce((sum, task) => sum + task.subtaskTotal, 0)}`, detail: "من قوائم المهام" },
+        { label: "وقت العمل المسجّل", value: formatDuration(totalTaskMinutes), detail: `${totalTaskMinutes} دقيقة · وقت يدوي وجلسات تركيز` },
+        { label: "المهام الفرعية ضمن الفترة", value: completedSubtaskCount(tasks, selectedRange.start, selectedRange.end), detail: "تُحسب بتاريخ إنجاز كل بند" },
+        { label: "إجمالي تقدم القوائم", value: `${taskDetails.reduce((sum, task) => sum + task.subtaskDone, 0)} من ${taskDetails.reduce((sum, task) => sum + task.subtaskTotal, 0)}`, detail: "من قوائم المهام" },
       ],
     },
     objectives: {

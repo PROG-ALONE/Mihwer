@@ -3,6 +3,7 @@ import { formatDate, localDateString } from "../utils/dates.js";
 import { nextOccurrence, RECURRENCE_OPTIONS } from "../utils/recurrence.js";
 import { parseQuickAdd } from "../utils/quickadd.js";
 import { showToast } from "../utils/notifications.js";
+import { formatDuration, totalRecordedTaskMinutes } from "../utils/task-metrics.js";
 
 const PRIORITY_LABELS = ["مهم وعاجل", "مهم وغير عاجل", "عاجل وغير مهم", "غير عاجل وغير مهم"];
 const PRIORITY_GUIDANCE = ["ابدأ بها الآن", "حدّد لها وقتاً", "أنجزها بسرعة", "أجّلها أو استبعدها"];
@@ -18,6 +19,8 @@ let eventController;
 let editorSubtasksPending = false;
 const expandedTaskSubtasks = new Set();
 const expandedTaskDetails = new Set();
+const collapsedTaskSubtasks = new Set();
+const collapsedTaskDetails = new Set();
 
 function arabicDigits(value) {
   return String(value).replace(/\d/g, (digit) => "٠١٢٣٤٥٦٧٨٩"[Number(digit)]);
@@ -76,16 +79,18 @@ function currentTasks() {
 
 function normalizedChecklist(task) {
   return (task.checklist ?? []).map((item) => typeof item === "string"
-    ? { id: crypto.randomUUID(), text: item, done: false }
-    : item);
+    ? { id: crypto.randomUUID(), text: item, done: false, completionLog: [] }
+    : { ...item, completionLog: Array.isArray(item.completionLog) ? item.completionLog : [] });
 }
 
 function subtasksBlock(task) {
   const items = normalizedChecklist(task);
   const doneCount = items.filter((item) => item.done).length;
   const percent = items.length ? Math.round((doneCount / items.length) * 100) : 0;
+  const isOpen = expandedTaskSubtasks.has(task.id) ||
+    (items.length > 0 && !collapsedTaskSubtasks.has(task.id));
   return `
-    <details class="subtasks"${expandedTaskSubtasks.has(task.id) ? " open" : ""}>
+    <details class="subtasks"${isOpen ? " open" : ""}>
       <summary>مهام فرعية${items.length ? ` <span class="subtask-count">${doneCount}/${items.length}</span>` : ""}</summary>
       ${items.length ? `<div class="subtask-progress" role="progressbar" aria-label="إنجاز المهام الفرعية" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100"><span style="width:${percent}%"></span></div>` : ""}
       <ul class="subtask-list">
@@ -117,6 +122,9 @@ function taskCard(task) {
   const overdue = !done && taskDate && taskDate < localDateString();
   const statusLabel = done ? "مكتملة" : overdue ? "متأخرة" : "";
   const checklist = normalizedChecklist(task);
+  const detailsOpen = expandedTaskDetails.has(task.id) ||
+    (checklist.length > 0 && !collapsedTaskDetails.has(task.id));
+  const trackedMinutes = totalRecordedTaskMinutes(task);
   return `
     <article class="task-card${done ? " is-done" : ""}" data-priority="${priorityIndex(task)}" data-task-id="${escapeHtml(task.id)}">
       <span class="task-color-dot" aria-hidden="true"></span>
@@ -125,16 +133,17 @@ function taskCard(task) {
           <input type="checkbox" data-action="toggle" ${done ? "checked" : ""}>
           <span aria-hidden="true"></span>
         </label>
-        <button class="task-card-summary" type="button" data-action="toggle-task-details" aria-expanded="${expandedTaskDetails.has(task.id)}" aria-label="إظهار تفاصيل المهمة: ${escapeHtml(task.title)}">
+        <button class="task-card-summary" type="button" data-action="toggle-task-details" aria-expanded="${detailsOpen}" aria-label="إظهار تفاصيل المهمة: ${escapeHtml(task.title)}">
           <span class="task-title">${escapeHtml(task.title)}</span>
           ${taskDate ? `<span class="task-card-meta">${escapeHtml(formatDate(taskDate))}${task.dueTime ? ` · ${escapeHtml(task.dueTime)}` : ""}</span>` : ""}
         </button>
         <button class="icon-button task-card-edit" type="button" data-action="edit" aria-label="تعديل ${escapeHtml(task.title)}">✎</button>
       </div>
-      <div class="task-card-details${expandedTaskDetails.has(task.id) ? " is-open" : ""}"${expandedTaskDetails.has(task.id) ? "" : " hidden"}>
+      <div class="task-card-details${detailsOpen ? " is-open" : ""}"${detailsOpen ? "" : " hidden"}>
         <div class="task-focus-strip">
           <a class="task-focus-link" href="#/focus?task=${encodeURIComponent(task.id)}">◉ ابدأ التركيز${task.estimateMin ? ` · ${Number(task.estimateMin)} د` : ""}</a>
           ${statusLabel ? `<span class="task-video-status${done ? " is-done" : ""}">${statusLabel}</span>` : `<span>ضمن قائمة المهام</span>`}
+          ${trackedMinutes ? `<span class="task-time-total">الوقت المسجّل: ${formatDuration(trackedMinutes)}</span>` : ""}
         </div>
         ${subtasksBlock(task)}
       </div>
@@ -161,8 +170,13 @@ function toggleTaskDetails(card) {
   details.classList.toggle("is-open", open);
   const summary = card.querySelector('[data-action="toggle-task-details"]');
   summary?.setAttribute("aria-expanded", String(open));
-  if (open) expandedTaskDetails.add(taskId);
-  else expandedTaskDetails.delete(taskId);
+  if (open) {
+    expandedTaskDetails.add(taskId);
+    collapsedTaskDetails.delete(taskId);
+  } else {
+    expandedTaskDetails.delete(taskId);
+    collapsedTaskDetails.add(taskId);
+  }
 }
 
 function renderPriorityBoard(tasks) {
@@ -259,6 +273,7 @@ function render() {
             <label>وقت التنفيذ<input name="dueTime" type="time"></label>
             <label>الأولوية<select name="priority">${PRIORITY_LABELS.map((label, index) => `<option value="${index}">${label}</option>`).join("")}</select></label>
             <label>مدة التركيز المستهدفة بالدقائق<input name="estimateMin" type="number" min="1" max="180" step="1"></label>
+            <label>وقت أُنجز اليوم بالدقائق<input name="timeLogTodayMin" type="number" min="0" max="1440" step="1" value="0"><small>يُضاف إلى سجل اليوم ولا يستبدل أوقات التركيز السابقة.</small></label>
           </div>
           <details class="task-editor-extra">
             <summary>تفاصيل إضافية</summary>
@@ -316,6 +331,7 @@ async function createTask(input, priorityOverride = null, dueDate = "", dueTime 
     estimateMin: focusDurationMin,
     tags: parsed.tags,
     checklist: [],
+    timeLog: [],
     recurrence: parsed.recurrence,
     status: "open",
     completedAt: null,
@@ -351,6 +367,15 @@ async function toggleTask(task) {
       await add("tasks", {
         ...task,
         id: crypto.randomUUID(),
+        checklist: normalizedChecklist(task).map((item) => ({
+          ...item,
+          id: crypto.randomUUID(),
+          done: false,
+          completedAt: null,
+          completionLog: [],
+        })),
+        timeSpentMin: 0,
+        timeLog: [],
         scheduled: nextDate,
         due: task.due ? nextDate : null,
         status: "open",
@@ -369,6 +394,8 @@ async function deleteTask(task) {
   await remove("tasks", task.id);
   expandedTaskSubtasks.delete(task.id);
   expandedTaskDetails.delete(task.id);
+  collapsedTaskSubtasks.delete(task.id);
+  collapsedTaskDetails.delete(task.id);
   setStatus("حُذفت المهمة.");
 }
 
@@ -378,6 +405,7 @@ function bindEvents(app) {
   const { signal } = eventController;
   let swipeState = null;
   let suppressClickUntil = 0;
+  app.querySelector("#task-dialog")?.addEventListener("close", () => render(), { signal });
 
   app.addEventListener("pointerdown", (event) => {
     if (event.pointerType === "mouse" || event.target.closest("a, input, label, details, summary, button")) return;
@@ -440,14 +468,18 @@ function bindEvents(app) {
     render();
   }, { signal });
 
-  app.addEventListener("click", (event) => {
-    const summary = event.target.closest(".subtasks > summary");
-    if (!summary) return;
-    const details = summary.parentElement;
+  app.addEventListener("toggle", (event) => {
+    const details = event.target.closest(".subtasks");
+    if (!details) return;
     const taskId = details.closest("[data-task-id]")?.dataset.taskId;
     if (!taskId) return;
-    if (details.open) expandedTaskSubtasks.add(taskId);
-    else expandedTaskSubtasks.delete(taskId);
+    if (details.open) {
+      expandedTaskSubtasks.add(taskId);
+      collapsedTaskSubtasks.delete(taskId);
+    } else {
+      expandedTaskSubtasks.delete(taskId);
+      collapsedTaskSubtasks.add(taskId);
+    }
   }, { capture: true, signal });
 
   app.querySelector("#quick-add-form").addEventListener("submit", async (event) => {
@@ -461,20 +493,6 @@ function bindEvents(app) {
     render();
   }));
 
-  app.addEventListener("submit", async (event) => {
-    const form = event.target.closest("[data-subtask-form]");
-    if (!form) return;
-    event.preventDefault();
-    const text = form.elements.text.value.trim();
-    const task = records.tasks.find((item) => item.id === form.closest("[data-task-id]")?.dataset.taskId);
-    if (!text || !task) return;
-    try {
-      await saveChecklist(task, [...normalizedChecklist(task), { id: crypto.randomUUID(), text, done: false }]);
-    } catch (error) {
-      setStatus(error.message, true);
-    }
-  }, { signal });
-
   app.addEventListener("change", async (event) => {
     const sub = event.target.closest('[data-action="toggle-subtask"]');
     if (sub) {
@@ -484,6 +502,13 @@ function bindEvents(app) {
       const item = items[Number(sub.dataset.index)];
       if (!item) return;
       item.done = sub.checked;
+      const date = localDateString();
+      const completionLog = Array.isArray(item.completionLog) ? item.completionLog : [];
+      item.completionLog = [
+        ...completionLog.filter((entry) => entry?.date !== date),
+        { date, completed: sub.checked },
+      ];
+      item.completedAt = sub.checked ? new Date().toISOString() : null;
       try {
         await saveChecklist(task, items);
         if (items.every((entry) => entry.done) && task.status !== "done") {
@@ -615,6 +640,7 @@ function bindEvents(app) {
       form.elements.dueTime.value = task.dueTime ?? "";
       form.elements.priority.value = String(priorityIndex(task));
       form.elements.estimateMin.value = task.estimateMin ?? "";
+      form.elements.timeLogTodayMin.value = "0";
       form.elements.projectId.value = task.projectId ?? "";
       form.elements.objectiveId.value = task.objectiveId ?? "";
       form.elements.keyResultId.value = task.keyResultId ?? "";
@@ -646,10 +672,13 @@ function bindEvents(app) {
       const text = input?.value.trim();
       if (!task || !text) return;
       try {
+        expandedTaskSubtasks.add(task.id);
+        collapsedTaskSubtasks.delete(task.id);
         await saveChecklist(task, [...normalizedChecklist(task), {
           id: crypto.randomUUID(),
           text,
           done: false,
+          completionLog: [],
         }]);
         input.value = "";
       } catch (error) {
@@ -674,6 +703,11 @@ function bindEvents(app) {
       return;
     }
     const priority = Number(form.elements.priority.value);
+    const manualMinutes = Number(form.elements.timeLogTodayMin.value || 0);
+    if (!Number.isInteger(manualMinutes) || manualMinutes < 0 || manualMinutes > 1440) {
+      setStatus("أدخل وقتاً صحيحاً بين 0 و1440 دقيقة.", true);
+      return;
+    }
     const scheduledInput = form.elements.scheduled.value || null;
     const dueInput = form.elements.due.value || null;
     const datesWereLinked = Boolean(task.scheduled && task.scheduled === task.due);
@@ -684,6 +718,10 @@ function bindEvents(app) {
     if (datesWereLinked && scheduledChanged && !dueChanged) due = scheduled;
     if (datesWereLinked && dueChanged && !scheduledChanged) scheduled = due;
     try {
+      const timeLog = Array.isArray(task.timeLog) ? [...task.timeLog] : [];
+      if (manualMinutes > 0) {
+        timeLog.push({ date: localDateString(), minutes: manualMinutes, createdAt: new Date().toISOString() });
+      }
       await update("tasks", {
         ...task,
         title: form.elements.title.value.trim(),
@@ -694,6 +732,7 @@ function bindEvents(app) {
         important: priority === 0 || priority === 1,
         urgent: priority === 0 || priority === 2,
         estimateMin: form.elements.estimateMin.value ? Number(form.elements.estimateMin.value) : null,
+        timeLog,
         projectId: form.elements.projectId.value || null,
         objectiveId,
         keyResultId,

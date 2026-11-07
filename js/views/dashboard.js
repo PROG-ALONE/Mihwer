@@ -3,6 +3,7 @@ import { formatDate, localDateString } from "../utils/dates.js";
 import { getObjectiveProgress } from "../utils/okr.js";
 import { dayProgress, setDayComplete } from "./habits.js";
 import { showToast } from "../utils/notifications.js";
+import { completedSubtaskCount, completedSubtasksOn, formatDuration, manualTaskMinutes } from "../utils/task-metrics.js";
 
 const DAY_NAMES = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 const WEEKDAY_SHORT_NAMES = DAY_NAMES;
@@ -166,6 +167,14 @@ function completedFocusMinutes(start, end) {
     }, 0);
 }
 
+function completedTaskMinutes(start, end) {
+    const focused = records.sessions
+      .filter((session) => session.taskId && session.type !== "break" &&
+        session.status === "completed" && dateWithin(session.start, start, end))
+      .reduce((total, session) => total + Math.max(0, Number(session.durationMin) || 0), 0);
+    return focused + manualTaskMinutes(records.tasks, start, end);
+}
+
 function habitTotals(start, end) {
   const habits = records.habits.filter((habit) => !habit.archived);
   let scheduled = 0;
@@ -190,15 +199,19 @@ function metricsForDate(date) {
   const habits = records.habits.filter((habit) => !habit.archived && isHabitScheduled(habit, date));
   const completedHabits = habits.filter((habit) => dayProgress(habit, date).complete).length;
   const focusMinutes = completedFocusMinutes(date, date);
+  const completedSubtasks = completedSubtasksOn(records.tasks, date);
+  const taskMinutes = completedTaskMinutes(date, date);
   return {
     planned: planned.length,
     completed: completedTasks.length,
+    completedSubtasks: completedSubtasks.length,
     taskProgress: planned.length + completedTasks.length
       ? Math.round(completedTasks.length / (planned.length + completedTasks.length) * 100)
       : 0,
     habitScheduled: habits.length,
     habitCompleted: completedHabits,
     focusMinutes,
+    taskMinutes,
     journalEntries: records.journal.filter((entry) => entry.date === date).length,
   };
 }
@@ -209,6 +222,8 @@ function periodMetrics() {
   const completedTasks = records.tasks.filter((task) => taskIsCompletedInRange(task, start, end));
   const habits = habitTotals(start, end);
   const focusMinutes = completedFocusMinutes(start, end);
+  const completedSubtasks = completedSubtaskCount(records.tasks, start, end);
+  const taskMinutes = completedTaskMinutes(start, end);
   const journalEntries = records.journal.filter((entry) => dateWithin(entry.date, start, end)).length;
   const year = currentDate().getFullYear();
   const objectives = records.objectives.filter((objective) =>
@@ -222,6 +237,8 @@ function periodMetrics() {
     completedTasks: completedTasks.length,
     ...habits,
     focusMinutes,
+    completedSubtasks,
+    taskMinutes,
     journalEntries,
     objectives: objectives.length,
     objectiveProgress,
@@ -245,8 +262,10 @@ function periodSummaryData(metrics) {
   const taskTotal = metrics.completedTasks + metrics.plannedTasks;
   return [
     { title: "المهام", icon: "✓", value: metrics.completedTasks, suffix: "مكتملة", hint: `${metrics.plannedTasks} قيد الإنجاز`, progress: taskTotal ? Math.round(metrics.completedTasks / taskTotal * 100) : 0, tone: "tasks" },
+    { title: "المهام الفرعية", icon: "↳", value: metrics.completedSubtasks, suffix: "منجزة", hint: "تُحسب في يوم إنجازها", progress: metrics.completedSubtasks ? 100 : 0, tone: "subtasks" },
     { title: "العادات", icon: "✦", value: metrics.completed, suffix: "مكتملة", hint: `${metrics.scheduled} مجدولة`, progress: habitPercent, tone: "habits" },
     { title: "التركيز", icon: "◉", value: metrics.focusMinutes, suffix: "دقيقة", hint: "جلسات مكتملة", progress: metrics.focusMinutes ? 100 : 0, tone: "focus" },
+    { title: "وقت المهام", icon: "◷", value: metrics.taskMinutes, suffix: "دقيقة", hint: formatDuration(metrics.taskMinutes), progress: metrics.taskMinutes ? 100 : 0, tone: "time" },
     { title: "الأهداف", icon: "◎", value: metrics.objectiveProgress, suffix: "إنجاز", hint: `${metrics.objectives} أهداف هذا العام`, progress: metrics.objectiveProgress, tone: "goals" },
     { title: "اليوميات", icon: "▤", value: metrics.journalEntries, suffix: "تدوينات", hint: "خلال هذه الفترة", progress: metrics.journalEntries ? 100 : 0, tone: "journal" },
   ];
@@ -266,6 +285,7 @@ function renderDayDetails(date) {
   const metrics = metricsForDate(date);
   const planned = records.tasks.filter((task) => isTaskPlannedOn(task, date));
   const completed = records.tasks.filter((task) => isTaskCompletedOn(task, date));
+  const completedSubtasks = completedSubtasksOn(records.tasks, date);
   const focusSessions = records.sessions.filter((session) =>
     session.type !== "break" && dateWithin(session.start, date, date));
   const journal = records.journal.find((entry) => entry.date === date);
@@ -287,6 +307,9 @@ function renderDayDetails(date) {
       return `<li><a href="#/tasks"><strong>${escapeHtml(task.title)}</strong><small>${escapeHtml(taskPriority(task))}${taskTime}</small></a><span>${status}</span></li>`;
     }).join("")}</ul>`
     : `<p class="period-empty">${empty}</p>`;
+  const subtaskList = completedSubtasks.length
+    ? `<ul class="period-detail-list">${completedSubtasks.map(({ task, item }) => `<li><a href="#/tasks"><strong>${escapeHtml(item.text)}</strong><small>${escapeHtml(task.title)}</small></a><span>مكتملة</span></li>`).join("")}</ul>`
+    : `<p class="period-empty">لا توجد مهام فرعية أُنجزت في هذا اليوم.</p>`;
   const sessions = focusSessions.length
     ? `<ul class="period-detail-list">${focusSessions.map((session) => {
       const startTime = session.start?.slice(11, 16);
@@ -296,6 +319,8 @@ function renderDayDetails(date) {
     : `<p class="period-empty">لا توجد جلسات تركيز مكتملة.</p>`;
   return `<div class="period-day-details">
     <section class="period-detail-card detail-tone-tasks"><header><h3>المهام</h3><span class="period-detail-icon">✓</span></header><div class="period-detail-stat"><strong data-count="${metrics.completed}">${formatCount(metrics.completed)}</strong><span>مكتملة</span><em>${formatCount(metrics.planned)} متبقية</em></div>${taskList(planned, "لا توجد مهام مجدولة.")}<details class="period-completed-details"><summary>عرض المنجزة (${formatCount(completed.length)})</summary>${taskList(completed, "لا توجد مهام منجزة.")}</details></section>
+    <section class="period-detail-card detail-tone-tasks"><header><h3>المهام الفرعية</h3><span class="period-detail-icon">↳</span></header><div class="period-detail-stat"><strong data-count="${metrics.completedSubtasks}">${formatCount(metrics.completedSubtasks)}</strong><span>منجزة اليوم</span><em>حتى لو بقيت المهمة الرئيسية مفتوحة</em></div>${subtaskList}</section>
+    <section class="period-detail-card detail-tone-focus"><header><h3>وقت المهام</h3><span class="period-detail-icon">◷</span></header><div class="period-detail-stat"><strong>${formatDuration(metrics.taskMinutes)}</strong><span>يدوي وتركيز على مهمة</span><em>${metrics.taskMinutes} دقيقة مسجلة</em></div></section>
     <section class="period-detail-card detail-tone-focus"><header><h3>التركيز</h3><span class="period-detail-icon">◉</span></header><div class="period-detail-stat"><strong data-count="${metrics.focusMinutes}">${formatCount(metrics.focusMinutes)}</strong><span>دقيقة</span><em>${formatCount(focusSessions.length)} جلسات</em></div>${sessions}</section>
     <section class="period-detail-card detail-tone-journal"><header><h3>اليوميات</h3><span class="period-detail-icon">▤</span></header><div class="period-detail-stat"><strong data-count="${metrics.journalEntries}">${formatCount(metrics.journalEntries)}</strong><span>تدوينات</span><em>${journal ? "تم التسجيل" : "لم تسجل بعد"}</em></div>${journal
       ? `<a class="period-journal-entry" href="#/journal"><strong>${escapeHtml(journal.title || "تدوينة اليوم")}</strong><span>${escapeHtml(journal.highlight || journal.text || "تم تسجيل تدوينة لهذا اليوم.")}</span></a>`
@@ -329,9 +354,9 @@ function progressTone(percent) {
 }
 
 function dailyProgress(metrics) {
-  const total = metrics.planned + metrics.completed + metrics.habitScheduled;
+  const total = metrics.planned + metrics.completed + metrics.completedSubtasks + metrics.habitScheduled;
   return total
-    ? Math.round((metrics.completed + metrics.habitCompleted) / total * 100)
+    ? Math.round((metrics.completed + metrics.completedSubtasks + metrics.habitCompleted) / total * 100)
     : 0;
 }
 
@@ -407,10 +432,10 @@ function renderDailyHome(date) {
   return `<div class="today-day-content">
     <section class="today-calm-summary" aria-label="ملخص اليوم">
       <div class="today-calm-hero">
-        <div><p class="today-section-kicker">ملخص اليوم</p><h3>${percent ? "إيقاعك واضح اليوم" : "مساحة هادئة لتبدأ"}</h3><span>${metrics.completedTasks} مهام · ${metrics.completed} عادات · ${metrics.focusMinutes} دقيقة تركيز</span></div>
+        <div><p class="today-section-kicker">ملخص اليوم</p><h3>${percent ? "إيقاعك واضح اليوم" : "مساحة هادئة لتبدأ"}</h3><span>${metrics.completedTasks} مهام · ${metrics.completedSubtasks} فرعية · ${metrics.completed} عادات · ${metrics.focusMinutes} دقيقة تركيز · ${formatDuration(metrics.taskMinutes)} وقت مهام</span></div>
         <div class="today-calm-score"><strong>${percent}<small>%</small></strong><span>إنجاز اليوم</span></div>
       </div>
-      <div class="today-calm-stats">${calmStatCards(metrics)}</div>
+      <div class="today-calm-stats">${calmStatCards(metrics, ["tasks", "subtasks", "habits", "focus", "time"])}</div>
     </section>
     <section class="today-message-card today-message-card--calm" aria-label="تذكير اليوم">
       <span class="today-message-icon" aria-hidden="true">✦</span>
@@ -436,7 +461,7 @@ function dayCalendar(date) {
     const dateValue = dateString(localDate(year, month, day));
     const metrics = metricsForDate(dateValue);
     const selected = selectedDate === dateValue;
-    const hasActivity = metrics.planned + metrics.completed + metrics.habitCompleted + metrics.focusMinutes > 0;
+    const hasActivity = metrics.planned + metrics.completed + metrics.completedSubtasks + metrics.habitCompleted + metrics.focusMinutes + metrics.taskMinutes > 0;
     const complete = metrics.planned + metrics.completed > 0 && metrics.taskProgress === 100;
     const progress = dailyProgress(metrics);
     const tone = progressTone(progress);
@@ -471,7 +496,9 @@ function metricsForRange(start, end) {
     tasks: plannedTasks.length + completedTasks.length,
     plannedTasks: plannedTasks.length,
     completedTasks: completedTasks.length,
+    completedSubtasks: completedSubtaskCount(records.tasks, start, end),
     focusMinutes: completedFocusMinutes(start, end),
+    taskMinutes: completedTaskMinutes(start, end),
   };
 }
 
@@ -485,15 +512,15 @@ function renderPeriodContent() {
 
 function periodCompletionPercent(metrics) {
   const taskTotal = metrics.completedTasks + metrics.plannedTasks;
-  const total = taskTotal + metrics.scheduled;
-  const completed = metrics.completedTasks + metrics.completed;
+  const total = taskTotal + metrics.scheduled + metrics.completedSubtasks;
+  const completed = metrics.completedTasks + metrics.completed + metrics.completedSubtasks;
   return total ? Math.round(completed / total * 100) : 0;
 }
 
 function renderProgressHero(metrics, label) {
   const percent = periodCompletionPercent(metrics);
   return `<section class="period-progress-hero" aria-label="ملخص ${escapeHtml(label)}">
-    <div class="period-progress-copy"><p class="today-section-kicker">إنجاز ${escapeHtml(label)}</p><h3>${percent ? "استمر، إيقاعك واضح" : "يلا نبدأ!"}</h3><span>${metrics.completedTasks} مهام · ${metrics.completed} عادات · ${metrics.focusMinutes} د تركيز</span>
+    <div class="period-progress-copy"><p class="today-section-kicker">إنجاز ${escapeHtml(label)}</p><h3>${percent ? "استمر، إيقاعك واضح" : "يلا نبدأ!"}</h3><span>${metrics.completedTasks} مهام · ${metrics.completedSubtasks} فرعية · ${metrics.completed} عادات · ${metrics.focusMinutes} د تركيز · ${formatDuration(metrics.taskMinutes)} وقت مهام</span>
       <div class="period-progress-pills"><b>${metrics.completedTasks} مهام مكتملة</b><b>${metrics.completed} عادات مكتملة</b><b>${metrics.journalEntries} تدوينات</b></div>
     </div>
     <div class="period-progress-score" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><strong>${percent}<small>%</small></strong><span>منجز</span><i style="--progress:${percent}%"></i></div>
@@ -503,7 +530,7 @@ function renderProgressHero(metrics, label) {
 function renderPeriodStats(metrics, label) {
   return `<section class="period-summary-section" aria-label="إحصائيات ${escapeHtml(label)}">
     <header><div><p class="today-section-kicker">أرقام ${escapeHtml(label)}</p><h3>تفاصيل الفترة</h3></div><span>ملخص واحد بلا تكرار</span></header>
-    <div class="today-calm-stats period-calm-stats">${calmStatCards(metrics, ["tasks", "habits", "focus", "goals", "journal"])}</div>
+    <div class="today-calm-stats period-calm-stats">${calmStatCards(metrics, ["tasks", "subtasks", "habits", "focus", "time"])}</div>
   </section>`;
 }
 
@@ -526,7 +553,7 @@ function renderMonthOverview(date) {
   while (cursor <= new Date(`${end}T12:00:00`)) {
     const value = dateString(cursor);
     const day = metricsForDate(value);
-    const total = day.completed + day.habitCompleted + day.planned;
+    const total = day.completed + day.completedSubtasks + day.habitCompleted + day.planned;
     const complete = day.planned + day.completed > 0 && day.taskProgress === 100;
     const progress = dailyProgress(day);
     const tone = progressTone(progress);
@@ -550,8 +577,8 @@ function renderYearOverview(date) {
     const end = dateString(localDate(year, month + 1, 0));
     const metrics = metricsForRange(start, end);
     const monthHabits = habitTotals(start, end);
-    const total = metrics.tasks + monthHabits.scheduled;
-    const completed = metrics.completedTasks + monthHabits.completed;
+    const total = metrics.tasks + monthHabits.scheduled + metrics.completedSubtasks;
+    const completed = metrics.completedTasks + monthHabits.completed + metrics.completedSubtasks;
     const percent = total ? Math.round(completed / total * 100) : 0;
     const taskComplete = metrics.tasks > 0 && metrics.completedTasks === metrics.tasks;
     const currentMonth = date.getFullYear() === new Date().getFullYear() && month === new Date().getMonth();

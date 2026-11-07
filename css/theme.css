@@ -12439,3 +12439,88 @@ details.objective-card .goal-progress-line {
     overflow-wrap: anywhere;
   }
 }
+
+.today-week-day.progress-complete,
+.today-week-day.progress-complete.is-selected,
+.today-week-day.progress-complete.is-today:not(.is-selected),
+.period-day-cell.progress-complete,
+.period-day-cell.progress-complete.is-selected,
+.period-day-cell.progress-complete.is-today:not(.is-selected),
+.period-activity-day.progress-complete,
+.period-year-card.progress-complete,
+.today-week-day.is-task-complete,
+.period-day-cell.is-task-complete,
+.period-activity-day.is-task-complete,
+.period-year-card.is-task-complete {
+  border-color: #16834b;
+  color: #fff;
+  background: #16834b;
+  background-image: none;
+}
+
+.today-week-day.progress-complete > span,
+.today-week-day.progress-complete > strong,
+.period-day-cell.progress-complete > span,
+.period-day-cell.progress-complete > small,
+.period-year-card.progress-complete > :is(strong, span, small) {
+  color: #fff;
+}
+
+.period-activity-day.is-task-complete > i,
+.period-year-card.is-task-complete > i {
+  background: #fff;
+}
+
+.subtask-list li.is-done {
+  border-radius: 8px;
+  background: color-mix(in srgb, #16834b 12%, var(--color-surface));
+}
+
+.subtask-list li.is-done label {
+  color: #16834b;
+  font-weight: 700;
+}
+
+.subtask-list input[type="checkbox"],
+.today-checkbox input:checked + span {
+  accent-color: #16834b;
+}
+
+.today-checkbox input:checked + span {
+  border-color: #16834b;
+  background-color: #16834b;
+}
+
+.task-time-total {
+  color: var(--color-primary);
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.report-filter-details,
+.report-analysis-details,
+.report-extra-stats {
+  margin-block: .8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+
+.report-filter-details > summary,
+.report-analysis-details > summary,
+.report-extra-stats > summary {
+  padding: .8rem 1rem;
+  color: var(--color-primary);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.report-analysis-details[open] > summary,
+.report-extra-stats[open] > summary {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.report-analysis-details > :not(summary),
+.report-extra-stats > :not(summary) {
+  margin: .8rem;
+}

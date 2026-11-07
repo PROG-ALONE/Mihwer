@@ -6,10 +6,10 @@ import { mountHabitsView, unmountHabitsView } from "./views/habits.js";
 import { mountFocusView, unmountFocusView } from "./views/focus.js";
 import { mountJournalView, unmountJournalView } from "./views/journal.js";
 import { mountReportsView, unmountReportsView } from "./views/reports.js";
-import { mountTasksView, unmountTasksView } from "./views/tasks.js?v=105";
+import { mountTasksView, unmountTasksView } from "./views/tasks.js?v=108";
 import { bindSettingsActions, checkBackupReminder } from "./views/settings.js";
 import { showToast } from "./utils/notifications.js";
-import { mountPeriodDashboard } from "./views/dashboard.js?v=107";
+import { mountPeriodDashboard } from "./views/dashboard.js?v=109";
 
 const app = document.querySelector("#app");
 const navigation = document.querySelector("#primary-navigation");
@@ -32,12 +32,12 @@ const themes = {
 let renderSequence = 0;
 let mountedRoute;
 const animatedCountSelector = "[data-count]";
-const LATEST_UPDATE_ID = "backup-reminder-and-periods-v100";
+const LATEST_UPDATE_ID = "daily-subtasks-manual-time-v123";
 
 function showLatestUpdates() {
   if (localStorage.getItem("mihwar-seen-update") === LATEST_UPDATE_ID) return;
   localStorage.setItem("mihwar-seen-update", LATEST_UPDATE_ID);
-  showToast("آخر التحديثات:\n• تذكير الجمعة بالنسخ الاحتياطي\n• حفظ النسخة باسم اليوم والتاريخ\n• إحصائيات أوضح للفترات", { duration: 9000 });
+  showToast("آخر التحديثات:\n• إنجاز المهام الفرعية يُحسب في يومه\n• أدخل وقت المهمة يدوياً وتابعه بالساعات والدقائق\n• صفحة التقدم أصبحت أقصر", { duration: 9000 });
 }
 
 function arabicDigits(value) {
