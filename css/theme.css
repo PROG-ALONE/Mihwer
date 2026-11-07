@@ -7037,7 +7037,7 @@ details.objective-card > .objective-details-content {
 
 .report-stat-dot {
   position: absolute;
-  inset-inline-start: 0;
+  inset-inline-end: 0;
   width: 9px;
   height: 9px;
   border-radius: 50%;
