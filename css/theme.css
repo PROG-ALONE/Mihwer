@@ -9886,6 +9886,7 @@ body {
 
 .today-week-picker {
   display: grid;
+  width: min(100%, 560px);
   grid-template-columns: 38px minmax(0, 1fr) 38px;
   align-items: center;
   gap: 8px;
@@ -12523,4 +12524,159 @@ details.objective-card .goal-progress-line {
 .report-analysis-details > :not(summary),
 .report-extra-stats > :not(summary) {
   margin: .8rem;
+}
+
+body.today-route .topbar {
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+body.today-route .topbar > div:first-child {
+  display: none;
+}
+
+.today-week-day {
+  width: 100%;
+  min-width: 0;
+}
+
+.period-dashboard--today .today-calm-hero > div:first-child > span {
+  display: block;
+  max-width: 44rem;
+  line-height: 1.55;
+}
+
+.period-dashboard--today .today-calm-links {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.period-dashboard--today .today-calm-stat[data-tone="subtasks"] {
+  --calm-accent: #21936a;
+}
+
+.today-empty-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  margin-top: 10px;
+  padding: 7px 12px;
+  border: 1px solid var(--color-primary);
+  border-radius: 11px;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.today-week-day.progress-none:not(.is-selected),
+.period-day-cell.progress-none:not(.is-selected),
+.period-activity-day.progress-none:not(.is-selected),
+.period-year-card.progress-none:not(.is-selected) {
+  border-color: var(--color-border);
+  color: var(--color-muted);
+  background: var(--color-surface-muted);
+  background-image: none;
+}
+
+.today-week-day.progress-none.is-today:not(.is-selected),
+.period-day-cell.progress-none.is-today:not(.is-selected) {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+@media (max-width: 560px) {
+  .today-week-picker {
+    grid-template-columns: 30px minmax(0, 1fr) 30px;
+  }
+
+  .today-week-days {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  .today-week-day {
+    padding-inline: 0;
+    border-radius: 11px;
+  }
+
+  .today-week-day > span {
+    font-size: clamp(.42rem, 1.8vw, .57rem);
+    letter-spacing: -.025em;
+  }
+
+  .today-week-day > strong {
+    font-size: .82rem;
+  }
+
+  .period-dashboard--today .today-calm-hero {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .period-dashboard--today .today-calm-score {
+    min-width: 64px;
+    min-height: 70px;
+  }
+
+  .period-dashboard--today .today-calm-score strong {
+    font-size: 1.75rem;
+  }
+
+  .period-dashboard--today .today-calm-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+body.today-route .topbar {
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+body.today-route .topbar > div:first-child {
+  display: none;
+}
+
+.today-week-days {
+  min-width: 0;
+  width: 100%;
+}
+
+.today-week-day {
+  width: 100%;
+  min-width: 0;
+}
+
+.period-dashboard--today .today-calm-hero > div:first-child > span {
+  display: block;
+  max-width: 44rem;
+  line-height: 1.55;
+}
+
+.period-dashboard--today .today-calm-links {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.period-dashboard--today .today-calm-stat[data-tone="subtasks"] {
+  --calm-accent: #21936a;
+}
+
+.period-dashboard--today .today-calm-stat[data-tone="time"] {
+  --calm-accent: #5487b8;
+}
+
+.today-empty-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  margin-top: 10px;
+  padding: 7px 12px;
+  border: 1px solid var(--color-primary);
+  border-radius: 11px;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  font-size: .82rem;
+  font-weight: 800;
 }

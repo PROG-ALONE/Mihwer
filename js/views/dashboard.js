@@ -5,8 +5,7 @@ import { dayProgress, setDayComplete } from "./habits.js";
 import { showToast } from "../utils/notifications.js";
 import { completedSubtaskCount, completedSubtasksOn, formatDuration, manualTaskMinutes } from "../utils/task-metrics.js";
 
-const DAY_NAMES = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-const WEEKDAY_SHORT_NAMES = DAY_NAMES;
+const WEEKDAY_SHORT_NAMES = ["أحد", "اثن", "ثلا", "أرب", "خمي", "جمع", "سبت"];
 const MONTH_NAMES = Array.from({ length: 12 }, (_, month) =>
   new Intl.DateTimeFormat("ar", { month: "long" }).format(new Date(2026, month, 1)));
 const STORE_NAMES = ["tasks", "habits", "objectives", "keyResults", "sessions", "journal"];
@@ -336,17 +335,8 @@ function greetingForDate(date) {
   return "مساء الخير";
 }
 
-function messageForDate(date) {
-  const messages = [
-    "خطوة صغيرة اليوم تصنع فرقاً كبيراً غداً.",
-    "استمر بهدوء؛ التقدم لا يحتاج إلى الكمال.",
-    "امنح أهم ما لديك وقتاً، والباقي يأتي تباعاً.",
-    "يكفي أن تبدأ. أكمل يومك على مهل.",
-  ];
-  return messages[Number(date.slice(-2)) % messages.length];
-}
-
-function progressTone(percent) {
+function progressTone(percent, hasProgressItems = true) {
+  if (!hasProgressItems) return "progress-none";
   if (percent >= 100) return "progress-complete";
   if (percent > 75) return "progress-high";
   if (percent >= 50) return "progress-medium";
@@ -369,7 +359,8 @@ function renderWeekStrip(date, context = "اختر يوماً") {
     const metrics = metricsForDate(value);
     const complete = metrics.planned + metrics.completed > 0 && metrics.taskProgress === 100;
     const progress = dailyProgress(metrics);
-    const tone = progressTone(progress);
+    const hasProgressItems = metrics.planned + metrics.completed + metrics.completedSubtasks + metrics.habitScheduled > 0;
+    const tone = progressTone(progress, hasProgressItems);
     const today = value === localDateString();
     return `<button class="today-week-day ${tone}${today ? " is-today" : ""}${selected ? " is-selected" : ""}${complete ? " is-task-complete" : ""}" type="button" data-select-day="${value}" style="--day-progress:${progress}%" aria-pressed="${selected}" aria-label="${escapeHtml(formatDate(value))}">
       <span>${WEEKDAY_SHORT_NAMES[day.getDay()]}</span><strong>${day.getDate()}</strong>
@@ -391,6 +382,17 @@ function habitIcon(habit) {
   if (/صلاة|قرآن|ذكر/.test(title)) return "🙏";
   if (/نوم|راحة/.test(title)) return "🌙";
   return habit.kind === "quit" ? "✦" : "✧";
+}
+
+function dailySummaryText(metrics) {
+  const parts = [];
+  const taskTotal = metrics.completedTasks + metrics.plannedTasks;
+  if (taskTotal) parts.push(`${metrics.completedTasks} من ${taskTotal} مهام`);
+  if (metrics.completedSubtasks) parts.push(`${metrics.completedSubtasks} مهام فرعية`);
+  if (metrics.scheduled) parts.push(`${metrics.completed} من ${metrics.scheduled} عادات`);
+  if (metrics.focusMinutes) parts.push(`${metrics.focusMinutes} د تركيز`);
+  if (metrics.taskMinutes) parts.push(`${formatDuration(metrics.taskMinutes)} وقت مهام`);
+  return parts.length ? parts.join(" · ") : "أضف مهمة أو عادة لتبدأ.";
 }
 
 function renderTodayHabits(date, habits) {
@@ -428,25 +430,18 @@ function calmStatCards(metrics, tones = ["tasks", "habits", "focus", "journal"])
 function renderDailyHome(date) {
   const metrics = periodMetrics();
   const percent = periodCompletionPercent(metrics);
+  const hasActivity = metrics.completedTasks + metrics.plannedTasks + metrics.completedSubtasks +
+    metrics.scheduled + metrics.completed + metrics.focusMinutes + metrics.taskMinutes > 0;
 
   return `<div class="today-day-content">
     <section class="today-calm-summary" aria-label="ملخص اليوم">
       <div class="today-calm-hero">
-        <div><p class="today-section-kicker">ملخص اليوم</p><h3>${percent ? "إيقاعك واضح اليوم" : "مساحة هادئة لتبدأ"}</h3><span>${metrics.completedTasks} مهام · ${metrics.completedSubtasks} فرعية · ${metrics.completed} عادات · ${metrics.focusMinutes} دقيقة تركيز · ${formatDuration(metrics.taskMinutes)} وقت مهام</span></div>
+        <div><p class="today-section-kicker">ملخص اليوم</p><h3>${hasActivity ? "إيقاعك واضح اليوم" : "ابدأ بخطوة واحدة"}</h3><span>${dailySummaryText(metrics)}</span>
+          ${!hasActivity ? `<a class="today-empty-action" href="#/tasks">إضافة أول مهمة</a>` : ""}</div>
         <div class="today-calm-score"><strong>${percent}<small>%</small></strong><span>إنجاز اليوم</span></div>
       </div>
-      <div class="today-calm-stats">${calmStatCards(metrics, ["tasks", "subtasks", "habits", "focus", "time"])}</div>
+      <div class="today-calm-stats">${calmStatCards(metrics, ["tasks", "subtasks", "habits", "focus"])}</div>
     </section>
-    <section class="today-message-card today-message-card--calm" aria-label="تذكير اليوم">
-      <span class="today-message-icon" aria-hidden="true">✦</span>
-      <div><span>تذكير اليوم</span><p>${messageForDate(date)}</p></div>
-    </section>
-    <nav class="today-calm-links" aria-label="اختصارات اليوم">
-      <a href="#/journal"><span aria-hidden="true">▤</span><strong>التدوين</strong><small>سجّل لحظتك</small></a>
-      <a href="#/focus"><span aria-hidden="true">◉</span><strong>التركيز</strong><small>ابدأ جلسة</small></a>
-      <a href="#/goals"><span aria-hidden="true">◎</span><strong>الأهداف</strong><small>راجع اتجاهك</small></a>
-      <a href="#/reports"><span aria-hidden="true">▥</span><strong>تقدّمي</strong><small>شاهد أرقامك</small></a>
-    </nav>
   </div>`;
 }
 
@@ -464,14 +459,15 @@ function dayCalendar(date) {
     const hasActivity = metrics.planned + metrics.completed + metrics.completedSubtasks + metrics.habitCompleted + metrics.focusMinutes + metrics.taskMinutes > 0;
     const complete = metrics.planned + metrics.completed > 0 && metrics.taskProgress === 100;
     const progress = dailyProgress(metrics);
-    const tone = progressTone(progress);
+    const hasProgressItems = metrics.planned + metrics.completed + metrics.completedSubtasks + metrics.habitScheduled > 0;
+    const tone = progressTone(progress, hasProgressItems);
     const today = dateValue === localDateString();
     return `<button class="period-day-cell ${tone}${today ? " is-today" : ""}${selected ? " is-selected" : ""}${hasActivity ? " has-activity" : ""}${complete ? " is-task-complete" : ""}" type="button" data-select-day="${dateValue}" style="--day-progress:${progress}%" aria-label="${escapeHtml(formatDate(dateValue))}: ${metrics.planned} مهام، ${metrics.habitCompleted} عادات مكتملة">
       <span>${day}</span><small>${metrics.planned + metrics.completed || ""}</small>
     </button>`;
   }).join("");
   return `<div class="period-calendar" aria-label="أيام الشهر">
-    ${DAY_NAMES.map((day) => `<span class="period-weekday">${day.slice(0, 2)}</span>`).join("")}
+    ${WEEKDAY_SHORT_NAMES.map((day) => `<span class="period-weekday">${day}</span>`).join("")}
     ${leading}${days}
   </div>`;
 }
@@ -556,7 +552,8 @@ function renderMonthOverview(date) {
     const total = day.completed + day.completedSubtasks + day.habitCompleted + day.planned;
     const complete = day.planned + day.completed > 0 && day.taskProgress === 100;
     const progress = dailyProgress(day);
-    const tone = progressTone(progress);
+    const hasProgressItems = day.planned + day.completed + day.completedSubtasks + day.habitScheduled > 0;
+    const tone = progressTone(progress, hasProgressItems);
     const today = value === localDateString();
     days.push(`<button class="period-activity-day ${tone}${today ? " is-today" : ""}${total ? " has-activity" : ""}${complete ? " is-task-complete" : ""}${value === selectedDate ? " is-selected" : ""}" type="button" data-select-day="${value}" aria-label="${escapeHtml(formatDate(value))}"><span>${cursor.getDate()}</span><i style="--day-progress:${progress}%"></i></button>`);
     cursor.setDate(cursor.getDate() + 1);
@@ -582,7 +579,7 @@ function renderYearOverview(date) {
     const percent = total ? Math.round(completed / total * 100) : 0;
     const taskComplete = metrics.tasks > 0 && metrics.completedTasks === metrics.tasks;
     const currentMonth = date.getFullYear() === new Date().getFullYear() && month === new Date().getMonth();
-    return `<button class="period-year-card ${progressTone(percent)}${currentMonth ? " is-current-month" : ""}${month === date.getMonth() ? " is-selected" : ""}${taskComplete ? " is-task-complete" : ""}" type="button" data-select-month="${month}"><strong>${name}</strong><span>${metrics.tasks} عناصر</span><i style="--month-progress:${percent}%"></i><small>${percent}% نشاط</small></button>`;
+    return `<button class="period-year-card ${progressTone(percent,total>0)}${currentMonth ? " is-current-month" : ""}${month === date.getMonth() ? " is-selected" : ""}${taskComplete ? " is-task-complete" : ""}" type="button" data-select-month="${month}"><strong>${name}</strong><span>${metrics.tasks} عناصر</span><i style="--month-progress:${percent}%"></i><small>${percent}% نشاط</small></button>`;
   }).join("");
   return `<section class="period-long-overview" aria-label="ملخص السنة">
     <section class="period-year-hero"><div><p class="today-section-kicker">إيقاع ${year}</p><h3>سنتك في لمحة</h3><span>تابع الأشهر النشطة بدل تقويم طويل.</span></div><strong>${year}</strong></section>

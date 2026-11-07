@@ -9,7 +9,7 @@ import { mountReportsView, unmountReportsView } from "./views/reports.js";
 import { mountTasksView, unmountTasksView } from "./views/tasks.js?v=108";
 import { bindSettingsActions, checkBackupReminder } from "./views/settings.js";
 import { showToast } from "./utils/notifications.js";
-import { mountPeriodDashboard } from "./views/dashboard.js?v=109";
+import { mountPeriodDashboard } from "./views/dashboard.js?v=112";
 
 const app = document.querySelector("#app");
 const navigation = document.querySelector("#primary-navigation");
@@ -32,12 +32,14 @@ const themes = {
 let renderSequence = 0;
 let mountedRoute;
 const animatedCountSelector = "[data-count]";
-const LATEST_UPDATE_ID = "daily-subtasks-manual-time-v123";
+const LATEST_UPDATE_ID = "mobile-dashboard-and-daily-time-v125";
 
 function showLatestUpdates() {
-  if (localStorage.getItem("mihwar-seen-update") === LATEST_UPDATE_ID) return;
+  const previousUpdateId = localStorage.getItem("mihwar-seen-update");
+  if (previousUpdateId === LATEST_UPDATE_ID) return;
   localStorage.setItem("mihwar-seen-update", LATEST_UPDATE_ID);
-  showToast("آخر التحديثات:\n• إنجاز المهام الفرعية يُحسب في يومه\n• أدخل وقت المهمة يدوياً وتابعه بالساعات والدقائق\n• صفحة التقدم أصبحت أقصر", { duration: 9000 });
+  if (!previousUpdateId) return;
+  showToast("آخر التحديثات:\n• تقويم الأيام صار أوضح وأهدأ\n• إنجاز المهام الفرعية يُحسب في يومه\n• وقت المهمة يظهر بالساعات والدقائق", { duration: 7000 });
 }
 
 function arabicDigits(value) {
@@ -63,6 +65,7 @@ function animateCardCount(counter) {
 async function render() {
   const sequence = ++renderSequence;
   const route = getRouteFromHash();
+  document.body.classList.toggle("today-route", route.id === "today");
   const taskView = route.id === "tasks"
     && new URLSearchParams(window.location.hash.split("?")[1] ?? "").get("view") === "habits";
   const routeKey = route.id === "tasks" ? `tasks:${taskView ? "habits" : "tasks"}` : route.id;
@@ -135,7 +138,7 @@ function updateConnectionStatus() {
 }
 
 const storedTheme = localStorage.getItem("mihwar-theme");
-const initialTheme = storedTheme ?? "dark";
+const initialTheme = storedTheme ?? "sage";
 applyTheme(initialTheme);
 updateConnectionStatus();
 window.addEventListener("online", updateConnectionStatus);
