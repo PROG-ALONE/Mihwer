@@ -1,5 +1,6 @@
 import { add, getRecords, subscribe, update } from "../store.js";
 import { localDateString } from "../utils/dates.js";
+import { ensureDefaultLifeAreas } from "../utils/life-areas.js";
 import { showToast } from "../utils/notifications.js";
 
 const DAY_NAMES = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
@@ -7,7 +8,7 @@ const DAYS = 84;
 
 let unsubscribe;
 let eventController;
-let records = { habits: [], objectives: [] };
+let records = { habits: [], objectives: [], lifeAreas: [] };
 const expandedHabitDetails = new Set();
 
 function escapeHtml(value = "") {
@@ -230,13 +231,14 @@ function renderHabit(habit) {
   const { current, longest } = streaks(habit);
   const stats = consistency(habit);
   const linkedObjective = records.objectives.find((objective) => objective.id === habit.objectiveId);
+  const lifeArea = records.lifeAreas.find((area) => area.id === (habit.lifeAreaId ?? linkedObjective?.lifeAreaId));
   return `<article class="habit-card" data-habit-id="${escapeHtml(habit.id)}">
     <span class="habit-color-dot" aria-hidden="true"></span>
     <div class="habit-card-heading">
       <button class="habit-today-toggle${checked ? " is-checked" : ""}" type="button" data-action="toggle-today" aria-pressed="${checked}" aria-label="${checked ? "إلغاء تحقق" : "تحقق"} ${escapeHtml(habit.title)}">
         <span aria-hidden="true">${checked ? "✓" : "+"}</span>
       </button>
-      <div class="habit-title-group"><h3>${escapeHtml(habit.title)}</h3><span>${checked ? "مكتملة اليوم" : progress.mode === "count" ? `${progress.done}/${progress.total} ${unit}` : `${current} يوم متتالٍ`}</span></div>
+      <div class="habit-title-group"><h3>${escapeHtml(habit.title)}</h3><span>${checked ? "مكتملة اليوم" : progress.mode === "count" ? `${progress.done}/${progress.total} ${unit}` : `${current} يوم متتالٍ`}${lifeArea ? ` · ${escapeHtml(lifeArea.name)}` : ""}</span></div>
       <button class="icon-button" type="button" data-action="edit" aria-label="تعديل ${escapeHtml(habit.title)}">✎</button>
       <button class="icon-button" type="button" data-action="archive" aria-label="أرشفة ${escapeHtml(habit.title)}">×</button>
     </div>
@@ -302,6 +304,7 @@ function render() {
             <label data-mode-field="items">هدف الإنجاز اليومي (عدد البنود)<input name="targetItemsPerDay" type="number" min="1" max="100" value="1"><small>تُحسب العادة منجزة عند بلوغ هذا العدد.</small></label>
             <label data-mode-field="count items">الوحدة (مثل: صفحة، ركعة، كوب)<input name="unit" maxlength="30"></label>
             <label class="habit-require-all-label" data-mode-field="items"><input name="requireAllItems" type="checkbox"><span><strong>لا تكتمل إلا بإكمال كل البنود</strong><small>مناسب للصلاة أو لأي عادة تتطلب إتمام جميع تفاصيلها.</small></span></label>
+            <label>المجال<select name="lifeAreaId"><option value="">من الهدف أو دون مجال</option>${records.lifeAreas.filter((area) => !area.archived).map((area) => `<option value="${escapeHtml(area.id)}">${escapeHtml(area.name)}</option>`).join("")}</select></label>
             <label>الهدف المرتبط<select name="objectiveId"><option value="">بلا هدف</option>${records.objectives.filter((objective) => objective.status !== "archived").map((objective) => `<option value="${escapeHtml(objective.id)}">${escapeHtml(objective.title)}</option>`).join("")}</select></label>
           </div>
           <label data-mode-field="items">بنود العادة، سطر لكل بند بصيغة: النوع | الاسم | الكمية | الوحدة
@@ -375,6 +378,7 @@ function bindEvents(app) {
       form.elements.requireAllItems.checked = true;
       form.elements.targetItemsPerDay.value = String(PRAYER_PRESET.split("\n").length);
       if (!form.elements.title.value) form.elements.title.value = "الصلاة بتفاصيلها";
+      form.elements.lifeAreaId.value = "mihwar-area-religion";
       syncModeFields(form);
       return;
     }
@@ -406,6 +410,7 @@ function bindEvents(app) {
         setStatus(`تقدّم ${habit.title}: ${dayProgress(next, today).done} من ${dayProgress(next, today).target} بند للهدف اليومي.`);
       } else if (action === "edit") {
         const form = app.querySelector("#habit-form");
+        const linkedObjective = records.objectives.find((objective) => objective.id === habit.objectiveId);
         form.elements.id.value = habit.id;
         form.elements.title.value = habit.title;
         form.elements.kind.value = habit.kind ?? "build";
@@ -419,6 +424,7 @@ function bindEvents(app) {
         form.elements.items.value = (habit.items ?? []).map((item) =>
           `${item.category ?? "عام"} | ${item.name} | ${item.amount || ""} | ${item.unit ?? habit.unit ?? ""}`).join("\n");
         syncModeFields(form);
+        form.elements.lifeAreaId.value = habit.lifeAreaId ?? linkedObjective?.lifeAreaId ?? "";
         form.elements.objectiveId.value = habit.objectiveId ?? "";
         app.querySelector("#habit-dialog-title").textContent = "تعديل العادة";
         app.querySelector("#habit-dialog").showModal();
@@ -472,6 +478,7 @@ function bindEvents(app) {
         : Math.max(1, Number(form.elements.targetItemsPerDay.value) || 1),
       requireAllItems: form.elements.mode.value === "items" ? form.elements.requireAllItems.checked : false,
       unit: form.elements.unit.value.trim(),
+      lifeAreaId: form.elements.lifeAreaId.value || null,
       items: form.elements.mode.value === "items"
         ? parseItems(form.elements.items.value, form.elements.unit.value.trim(), existing?.items) : (existing?.items ?? []),
       progress: existing?.progress ?? {},
@@ -501,8 +508,12 @@ function bindEvents(app) {
 }
 
 async function refreshRecords() {
-  const [habits, objectives] = await Promise.all([getRecords("habits"), getRecords("objectives")]);
-  records = { habits, objectives };
+  const [habits, objectives, lifeAreas] = await Promise.all([
+    getRecords("habits"),
+    getRecords("objectives"),
+    ensureDefaultLifeAreas(),
+  ]);
+  records = { habits, objectives, lifeAreas };
 }
 
 export async function mountHabitsView(isCurrent = () => true) {
@@ -512,7 +523,7 @@ export async function mountHabitsView(isCurrent = () => true) {
   document.querySelector("#page-title").textContent = "العادات";
   render();
   unsubscribe = subscribe(async (_state, change) => {
-    if (!change.storeName || ["habits", "objectives"].includes(change.storeName)) {
+    if (!change.storeName || ["habits", "objectives", "lifeAreas"].includes(change.storeName)) {
       try {
         await refreshRecords();
         if (isCurrent() && window.location.hash.startsWith("#/habits")) render();

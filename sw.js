@@ -1,4 +1,4 @@
-const CACHE_NAME = "mihwar-shell-v126";
+const CACHE_NAME = "mihwar-shell-v131";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -21,6 +21,7 @@ const APP_SHELL = [
   "./js/utils/plans.js",
   "./js/utils/notifications.js",
   "./js/utils/task-metrics.js",
+  "./js/utils/life-areas.js",
   "./js/views/today.js",
   "./js/views/dashboard.js",
   "./js/views/tasks.js",
@@ -80,7 +81,7 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(request).then((cached) => cached ?? Response.error())),
+        .catch(() => caches.match(request, { ignoreSearch: true }).then((cached) => cached ?? Response.error())),
     );
     return;
   }

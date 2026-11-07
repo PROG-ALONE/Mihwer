@@ -4,12 +4,13 @@ import { nextOccurrence, RECURRENCE_OPTIONS } from "../utils/recurrence.js";
 import { parseQuickAdd } from "../utils/quickadd.js";
 import { showToast } from "../utils/notifications.js";
 import { formatDuration, totalRecordedTaskMinutes } from "../utils/task-metrics.js";
+import { ensureDefaultLifeAreas } from "../utils/life-areas.js";
 
 const PRIORITY_LABELS = ["مهم وعاجل", "مهم وغير عاجل", "عاجل وغير مهم", "غير عاجل وغير مهم"];
 const PRIORITY_GUIDANCE = ["ابدأ بها الآن", "حدّد لها وقتاً", "أنجزها بسرعة", "أجّلها أو استبعدها"];
 
 let unsubscribe;
-let records = { tasks: [], projects: [], objectives: [], keyResults: [] };
+let records = { tasks: [], projects: [], objectives: [], keyResults: [], lifeAreas: [] };
 let statusFilter = "active";
 let priorityModeEnabled = localStorage.getItem("mihwar-task-priority-mode") === "true";
 let taskQuery = "";
@@ -65,6 +66,13 @@ function priorityIndex(task) {
   if (task.important) return 1;
   if (task.urgent) return 2;
   return 3;
+}
+
+function taskLifeAreaId(task) {
+  if (task.lifeAreaId) return task.lifeAreaId;
+  const objectiveId = task.objectiveId ??
+    records.keyResults.find((result) => result.id === task.keyResultId)?.objectiveId;
+  return records.objectives.find((objective) => objective.id === objectiveId)?.lifeAreaId ?? "";
 }
 
 function currentTasks() {
@@ -125,6 +133,7 @@ function taskCard(task) {
   const detailsOpen = expandedTaskDetails.has(task.id) ||
     (checklist.length > 0 && !collapsedTaskDetails.has(task.id));
   const trackedMinutes = totalRecordedTaskMinutes(task);
+  const lifeArea = records.lifeAreas.find((area) => area.id === taskLifeAreaId(task));
   return `
     <article class="task-card${done ? " is-done" : ""}" data-priority="${priorityIndex(task)}" data-task-id="${escapeHtml(task.id)}">
       <span class="task-color-dot" aria-hidden="true"></span>
@@ -135,7 +144,7 @@ function taskCard(task) {
         </label>
         <button class="task-card-summary" type="button" data-action="toggle-task-details" aria-expanded="${detailsOpen}" aria-label="إظهار تفاصيل المهمة: ${escapeHtml(task.title)}">
           <span class="task-title">${escapeHtml(task.title)}</span>
-          ${taskDate ? `<span class="task-card-meta">${escapeHtml(formatDate(taskDate))}${task.dueTime ? ` · ${escapeHtml(task.dueTime)}` : ""}</span>` : ""}
+          ${taskDate || lifeArea ? `<span class="task-card-meta">${taskDate ? escapeHtml(formatDate(taskDate)) : ""}${task.dueTime ? ` · ${escapeHtml(task.dueTime)}` : ""}${lifeArea ? ` · ${escapeHtml(lifeArea.name)}` : ""}</span>` : ""}
         </button>
         <button class="icon-button task-card-edit" type="button" data-action="edit" aria-label="تعديل ${escapeHtml(task.title)}">✎</button>
       </div>
@@ -252,6 +261,7 @@ function render() {
         <form class="quick-add-form task-add-form" id="quick-add-form">
           <label class="task-add-title-label" for="quick-add-input">ماذا تريد أن تنجز؟</label>
           <input id="quick-add-input" name="task" autocomplete="off" placeholder="اكتب المهمة هنا…" required maxlength="240">
+          <label>المجال<select name="lifeAreaId"><option value="">بدون مجال</option>${records.lifeAreas.filter((area) => !area.archived).map((area) => `<option value="${escapeHtml(area.id)}">${escapeHtml(area.name)}</option>`).join("")}</select></label>
         <div class="task-add-priority-grid" aria-label="اختر أولوية المهمة">
             ${PRIORITY_LABELS.map((label, index) => `<button class="task-add-priority-card priority-card-${index}" type="button" data-action="add-task-priority" data-priority="${index}">
               <span>${label}</span><small>${PRIORITY_GUIDANCE[index]}</small>
@@ -274,6 +284,7 @@ function render() {
             <label>الأولوية<select name="priority">${PRIORITY_LABELS.map((label, index) => `<option value="${index}">${label}</option>`).join("")}</select></label>
             <label>مدة التركيز المستهدفة بالدقائق<input name="estimateMin" type="number" min="1" max="180" step="1"></label>
             <label>وقت أُنجز اليوم بالدقائق<input name="timeLogTodayMin" type="number" min="0" max="1440" step="1" value="0"><small>يُضاف إلى سجل اليوم ولا يستبدل أوقات التركيز السابقة.</small></label>
+            <label>المجال<select name="lifeAreaId"><option value="">من الهدف أو دون مجال</option>${records.lifeAreas.filter((area) => !area.archived).map((area) => `<option value="${escapeHtml(area.id)}">${escapeHtml(area.name)}</option>`).join("")}</select></label>
           </div>
           <details class="task-editor-extra">
             <summary>تفاصيل إضافية</summary>
@@ -304,7 +315,7 @@ function setStatus(message, isError = false) {
   showToast(message, { isError });
 }
 
-async function createTask(input, priorityOverride = null, dueDate = "", dueTime = "", focusDuration = "") {
+async function createTask(input, priorityOverride = null, dueDate = "", dueTime = "", focusDuration = "", lifeAreaId = null) {
   const parsed = parseQuickAdd(input);
   if (!parsed) throw new Error("اكتب عنواناً للمهمة أولاً.");
   if (priorityOverride !== null && (!Number.isInteger(priorityOverride) || priorityOverride < 0 || priorityOverride > 3)) {
@@ -323,6 +334,7 @@ async function createTask(input, priorityOverride = null, dueDate = "", dueTime 
     projectId: null,
     objectiveId: null,
     keyResultId: null,
+    lifeAreaId: lifeAreaId || null,
     scheduled: taskDate,
     due: taskDate,
     dueTime: dueTime || null,
@@ -347,10 +359,14 @@ async function createTask(input, priorityOverride = null, dueDate = "", dueTime 
     const objective = records.objectives.find((item) => item.title.toLocaleLowerCase("ar") === name);
     const keyResult = records.keyResults.find((item) => item.title.toLocaleLowerCase("ar") === name);
     if (project) task.projectId = project.id;
-    else if (objective) task.objectiveId = objective.id;
+    else if (objective) {
+      task.objectiveId = objective.id;
+      if (!task.lifeAreaId) task.lifeAreaId = objective.lifeAreaId ?? null;
+    }
     else if (keyResult) {
       task.keyResultId = keyResult.id;
       task.objectiveId = keyResult.objectiveId ?? null;
+      if (!task.lifeAreaId) task.lifeAreaId = records.objectives.find((item) => item.id === task.objectiveId)?.lifeAreaId ?? null;
     }
     else throw new Error(`لم يُعثر على مشروع أو هدف باسم «${parsed.referenceName}». أنشئه أولاً.`);
   }
@@ -576,7 +592,8 @@ function bindEvents(app) {
       app.querySelector("#task-add-dialog")?.close();
       statusFilter = "active";
       try {
-        await createTask(title, selectedPriority);
+        const lifeAreaId = app.querySelector('#quick-add-form [name="lifeAreaId"]')?.value || null;
+        await createTask(title, selectedPriority, "", "", "", lifeAreaId);
         setStatus("أُضيفت المهمة إلى طابورك.");
       } catch (error) {
         console.error("تعذّرت إضافة المهمة:", error);
@@ -643,6 +660,7 @@ function bindEvents(app) {
       form.elements.timeLogTodayMin.value = "0";
       form.elements.projectId.value = task.projectId ?? "";
       form.elements.objectiveId.value = task.objectiveId ?? "";
+      form.elements.lifeAreaId.value = taskLifeAreaId(task);
       form.elements.keyResultId.value = task.keyResultId ?? "";
       form.elements.recurrence.value = task.recurrence ?? "";
       form.elements.tags.value = (task.tags ?? []).join("، ");
@@ -735,6 +753,7 @@ function bindEvents(app) {
         timeLog,
         projectId: form.elements.projectId.value || null,
         objectiveId,
+        lifeAreaId: form.elements.lifeAreaId.value || null,
         keyResultId,
         recurrence: form.elements.recurrence.value || null,
         tags: form.elements.tags.value.split(/[,،]/).map((tag) => tag.trim().replace(/^#/, "")).filter(Boolean),
@@ -756,19 +775,21 @@ export async function mountTasksView(isCurrent = () => true) {
     projects: await getRecords("projects"),
     objectives: await getRecords("objectives"),
     keyResults: await getRecords("keyResults"),
+    lifeAreas: await ensureDefaultLifeAreas(),
   };
   if (!isCurrent()) return;
   records = loadedRecords;
   document.querySelector("#page-title").textContent = "المهام";
   render();
   unsubscribe = subscribe((state, change) => {
-    if (!change.storeName || ["tasks", "projects", "objectives", "keyResults"].includes(change.storeName)) {
+    if (!change.storeName || ["tasks", "projects", "objectives", "keyResults", "lifeAreas"].includes(change.storeName)) {
       records = {
         ...records,
         tasks: state.tasks ?? records.tasks,
         projects: state.projects ?? records.projects,
         objectives: state.objectives ?? records.objectives,
         keyResults: state.keyResults ?? records.keyResults,
+        lifeAreas: state.lifeAreas ?? records.lifeAreas,
       };
       const editorDialog = document.querySelector("#task-dialog");
       if (change.storeName === "projects" && editorDialog?.open) {

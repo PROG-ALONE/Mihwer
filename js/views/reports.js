@@ -3,6 +3,7 @@ import { localDateString } from "../utils/dates.js";
 import { showToast } from "../utils/notifications.js";
 import { getKeyResultProgress } from "../utils/okr.js";
 import { getPlanConfig } from "../utils/plans.js";
+import { ensureDefaultLifeAreas } from "../utils/life-areas.js";
 import { dayProgress } from "./habits.js";
 import { downloadCsv } from "../export/csv.js";
 import { downloadXlsx } from "../export/xlsx.js";
@@ -19,7 +20,7 @@ const DATE_RANGES = {
 };
 const PLAN_RANGE_DAYS = { monthly: 30, quarterly: 90, trimester: 120 };
 const EXPORT_SCOPE_LABELS = {
-  all: "كل الأقسام",
+  all: "التقرير الكامل",
   tasks: "المهام بالتفصيل",
   objectives: "الأهداف والنتائج ومهامها",
   habits: "العادات وسجلها",
@@ -50,6 +51,7 @@ function escapeHtml(value = "") {
 function dateRange() {
   if (range === "all") return { start: "0001-01-01", end: "9999-12-31" };
   if (range === "custom") return { start: customStart, end: customEnd };
+  if (range === "year") return { start: `${new Date().getFullYear()}-01-01`, end: localDateString() };
   const end = new Date();
   const days = range === "plan" ? PLAN_RANGE_DAYS[plan.id] : DATE_RANGES[range];
   const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - (days ?? 30) + 1);
@@ -68,18 +70,25 @@ function objectiveForTask(task) {
     records.objectives.find((objective) => records.keyResults.some((result) => result.id === task.keyResultId && result.objectiveId === objective.id));
 }
 
+function taskLifeAreaId(task) {
+  return task.lifeAreaId || objectiveForTask(task)?.lifeAreaId || null;
+}
+
+function habitLifeAreaId(habit) {
+  return habit.lifeAreaId || records.objectives.find((objective) => objective.id === habit.objectiveId)?.lifeAreaId || null;
+}
+
 function matchesTaskFilters(task) {
   if (projectId && task.projectId !== projectId) return false;
   if (objectiveId && task.objectiveId !== objectiveId &&
     !records.keyResults.some((result) => result.objectiveId === objectiveId && result.id === task.keyResultId)) return false;
-  if (lifeAreaId && objectiveForTask(task)?.lifeAreaId !== lifeAreaId) return false;
+  if (lifeAreaId && taskLifeAreaId(task) !== lifeAreaId) return false;
   return true;
 }
 
 function matchesHabitFilters(habit) {
   if (objectiveId && habit.objectiveId !== objectiveId) return false;
-  const objective = records.objectives.find((item) => item.id === habit.objectiveId);
-  if (lifeAreaId && objective?.lifeAreaId !== lifeAreaId) return false;
+  if (lifeAreaId && habitLifeAreaId(habit) !== lifeAreaId) return false;
   if (projectId && !records.projects.some((project) => project.id === projectId && project.objectiveId === habit.objectiveId)) return false;
   return true;
 }
@@ -224,31 +233,122 @@ function reportSummary(tasks, start, end) {
   };
 }
 
-function renderSummaryCards(sections, activityTotal) {
-  const primaryStats = [
-    { label: "المهام", value: `${sections.tasks.metrics[1].value}/${sections.tasks.metrics[0].value}`, detail: `${sections.tasks.metrics[2].value} مفتوحة`, percent: sections.tasks.metrics[1].percent, tone: "primary" },
-    { label: "المهام الفرعية", value: sections.tasks.metrics[5]?.value ?? "0", detail: "إنجازات محسوبة في يومها", tone: "blue" },
-    { label: "الوقت المسجّل", value: sections.tasks.metrics[3].value, detail: "وقت يدوي وجلسات تركيز", tone: "accent" },
-    { label: "العادات", value: sections.habits.metrics[0].value, detail: `${sections.habits.metrics[3].value} ثبات`, percent: sections.habits.metrics[3].percent, tone: "gold" },
+function buildDomainHeatmaps(tasks, start, end, sessions) {
+  const areas = records.lifeAreas
+    .filter((area) => !lifeAreaId || area.id === lifeAreaId)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const habits = records.habits.filter((habit) => !habit.archived && matchesHabitFilters(habit));
+  const taskArea = (task) => taskLifeAreaId(task) ?? "__unassigned__";
+  const habitArea = (habit) => habitLifeAreaId(habit) ?? "__unassigned__";
+  const unassignedTasks = tasks.filter((task) => taskArea(task) === "__unassigned__");
+  const unassignedHabits = habits.filter((habit) => habitArea(habit) === "__unassigned__");
+  const unassignedSessions = sessions.filter((session) => {
+    const task = records.tasks.find((item) => item.id === session.taskId);
+    const habit = records.habits.find((item) => item.id === session.habitId);
+    return task ? taskArea(task) === "__unassigned__" : habit ? habitArea(habit) === "__unassigned__" : true;
+  });
+  const domainAreas = [
+    ...areas,
+    ...(!lifeAreaId && (unassignedTasks.length || unassignedHabits.length || unassignedSessions.length)
+      ? [{ id: "__unassigned__", name: "دون مجال", color: "#87918c" }]
+      : []),
   ];
-  const extraStats = [
-    { label: "الأهداف والنتائج", value: sections.objectives.metrics[0].value, detail: `${sections.objectives.metrics[3].value} نتيجة رئيسية`, tone: "blue" },
-    { label: "التركيز", value: sections.focus.metrics[1].value, detail: `${sections.focus.metrics[0].value} جلسات`, tone: "accent" },
-    { label: "اليوميات", value: sections.journal.metrics[0].value, detail: `${sections.journal.metrics[2].value} متوسط المزاج`, tone: "rose" },
-    { label: "المراجعات", value: sections.reviews.metrics[0].value, detail: "مراجعات محفوظة", tone: "blue" },
-    { label: "المشاريع", value: sections.projects.metrics[0].value, detail: `${sections.projects.metrics[1].value} نشطة`, tone: "primary" },
-    { label: "النشاط", value: activityTotal, detail: "إنجازات وجلسات وعادات", tone: "accent" },
+  const days = [];
+  const cursor = new Date(`${start}T12:00:00`);
+  const last = new Date(`${end}T12:00:00`);
+  while (cursor <= last && days.length < 366) {
+    const date = localDateString(cursor);
+    days.push({
+      date,
+      label: new Intl.DateTimeFormat("ar", { day: "numeric", month: "short" }).format(cursor),
+      value: 0,
+      tasks: 0,
+      subtasks: 0,
+      habits: 0,
+      sessions: 0,
+      focusMinutes: 0,
+    });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  const dayByDate = new Map(days.map((day) => [day.date, day]));
+
+  return domainAreas.map((area) => {
+    const areaTasks = tasks.filter((task) => taskArea(task) === area.id);
+    const areaHabits = habits.filter((habit) => habitArea(habit) === area.id);
+    const areaSessions = sessions.filter((session) => {
+      const task = records.tasks.find((item) => item.id === session.taskId);
+      const habit = records.habits.find((item) => item.id === session.habitId);
+      const id = task ? taskArea(task) : habit ? habitArea(habit) : "__unassigned__";
+      return id === area.id;
+    });
+
+    for (const task of areaTasks) {
+      if (task.status === "done" && task.completedAt) {
+        const day = dayByDate.get(task.completedAt.slice(0, 10));
+        if (day) day.tasks += 1;
+      }
+      for (const item of Array.isArray(task.checklist) ? task.checklist : []) {
+        if (typeof item === "string") continue;
+        for (const entry of Array.isArray(item.completionLog) ? item.completionLog : []) {
+          if (!entry?.completed) continue;
+          const day = dayByDate.get(String(entry.date ?? "").slice(0, 10));
+          if (day) day.subtasks += 1;
+        }
+      }
+    }
+
+    for (const habit of areaHabits) {
+      for (const day of days) {
+        if (scheduledDays(habit, day.date, day.date).length && dayProgress(habit, day.date).complete) {
+          day.habits += 1;
+        }
+      }
+    }
+
+    for (const session of areaSessions) {
+      const day = dayByDate.get(String(session.start ?? "").slice(0, 10));
+      if (!day) continue;
+      day.sessions += 1;
+      day.focusMinutes += Math.max(0, Number(session.durationMin) || 0);
+    }
+
+    const areaDays = days.map((day) => {
+      const value = day.tasks + day.subtasks + day.habits + day.sessions;
+      return { ...day, value };
+    });
+    return {
+      id: area.id,
+      name: area.name,
+      color: /^#[0-9a-f]{6}$/i.test(area.color ?? "") ? area.color : "#688b78",
+      days: areaDays,
+      total: areaDays.reduce((sum, day) => sum + day.value, 0),
+      activeDays: areaDays.filter((day) => day.value > 0).length,
+      completedTasks: areaDays.reduce((sum, day) => sum + day.tasks, 0),
+      completedSubtasks: areaDays.reduce((sum, day) => sum + day.subtasks, 0),
+      completedHabits: areaDays.reduce((sum, day) => sum + day.habits, 0),
+      focusMinutes: areaDays.reduce((sum, day) => sum + day.focusMinutes, 0),
+    };
+  });
+}
+
+function renderSummaryCards(analytics) {
+  const { summary, sections } = analytics;
+  const totalActivity = analytics.domainHeatmaps.reduce((sum, area) => sum + area.total, 0);
+  const stats = [
+    { label: "المهام المنجزة", value: summary.completedTasks, detail: `${summary.completionRate}% من ${summary.taskCount}`, tone: "primary" },
+    { label: "ثبات العادات", value: `${summary.habitCompletion}%`, detail: `${summary.habitCount} عادة نشطة`, tone: "gold" },
+    { label: "وقت التركيز", value: formatDuration(summary.focusMinutes), detail: `${summary.sessionCount} جلسة`, tone: "blue" },
+    { label: "الإنجازات المسجلة", value: totalActivity, detail: `${sections.tasks.metrics[4].value} مهام فرعية ضمن الفترة`, tone: "accent" },
   ];
-  const renderStats = (stats) => stats.map((stat) => `
-    <article class="report-stat-card tone-${stat.tone}${stat.label === "العادات" ? " has-ring" : ""}"${stat.label === "العادات" ? ` style="--report-progress:${stat.percent}%;"` : ""}>
-      <div class="report-stat-top"><span>${stat.label}</span><span class="report-stat-dot" aria-hidden="true"></span></div>
-      <div class="report-stat-value"><strong>${escapeHtml(stat.value)}</strong></div>
-      ${stat.label === "العادات" ? `<div class="report-stat-ring" role="img" aria-label="الالتزام بالعادات ${stat.percent}%"><span>${stat.percent}%</span></div>` : ""}
-      ${Number.isFinite(stat.percent) ? `<div class="report-stat-track" role="progressbar" aria-label="${stat.label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stat.percent}"><span style="width:${stat.percent}%"></span></div>` : ""}
-      <p>${escapeHtml(stat.detail)}</p>
-    </article>`).join("");
-  return `<section class="report-overview" aria-label="ملخص تقدّمي"><h3>ملخص تقدّمي</h3><div class="report-summary-grid">${renderStats(primaryStats)}</div>
-    <details class="report-extra-stats"><summary>مؤشرات إضافية</summary><div class="report-summary-grid">${renderStats(extraStats)}</div></details></section>`;
+  return `<section class="report-overview" aria-label="ملخص الفترة">
+    <header><div><p class="goals-kicker">ببساطة</p><h3>ملخص الفترة</h3></div><span>${summary.taskCount} مهام · ${summary.habitCount} عادات</span></header>
+    <div class="report-summary-grid">${stats.map((stat) => `
+      <article class="report-stat-card tone-${stat.tone}">
+        <div class="report-stat-top"><span>${stat.label}</span><span class="report-stat-dot" aria-hidden="true"></span></div>
+        <div class="report-stat-value"><strong>${escapeHtml(stat.value)}</strong></div>
+        <p>${escapeHtml(stat.detail)}</p>
+      </article>`).join("")}</div>
+  </section>`;
 }
 
 function renderActivityHeatmap(activity) {
@@ -264,6 +364,31 @@ function renderActivityHeatmap(activity) {
       <div class="report-heatmap">${cells.map((day) => `<span class="report-heat-cell heat-level-${day.intensity}" title="${day.date} · ${day.value} نشاط" aria-label="${day.date}: ${day.value} نشاط"></span>`).join("")}</div>
     </div>
     <div class="report-heatmap-legend"><span>أقل</span>${[0, 1, 2, 3, 4].map((level) => `<i class="heat-level-${level}" aria-hidden="true"></i>`).join("")}<span>أكثر</span></div>
+  </section>`;
+}
+
+function renderDomainHeatmaps(areas) {
+  if (!areas.length) return `<section class="report-domain-section"><p class="report-empty">لا توجد مجالات نشطة بعد.</p></section>`;
+  return `<section class="report-domain-section" aria-label="نشاط كل مجال">
+    <header class="report-domain-heading"><div><p class="goals-kicker">أيامك على مدار الفترة</p><h3>خريطة الإنجاز حسب المجال</h3></div><span>المربع = يوم · اللون الأقوى = نشاط أكثر</span></header>
+    <div class="report-domain-grid">${areas.map((area) => {
+      const leadingDays = area.days.length ? new Date(`${area.days[0].date}T12:00:00`).getDay() : 0;
+      const max = Math.max(1, ...area.days.map((day) => day.value));
+      const emptyCells = Array.from({ length: leadingDays }, () => `<span class="report-heat-cell is-empty" aria-hidden="true"></span>`);
+      const cells = area.days.map((day) => {
+        const intensity = day.value ? Math.max(1, Math.ceil(day.value / max * 4)) : 0;
+        const breakdown = `${day.tasks} مهام · ${day.subtasks} فرعية · ${day.habits} عادات · ${day.sessions} جلسات تركيز`;
+        return `<span class="report-heat-cell heat-level-${intensity}" title="${escapeHtml(day.date)} · ${day.value} نشاط · ${escapeHtml(breakdown)}" aria-label="${escapeHtml(day.date)}: ${day.value} نشاط"></span>`;
+      }).join("");
+      return `<article class="report-domain-card" style="--area-color:${area.color}">
+        <header><span class="report-domain-dot" aria-hidden="true"></span><h4>${escapeHtml(area.name)}</h4><strong>${area.total} نشاط</strong></header>
+        <div class="report-domain-stats"><span>${area.activeDays} يوم نشط</span><span>${area.completedTasks + area.completedSubtasks} مهمة</span><span>${area.completedHabits} عادة</span><span>${formatDuration(area.focusMinutes)} تركيز</span></div>
+        <div class="report-domain-heatmap-scroll" role="img" aria-label="خريطة إنجاز ${escapeHtml(area.name)}، ${area.days.length} يوماً، ${area.total} نشاطاً">
+          <div class="report-domain-heatmap">${emptyCells.join("")}${cells}</div>
+        </div>
+        <div class="report-heatmap-legend"><span>أقل</span>${[0, 1, 2, 3, 4].map((level) => `<i class="heat-level-${level}" aria-hidden="true"></i>`).join("")}<span>أكثر</span></div>
+      </article>`;
+    }).join("")}</div>
   </section>`;
 }
 
@@ -375,8 +500,12 @@ function renderReportCharts(tasks) {
       <details class="report-entity-details"><summary>التفاصيل والمجاميع لكل سجل <span>${section.details.length}</span></summary>${renderEntityCards(section.details)}</details>
     </section>`;
   }).join("");
-  return `${renderSummaryCards(analytics.sections, analytics.activity.reduce((sum, day) => sum + day.value, 0))}
-    <details class="report-analysis-details"><summary>الرسوم والتحليل التفصيلي</summary>${renderActivityHeatmap(analytics.activity)}${sections}</details>`;
+  return `${renderSummaryCards(analytics)}
+    ${renderDomainHeatmaps(analytics.domainHeatmaps)}
+    <details class="report-advanced-details"><summary>إحصاءات إضافية (اختيارية)</summary>
+      ${renderActivityHeatmap(analytics.activity)}
+      <div class="report-advanced-sections">${sections}</div>
+    </details>`;
 }
 
 function render() {
@@ -384,40 +513,42 @@ function render() {
   if (!app) return;
   const tasks = filteredTasks();
   const { start, end } = dateRange();
+  const completedTasks = tasks.filter((task) => task.status === "done" && inRange(task.completedAt, start, end)).length;
   app.innerHTML = `
     <section class="reports-page" aria-label="تقدّمي">
-      <header class="reports-heading"><div><p class="goals-kicker">رحلتك بالأرقام</p><h2>تقدّمي</h2></div><details class="report-exports"><summary>تصدير التقرير</summary><div class="report-export-menu">
-        <p class="report-export-title">اختر الصيغة المناسبة</p>
-        <button class="report-export-option" type="button" data-export="excel"><strong>Excel</strong><span>جداول مرتبة ورسوم قابلة للتحليل</span></button>
-        <button class="report-export-option" type="button" data-export="csv"><strong>CSV</strong><span>أرقام وتفاصيل قابلة للفتح في أي جدول</span></button>
-        <button class="report-export-option" type="button" data-export="json"><strong>JSON</strong><span>بيانات كاملة للاحتفاظ أو التكامل</span></button>
-        <button class="report-export-option is-primary" type="button" data-export="pdf"><strong>طباعة / PDF</strong><span>نسخة مرئية جاهزة للمشاركة</span></button>
-      </div></details></header>
-      <details class="report-filter-details"><summary>الفترة والتصفية</summary><section class="today-panel reports-filters">
+      <header class="reports-heading">
+        <div><p class="goals-kicker">رحلتك بالأرقام</p><h2>تقدّمي</h2><p>ملخص واضح لنشاطك ومجالات حياتك.</p></div>
+        <details class="report-exports"><summary>تصدير التقرير</summary><div class="report-export-menu">
+          <label>محتوى التقرير<select id="report-export-scope">
+            <option value="all"${exportScope === "all" ? " selected" : ""}>التقرير الكامل</option>
+            <option value="tasks"${exportScope === "tasks" ? " selected" : ""}>المهام</option>
+            <option value="objectives"${exportScope === "objectives" ? " selected" : ""}>الأهداف والنتائج</option>
+            <option value="habits"${exportScope === "habits" ? " selected" : ""}>العادات</option>
+            <option value="sessions"${exportScope === "sessions" ? " selected" : ""}>جلسات التركيز</option>
+            <option value="journal"${exportScope === "journal" ? " selected" : ""}>اليوميات</option>
+            <option value="reviews"${exportScope === "reviews" ? " selected" : ""}>المراجعات</option>
+            <option value="projects"${exportScope === "projects" ? " selected" : ""}>المشاريع</option>
+          </select></label>
+          <p class="report-export-title">اختر الصيغة المناسبة</p>
+          <button class="report-export-option is-primary" type="button" data-export="pdf"><strong>تقرير PDF</strong><span>ملخص بصري وخريطة مجالاتك</span></button>
+          <button class="report-export-option" type="button" data-export="excel"><strong>Excel</strong><span>جداول ورسوم قابلة للتحليل</span></button>
+          <button class="report-export-option" type="button" data-export="csv"><strong>CSV</strong><span>بيانات قابلة للفتح في أي جدول</span></button>
+          <button class="report-export-option" type="button" data-export="json"><strong>JSON</strong><span>نسخة كاملة من بيانات التقرير</span></button>
+        </div></details>
+      </header>
+      <section class="report-controls" aria-label="اختيار فترة التقرير ومجاله">
         <label>الفترة<select id="report-range">
-          <option value="day"${range === "day" ? " selected" : ""}>اليوم</option><option value="week"${range === "week" ? " selected" : ""}>أسبوع</option><option value="month"${range === "month" ? " selected" : ""}>شهر</option><option value="quarter"${range === "quarter" ? " selected" : ""}>ربع سنة</option><option value="year"${range === "year" ? " selected" : ""}>سنة</option><option value="plan"${range === "plan" ? " selected" : ""}>فترة التخطيط (${plan.columns.length} فترات)</option><option value="custom"${range === "custom" ? " selected" : ""}>مخصص</option><option value="all"${range === "all" ? " selected" : ""}>كامل الفترة</option>
+          <option value="week"${range === "week" ? " selected" : ""}>هذا الأسبوع</option><option value="month"${range === "month" ? " selected" : ""}>هذا الشهر</option><option value="year"${range === "year" ? " selected" : ""}>هذه السنة</option><option value="quarter"${range === "quarter" ? " selected" : ""}>آخر 3 أشهر</option><option value="day"${range === "day" ? " selected" : ""}>اليوم</option><option value="plan"${range === "plan" ? " selected" : ""}>فترة التخطيط (${plan.columns.length} فترات)</option><option value="custom"${range === "custom" ? " selected" : ""}>فترة مخصصة</option><option value="all"${range === "all" ? " selected" : ""}>كامل السجل</option>
         </select></label>
         ${range === "custom" ? `<label>من<input id="report-start" type="date" value="${start}"></label><label>إلى<input id="report-end" type="date" value="${end}"></label>` : ""}
-        <label>القسم للتصدير<select id="report-export-scope">
-          <option value="all"${exportScope === "all" ? " selected" : ""}>كل الأقسام</option>
-          <option value="tasks"${exportScope === "tasks" ? " selected" : ""}>المهام بالتفصيل</option>
-          <option value="objectives"${exportScope === "objectives" ? " selected" : ""}>الأهداف والنتائج ومهامها</option>
-          <option value="habits"${exportScope === "habits" ? " selected" : ""}>العادات وسجلها</option>
-          <option value="sessions"${exportScope === "sessions" ? " selected" : ""}>جلسات التركيز</option>
-          <option value="journal"${exportScope === "journal" ? " selected" : ""}>اليوميات</option>
-          <option value="reviews"${exportScope === "reviews" ? " selected" : ""}>المراجعات</option>
-          <option value="projects"${exportScope === "projects" ? " selected" : ""}>المشاريع</option>
-        </select></label>
         <label>المجال<select id="report-area"><option value="">كل المجالات</option>${records.lifeAreas.filter((area) => !area.archived).map((area) => `<option value="${escapeHtml(area.id)}"${lifeAreaId === area.id ? " selected" : ""}>${escapeHtml(area.name)}</option>`).join("")}</select></label>
-        <label>المشروع<select id="report-project"><option value="">كل المشاريع</option>${records.projects.filter((project) => !project.archived).map((project) => `<option value="${escapeHtml(project.id)}"${projectId === project.id ? " selected" : ""}>${escapeHtml(project.name)}</option>`).join("")}</select></label>
-        <label>الهدف<select id="report-objective"><option value="">كل الأهداف</option>${records.objectives.filter((objective) => objective.status !== "archived").map((objective) => `<option value="${escapeHtml(objective.id)}"${objectiveId === objective.id ? " selected" : ""}>${escapeHtml(objective.title)}</option>`).join("")}</select></label>
-      </section></details>
-      <div class="report-period-label">${range === "all" ? "كامل الفترة · المخططات تعرض آخر 12 شهراً" : `${escapeHtml(start)} — ${escapeHtml(end)}`} · ${tasks.filter((task) => task.status === "done").length} مهام مكتملة · ${escapeHtml(EXPORT_SCOPE_LABELS[exportScope])}</div>
+        <details class="report-more-filters"><summary>تصفية أخرى</summary><div>
+          <label>المشروع<select id="report-project"><option value="">كل المشاريع</option>${records.projects.filter((project) => !project.archived).map((project) => `<option value="${escapeHtml(project.id)}"${projectId === project.id ? " selected" : ""}>${escapeHtml(project.name)}</option>`).join("")}</select></label>
+          <label>الهدف<select id="report-objective"><option value="">كل الأهداف</option>${records.objectives.filter((objective) => objective.status !== "archived").map((objective) => `<option value="${escapeHtml(objective.id)}"${objectiveId === objective.id ? " selected" : ""}>${escapeHtml(objective.title)}</option>`).join("")}</select></label>
+        </div></details>
+      </section>
+      <p class="report-period-label">${range === "all" ? "كامل السجل · خريطة النشاط تعرض آخر 12 شهراً" : `<bdi dir="ltr">${escapeHtml(start)} — ${escapeHtml(end)}</bdi>`} · ${completedTasks} مهام منجزة</p>
       ${renderReportCharts(tasks)}
-      <details class="report-table-details">
-        <summary>سجل المهام بالتفصيل <span>${tasks.length} مهمة</span></summary>
-        <section class="today-panel report-table-wrap">${tasks.length ? `<table class="report-table"><thead><tr><th>المهمة</th><th>الحالة</th><th>التاريخ</th><th>الوقت</th><th>الدقائق</th><th>المشروع</th></tr></thead><tbody>${tasks.slice().sort((a, b) => (b.completedAt ?? b.due ?? "").localeCompare(a.completedAt ?? a.due ?? "")).map((task) => `<tr><td>${escapeHtml(task.title)}</td><td>${task.status === "done" ? "مكتملة" : "مفتوحة"}</td><td>${escapeHtml((task.completedAt ?? task.due ?? task.scheduled ?? "").slice(0, 10))}</td><td>${escapeHtml(task.dueTime ?? "—")}</td><td>${totalRecordedTaskMinutes(task)}</td><td>${escapeHtml(records.projects.find((project) => project.id === task.projectId)?.name ?? "—")}</td></tr>`).join("")}</tbody></table>` : `<p class="report-empty">لا توجد مهام ضمن هذه الفترة والفلاتر.</p>`}</section>
-      </details>
       <p class="reports-status" role="status" aria-live="polite"></p>
     </section>`;
   bindEvents(app);
@@ -428,7 +559,7 @@ function taskRows(tasks) {
     "المعرّف", "العنوان", "الوصف والملاحظات", "الحالة", "تاريخ الإنشاء", "آخر تحديث",
     "تاريخ الجدولة", "الموعد النهائي", "وقت التنفيذ", "تاريخ الإنجاز", "مهم", "عاجل",
     "الوقت المتوقع بالدقائق", "الوقت المنفق بالدقائق", "الوسوم",
-    "المشروع", "معرّف المشروع", "الهدف", "معرّف الهدف", "النتيجة الرئيسية", "معرّف النتيجة",
+    "المجال", "المشروع", "معرّف المشروع", "الهدف", "معرّف الهدف", "النتيجة الرئيسية", "معرّف النتيجة",
     "التكرار", "المهام الفرعية", "الترتيب",
   ];
   return {
@@ -437,6 +568,7 @@ function taskRows(tasks) {
       task.id, task.title, task.notes, task.status, task.createdAt, task.updatedAt,
       task.scheduled, task.due, task.dueTime, task.completedAt, Boolean(task.important), Boolean(task.urgent),
       task.estimateMin, totalRecordedTaskMinutes(task), (task.tags ?? []).join("، "),
+      records.lifeAreas.find((item) => item.id === taskLifeAreaId(task))?.name ?? "",
       records.projects.find((item) => item.id === task.projectId)?.name ?? "", task.projectId,
       objectiveForTask(task)?.title ?? "", objectiveForTask(task)?.id ?? "",
       records.keyResults.find((item) => item.id === task.keyResultId)?.title ?? "", task.keyResultId,
@@ -471,12 +603,13 @@ function buildExportSheets(tasks) {
   const habits = records.habits.filter(matchesHabitFilters);
   const habitConfigs = {
     name: "العادات",
-    rows: [["المعرّف", "العادة", "الوصف", "النوع", "طريقة التتبع", "الجدول", "الهدف اليومي", "وحدة الهدف", "هدف البنود يومياً", "مدة التركيز المستهدفة", "وقت التركيز المسجل", "بنود العادة بالتفصيل", "الهدف المرتبط", "مؤرشفة", "تاريخ الإنشاء", "آخر تحديث"],
+    rows: [["المعرّف", "العادة", "الوصف", "النوع", "طريقة التتبع", "الجدول", "الهدف اليومي", "وحدة الهدف", "هدف البنود يومياً", "مدة التركيز المستهدفة", "وقت التركيز المسجل", "بنود العادة بالتفصيل", "المجال", "الهدف المرتبط", "مؤرشفة", "تاريخ الإنشاء", "آخر تحديث"],
       ...habits.map((habit) => [
         habit.id, habit.title, habit.description, habit.kind, habit.mode,
         Array.isArray(habit.schedule) ? habit.schedule.join("، ") : habit.schedule,
         habit.targetPerDay, habit.unit, habit.targetItemsPerDay, habit.focusDurationMin, habit.focusSpentMin,
         (habit.items ?? []).map((item) => `${item.category ?? "عام"} | ${item.name} | ${item.amount ?? ""} ${item.unit ?? ""}`).join("\n"),
+        records.lifeAreas.find((item) => item.id === habitLifeAreaId(habit))?.name ?? "",
         records.objectives.find((item) => item.id === habit.objectiveId)?.title ?? "",
         Boolean(habit.archived), habit.createdAt, habit.updatedAt,
       ])],
@@ -625,8 +758,8 @@ function buildExportAnalytics(tasks) {
   for (const session of focusSessions) {
     const task = records.tasks.find((item) => item.id === session.taskId);
     const habit = records.habits.find((item) => item.id === session.habitId);
-    const objective = task ? objectiveForTask(task) : records.objectives.find((item) => item.id === habit?.objectiveId);
-    const area = records.lifeAreas.find((item) => item.id === objective?.lifeAreaId);
+    const areaId = task ? taskLifeAreaId(task) : habit ? habitLifeAreaId(habit) : null;
+    const area = records.lifeAreas.find((item) => item.id === areaId);
     const label = area?.name ?? records.projects.find((item) => item.id === task?.projectId)?.name ?? "دون تصنيف";
     focusByGroup.set(label, (focusByGroup.get(label) ?? 0) + Math.max(0, Number(session.durationMin) || 0));
   }
@@ -1127,12 +1260,14 @@ function buildExportAnalytics(tasks) {
       ],
     },
   };
+  const domainHeatmaps = buildDomainHeatmaps(tasks, start, end, focusSessions);
   return {
     period: { start: selectedRange.start, end: selectedRange.end, chartStart: start, chartEnd: end },
     summary,
     sections,
     charts,
     activity,
+    domainHeatmaps,
   };
 }
 
@@ -1179,6 +1314,15 @@ function analyticsSheets(analytics) {
   }));
   return [
     { name: "ملخص التقرير", rows: summaryRows },
+    {
+      name: "خريطة المجالات",
+      rows: [
+        ["المجال", "التاريخ", "النشاط", "المهام", "المهام الفرعية", "العادات", "جلسات التركيز", "دقائق التركيز"],
+        ...analytics.domainHeatmaps.flatMap((area) => area.days.map((day) => [
+          area.name, day.date, day.value, day.tasks, day.subtasks, day.habits, day.sessions, day.focusMinutes,
+        ])),
+      ],
+    },
     ...sectionSheets,
     ...analytics.charts.map((chart, index) => {
       const values = chart.values;
@@ -1234,6 +1378,12 @@ function exportCsv(sheets, analytics) {
     } else rows.push(["لا توجد بيانات ضمن الفترة المحددة."]);
   }
   rows.push([], ["خريطة النشاط اليومية"], ["التاريخ", "عدد الأنشطة"], ...analytics.activity.map((day) => [day.date, day.value]));
+  rows.push([], ["خريطة المجالات"], ["المجال", "التاريخ", "النشاط", "المهام", "المهام الفرعية", "العادات", "جلسات التركيز", "دقائق التركيز"]);
+  for (const area of analytics.domainHeatmaps) {
+    rows.push(...area.days.map((day) => [
+      area.name, day.date, day.value, day.tasks, day.subtasks, day.habits, day.sessions, day.focusMinutes,
+    ]));
+  }
   for (const sheet of sheets) rows.push([], [sheet.name], ...sheet.rows);
   downloadCsv(exportFilename("csv"), ["مِحوَر — تقرير إحصائي ومفصل"], rows);
 }
@@ -1268,6 +1418,7 @@ function exportJson(sheets, analytics) {
       sections: analytics.sections,
       charts: analytics.charts,
       activity: analytics.activity,
+      domainHeatmaps: analytics.domainHeatmaps,
     },
     sections,
   };
@@ -1370,6 +1521,7 @@ function setReportStatus(message, isError = false) {
 }
 
 async function refreshRecords() {
+  await ensureDefaultLifeAreas();
   const names = Object.keys(records);
   const values = await Promise.all(names.map((name) => getRecords(name)));
   records = Object.fromEntries(names.map((name, index) => [name, values[index]]));

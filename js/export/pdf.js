@@ -25,19 +25,6 @@ export function printReport(sheets, title, period, analytics) {
     const number = metricNumber(value) ?? 0;
     return maximum > 0 ? Math.min(1, number / maximum) : 0;
   };
-  const metricMaximums = new Map();
-  const collectMetrics = (details) => {
-    for (const item of details ?? []) {
-      for (const metric of item.metrics ?? []) {
-        const value = metricNumber(metric.value);
-        if (value === null) continue;
-        const maximum = metric.percent !== undefined ? 100 : value;
-        metricMaximums.set(metric.label, Math.max(metricMaximums.get(metric.label) ?? 0, maximum));
-      }
-      collectMetrics(item.children);
-    }
-  };
-  Object.values(analytics.sections).forEach((section) => collectMetrics(section.details));
   const visualMetric = (label, value, maximum, percent) => {
     const number = metricNumber(value);
     if (number === null) return `<div class="export-visual-metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
@@ -48,7 +35,13 @@ export function printReport(sheets, title, period, analytics) {
     </svg>`;
     return `<div class="export-visual-metric"><span>${escapeHtml(label)}</span><div>${display}<strong>${escapeHtml(value)}</strong></div></div>`;
   };
-  const chartMarkup = analytics.charts.map((chart) => {
+  const featuredCharts = analytics.charts.filter((chart) => [
+    "إنجاز المهام عبر الزمن",
+    "إنجاز العادات اليومي",
+    "دقائق التركيز يومياً",
+    "تقدّم الأهداف حسب المجال",
+  ].includes(chart.title));
+  const chartMarkup = featuredCharts.map((chart) => {
     if (chart.type === "line" && chart.values.length) {
       const chartValues = chart.values.length > 56
         ? Array.from({ length: Math.ceil(chart.values.length / 7) }, (_item, index) => {
@@ -108,37 +101,30 @@ export function printReport(sheets, title, period, analytics) {
       </svg>` : "<p>لا توجد بيانات ضمن الفترة.</p>"}
     </section>`;
   }).join("");
-  const sectionAnalytics = Object.values(analytics.sections).map((section) => `
-    <section class="export-stat-section">
-      <h3>${escapeHtml(section.label)}</h3>
-      ${(() => {
-        const maximum = Math.max(0, ...section.metrics.map((metric) => metric.percent !== undefined ? 0 : metricNumber(metric.value) ?? 0));
-        return `<div class="export-stat-grid">${section.metrics.map((metric) => `<article class="export-stat-visual">
-          <span>${escapeHtml(metric.label)}</span><strong>${escapeHtml(metric.value)}</strong>
-          ${visualMetric(metric.label, metric.value, metric.percent !== undefined ? 100 : maximum, metric.percent)}
-          <small>${escapeHtml(metric.detail ?? "")}</small>
-        </article>`).join("")}</div>`;
-      })()}
-      ${section.details.length ? `<div class="export-entity-stats">${section.details.map((item) => `
-        <article class="${item.visualKind === "habit-items" ? "export-habit-card" : ""}"><strong>${escapeHtml(item.title)}</strong><b>${escapeHtml(item.value)}</b><small>${escapeHtml(item.detail ?? "")}</small>
-          <div class="export-entity-visuals">${(item.metrics ?? []).map((metric) => visualMetric(
-            metric.label,
-            metric.value,
-            metric.percent !== undefined ? 100 : metricMaximums.get(metric.label),
-            metric.percent,
-          )).join("")}</div>
-          ${(item.children ?? []).length ? `<div class="export-child-grid">${item.children.map((child) => `<div class="export-child-card"><strong>${escapeHtml(child.label)}</strong><b>${escapeHtml(child.value)}</b><small>${escapeHtml(child.detail ?? "")}</small>
-            <div class="export-entity-visuals">${(child.metrics ?? []).map((metric) => visualMetric(
-              metric.label,
-              metric.value,
-              metric.percent !== undefined ? 100 : metricMaximums.get(metric.label),
-              metric.percent,
-            )).join("")}
-              ${child.metrics?.length ? "" : visualMetric("الحالة", child.value, 1, /مكتمل|مسجل/.test(String(child.value)) ? 100 : 0)}
-            </div>
-          </div>`).join("")}</div>` : ""}
-        </article>`).join("")}</div>` : ""}
-    </section>`).join("");
+  const summary = analytics.summary;
+  const summaryCards = [
+    { label: "المهام المنجزة", value: summary.completedTasks, detail: `${summary.completionRate}% من ${summary.taskCount}` },
+    { label: "ثبات العادات", value: `${summary.habitCompletion}%`, detail: `${summary.habitCount} عادة نشطة` },
+    { label: "وقت التركيز", value: `${Math.floor(summary.focusMinutes / 60)} س ${summary.focusMinutes % 60} د`, detail: `${summary.sessionCount} جلسة` },
+    { label: "تقدّم الأهداف", value: `${summary.objectiveProgress}%`, detail: `${summary.objectiveCount} هدف` },
+  ].map((item) => `<article><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)}</strong><small>${escapeHtml(item.detail)}</small></article>`).join("");
+  const domainHeatmaps = (analytics.domainHeatmaps ?? []).map((area) => {
+    const leadingDays = area.days.length ? new Date(`${area.days[0].date}T12:00:00`).getDay() : 0;
+    const max = Math.max(1, ...area.days.map((day) => day.value));
+    const cells = [
+      ...Array.from({ length: leadingDays }, () => `<i class="export-domain-cell is-empty"></i>`),
+      ...area.days.map((day) => {
+        const intensity = day.value ? Math.max(1, Math.ceil(day.value / max * 4)) : 0;
+        return `<i class="export-domain-cell heat-level-${intensity}" title="${escapeHtml(day.date)} · ${day.value} نشاط"></i>`;
+      }),
+    ].join("");
+    const color = /^#[0-9a-f]{6}$/i.test(area.color ?? "") ? area.color : "#688b78";
+    return `<article class="export-domain-card" style="--area-color:${color}">
+      <header><strong>${escapeHtml(area.name)}</strong><span>${area.total} نشاط · ${area.activeDays} يوم نشط</span></header>
+      <div class="export-domain-heatmap">${cells}</div>
+      <small>${area.completedTasks + area.completedSubtasks} مهمة · ${area.completedHabits} عادة · ${area.focusMinutes} دقيقة تركيز</small>
+    </article>`;
+  }).join("");
   const renderSheetCards = (sheet) => {
     const headers = sheet.rows[0] ?? [];
     const records = sheet.rows.slice(1).filter((row) => row.some((value) => String(value ?? "").trim()));
@@ -179,14 +165,15 @@ export function printReport(sheets, title, period, analytics) {
   const printView = document.createElement("section");
   printView.className = "print-data-report";
   printView.innerHTML = `
-    <header>
-      <h1>${escapeHtml(title)}</h1>
-      <p>مِحوَر · ${escapeHtml(period)} · ${escapeHtml(new Date().toLocaleString("ar"))}</p>
+    <header class="export-cover">
+      <div><p>مِحوَر · تقرير تقدّمك</p><h1>${escapeHtml(title)}</h1><span><bdi dir="ltr">${escapeHtml(period)}</bdi></span></div>
+      <strong aria-hidden="true">م</strong>
+      <small>أُعدّ في ${escapeHtml(new Date().toLocaleString("ar"))}</small>
     </header>
+    <section class="export-summary"><h2>ملخص الفترة</h2><div>${summaryCards}</div></section>
+    ${domainHeatmaps ? `<section class="export-domain-section"><h2>خريطة الإنجاز حسب المجال</h2><p>كل مربع يمثل يوماً؛ قوة اللون توضّح مقدار النشاط.</p><div>${domainHeatmaps}</div></section>` : ""}
     <section class="export-analytics">
-      <h2>إحصاءات الأقسام والسجلات</h2>
-      ${sectionAnalytics}
-      <h2>الرسوم البيانية لكل قسم</h2>
+      <h2>اتجاهات مختارة</h2>
       ${sheets.some((sheet) => sheet.name === "سجل العادات") ? `<p class="export-aggregation-note">عُرض سجل العادات اليومية كمجاميع لكل بند لتقليل التكرار. السجل اليومي الكامل متاح في CSV وExcel وJSON.</p>` : ""}
       <div class="export-chart-grid">${chartMarkup}</div>
     </section>

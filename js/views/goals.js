@@ -1,6 +1,7 @@
 import { add, getRecords, remove, subscribe, update } from "../store.js";
 import { getObjectiveProgress, getObjectiveStatus, getKeyResultProgress } from "../utils/okr.js";
 import { getObjectivePeriod, getPlanConfig, setObjectivePeriod } from "../utils/plans.js";
+import { ensureDefaultLifeAreas } from "../utils/life-areas.js";
 import { showToast } from "../utils/notifications.js";
 
 const STATUS_LABELS = {
@@ -11,15 +12,6 @@ const STATUS_LABELS = {
 };
 
 const STATUS_OPTIONS = ["on-track", "at-risk", "blocked", "done"];
-const DEFAULT_LIFE_AREAS = [
-  { id: "mihwar-area-health", name: "الصحة", color: "#16a889" },
-  { id: "mihwar-area-work", name: "العمل", color: "#6258d9" },
-  { id: "mihwar-area-relationships", name: "العائلة والعلاقات", color: "#c05d7a" },
-  { id: "mihwar-area-finances", name: "المال", color: "#d28a36" },
-  { id: "mihwar-area-learning", name: "التعلّم", color: "#4d84c4" },
-  { id: "mihwar-area-growth", name: "النمو الشخصي", color: "#75854e" },
-];
-
 let unsubscribe;
 let eventController;
 let records = { lifeAreas: [], objectives: [], keyResults: [], tasks: [], projects: [], profile: [] };
@@ -394,23 +386,6 @@ export async function mountGoalsView(isCurrent = () => true) {
       }
     }
   });
-}
-
-async function ensureDefaultLifeAreas() {
-  const areas = await getRecords("lifeAreas");
-  const missingAreas = DEFAULT_LIFE_AREAS.filter((area) => !areas.some((existing) => existing.id === area.id));
-  if (!missingAreas.length) return;
-  const now = new Date().toISOString();
-  await Promise.all(missingAreas.map((area, index) => {
-    return update("lifeAreas", {
-      ...area,
-      icon: "◎",
-      order: areas.length + index,
-      archived: false,
-      createdAt: now,
-      updatedAt: now,
-    });
-  }));
 }
 
 export function unmountGoalsView() {
