@@ -5,6 +5,7 @@ import { parseQuickAdd } from "../utils/quickadd.js";
 import { showToast } from "../utils/notifications.js";
 import { formatDuration, totalRecordedTaskMinutes } from "../utils/task-metrics.js";
 import { ensureDefaultLifeAreas } from "../utils/life-areas.js";
+import { requestCompletionDetails } from "../utils/completion-dialog.js";
 
 const PRIORITY_LABELS = ["مهم وعاجل", "مهم وغير عاجل", "عاجل وغير مهم", "غير عاجل وغير مهم"];
 const PRIORITY_GUIDANCE = ["ابدأ بها الآن", "حدّد لها وقتاً", "أنجزها بسرعة", "أجّلها أو استبعدها"];
@@ -62,6 +63,7 @@ function escapeHtml(value = "") {
 }
 
 function priorityIndex(task) {
+  if (Number.isInteger(task.priority) && task.priority >= 0 && task.priority <= 3) return task.priority;
   if (task.important && task.urgent) return 0;
   if (task.important) return 1;
   if (task.urgent) return 2;
@@ -75,10 +77,27 @@ function taskLifeAreaId(task) {
   return records.objectives.find((objective) => objective.id === objectiveId)?.lifeAreaId ?? "";
 }
 
+function selectedDateFilter() {
+  const date = new URLSearchParams(window.location.hash.split("?")[1] ?? "").get("date") ?? "";
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : "";
+}
+
+function isTaskOnDate(task, date) {
+  if (task.status === "done" && task.completedAt) {
+    return localDateString(new Date(task.completedAt)) === date;
+  }
+  const taskDates = [task.scheduled, task.due].map((value) => {
+    if (!value) return false;
+    return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : localDateString(new Date(value));
+  }).filter(Boolean);
+  return taskDates.includes(date) || (date === localDateString() && taskDates.some((taskDate) => taskDate < date));
+}
+
 function currentTasks() {
+  const date = selectedDateFilter();
   return records.tasks.filter((task) => statusFilter === "done"
     ? task.status === "done"
-    : task.status !== "done").filter((task) => {
+    : task.status !== "done").filter((task) => !date || isTaskOnDate(task, date)).filter((task) => {
     const query = taskQuery.trim().toLocaleLowerCase("ar");
     const haystack = [task.title, task.notes, ...(task.tags ?? [])].join(" ").toLocaleLowerCase("ar");
     return (!query || haystack.includes(query)) && (!taskProjectFilter || task.projectId === taskProjectFilter);
@@ -162,6 +181,7 @@ function taskCard(task) {
 
 function renderList(tasks) {
   if (!tasks.length) {
+    if (selectedDateFilter()) return `<div class="tasks-empty">لا توجد مهام مسجلة لهذا اليوم بعد.</div>`;
     const emptyMessage = statusFilter === "done"
       ? "لا توجد مهام منجزة بعد."
       : "ابدأ بإضافة مهمتك الأولى من زر + أعلاه.";
@@ -237,18 +257,22 @@ function render() {
     return firstOrder - secondOrder;
   });
   const activeCount = records.tasks.filter((task) => task.status !== "done").length;
-  const doneCount = records.tasks.filter((task) => task.status === "done").length;
+  const date = selectedDateFilter();
+  const scopedTasks = date ? records.tasks.filter((task) => isTaskOnDate(task, date)) : records.tasks;
+  const scopedActiveCount = scopedTasks.filter((task) => task.status !== "done").length;
+  const doneCount = scopedTasks.filter((task) => task.status === "done").length;
   const body = renderList(tasks);
   const visibleTotal = tasks.length;
 
   app.innerHTML = `
     <section class="tasks-page" aria-label="إدارة المهام">
       <header class="tasks-heading">
-        <div><p class="goals-kicker">مساحة الإنجاز</p><h2>المهام</h2><p class="tasks-heading-note"><span class="task-count" data-count="${visibleTotal}">٠</span> مهمة في القائمة</p></div>
+        <div><p class="goals-kicker">${date ? `يوم ${escapeHtml(formatDate(date))}` : "مساحة الإنجاز"}</p><h2>${date ? "مهام اليوم" : "المهام"}</h2><p class="tasks-heading-note"><span class="task-count" data-count="${visibleTotal}">٠</span> مهمة في القائمة</p></div>
         <button class="tasks-heading-add" type="button" data-action="new-task" aria-label="إضافة مهمة"><span aria-hidden="true">＋</span></button>
       </header>
+      ${date ? `<a class="day-filter-back-link" href="#/today?date=${encodeURIComponent(date)}">↗ العودة إلى خارطة اليوم</a>` : ""}
       <nav class="task-status-tabs" aria-label="حالة المهام">
-        <button type="button" class="${statusFilter === "active" ? "is-active" : ""}" data-status="active" aria-pressed="${statusFilter === "active"}">قيد الإنجاز <strong class="task-count" data-count="${activeCount}">٠</strong></button>
+        <button type="button" class="${statusFilter === "active" ? "is-active" : ""}" data-status="active" aria-pressed="${statusFilter === "active"}">قيد الإنجاز <strong class="task-count" data-count="${date ? scopedActiveCount : activeCount}">٠</strong></button>
         <button type="button" class="${statusFilter === "done" ? "is-active" : ""}" data-status="done" aria-pressed="${statusFilter === "done"}">المنجزة <strong class="task-count" data-count="${doneCount}">٠</strong></button>
       </nav>
       <nav class="task-layout-switch" aria-label="عرض المهام">
@@ -326,7 +350,7 @@ async function createTask(input, priorityOverride = null, dueDate = "", dueTime 
   if (focusDurationMin !== null && (!Number.isInteger(focusDurationMin) || focusDurationMin < 1 || focusDurationMin > 180)) {
     throw new Error("مدة التركيز يجب أن تكون بين دقيقة واحدة و3 ساعات.");
   }
-  const taskDate = dueDate || parsed.due || parsed.scheduled || localDateString();
+  const taskDate = dueDate || parsed.due || parsed.scheduled || selectedDateFilter() || localDateString();
   const task = {
     id: crypto.randomUUID(),
     title: parsed.title,
@@ -374,10 +398,21 @@ async function createTask(input, priorityOverride = null, dueDate = "", dueTime 
   await add("tasks", task);
 }
 
-async function toggleTask(task) {
+async function toggleTask(task, completionDetails = null) {
   const now = new Date().toISOString();
   if (task.status !== "done") {
-    await update("tasks", { ...task, status: "done", completedAt: now, updatedAt: now });
+    if (!completionDetails) throw new Error("يلزم تسجيل وقت الإنجاز ومدته أولاً.");
+    const completionLog = [
+      ...(Array.isArray(task.completionLog) ? task.completionLog : []),
+      completionDetails,
+    ];
+    await update("tasks", {
+      ...task,
+      status: "done",
+      completedAt: completionDetails.completedAt,
+      completionLog,
+      updatedAt: now,
+    });
     if (task.recurrence) {
       const nextDate = nextOccurrence(task.scheduled || task.due, task.recurrence);
       await add("tasks", {
@@ -396,6 +431,8 @@ async function toggleTask(task) {
         due: task.due ? nextDate : null,
         status: "open",
         completedAt: null,
+        completionLog: [],
+        timeSpentMin: 0,
         order: Date.now(),
         createdAt: now,
         updatedAt: now,
@@ -541,9 +578,17 @@ function bindEvents(app) {
     const task = records.tasks.find((item) => item.id === taskElement?.dataset.taskId);
     if (!task) return;
     try {
-      await toggleTask(task);
+      const completionDetails = task.status === "done"
+        ? null
+        : await requestCompletionDetails({ title: task.title });
+      if (task.status !== "done" && !completionDetails) {
+        checkbox.checked = false;
+        return;
+      }
+      await toggleTask(task, completionDetails);
       setStatus(task.status === "done" ? "أُعيد فتح المهمة، وأصبحت ضمن المهام قيد الإنجاز." : "أُنجزت المهمة، وتجدها في قائمة المنجزة.");
     } catch (error) {
+      checkbox.checked = task.status === "done";
       console.error("تعذّر تحديث المهمة:", error);
       setStatus(error.message, true);
     }
@@ -820,4 +865,6 @@ export function unmountTasksView() {
   unsubscribe = undefined;
   eventController?.abort();
   eventController = undefined;
+  expandedTaskDetails.clear();
+  expandedTaskSubtasks.clear();
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = "mihwar-shell-v132";
+const CACHE_NAME = "mihwar-shell-v133";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -10,6 +10,7 @@ const APP_SHELL = [
   "./css/base.css",
   "./css/theme.css",
   "./js/app.js",
+  "./js/app.js?v=111",
   "./js/router.js",
   "./js/db.js",
   "./js/store.js",
@@ -22,9 +23,14 @@ const APP_SHELL = [
   "./js/utils/notifications.js",
   "./js/utils/task-metrics.js",
   "./js/utils/life-areas.js",
+  "./js/utils/completion-dialog.js",
+  "./js/utils/prayer-times.js",
   "./js/views/today.js",
   "./js/views/dashboard.js",
+  "./js/views/dashboard.js?v=112",
   "./js/views/tasks.js",
+  "./js/views/tasks.js?v=109",
+  "./css/theme.css?v=127",
   "./js/views/goals.js",
   "./js/views/habits.js",
   "./js/views/focus.js",

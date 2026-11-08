@@ -1,9 +1,10 @@
 import { getRecords, subscribe, update } from "../store.js";
 import { formatDate, localDateString } from "../utils/dates.js";
 import { getObjectiveProgress } from "../utils/okr.js";
-import { dayProgress, setDayComplete } from "./habits.js";
+import { dayProgress, setCompletionDetails, setDayComplete } from "./habits.js";
 import { showToast } from "../utils/notifications.js";
 import { completedSubtaskCount, completedSubtasksOn, formatDuration, manualTaskMinutes } from "../utils/task-metrics.js";
+import { requestCompletionDetails } from "../utils/completion-dialog.js";
 
 const WEEKDAY_SHORT_NAMES = ["أحد", "اثن", "ثلا", "أرب", "خمي", "جمع", "سبت"];
 const MONTH_NAMES = Array.from({ length: 12 }, (_, month) =>
@@ -178,6 +179,7 @@ function habitTotals(start, end) {
   const habits = records.habits.filter((habit) => !habit.archived);
   let scheduled = 0;
   let completed = 0;
+  let progress = 0;
   const cursor = new Date(`${start}T12:00:00`);
   const last = new Date(`${end}T12:00:00`);
   while (cursor <= last) {
@@ -185,11 +187,13 @@ function habitTotals(start, end) {
     for (const habit of habits) {
       if (!isHabitScheduled(habit, date)) continue;
       scheduled += 1;
-      if (dayProgress(habit, date).complete) completed += 1;
+      const habitDayProgress = dayProgress(habit, date);
+      progress += habitDayProgress.percent / 100;
+      if (habitDayProgress.complete) completed += 1;
     }
     cursor.setDate(cursor.getDate() + 1);
   }
-  return { scheduled, completed };
+  return { scheduled, completed, progress };
 }
 
 function metricsForDate(date) {
@@ -197,6 +201,7 @@ function metricsForDate(date) {
   const completedTasks = records.tasks.filter((task) => isTaskCompletedOn(task, date));
   const habits = records.habits.filter((habit) => !habit.archived && isHabitScheduled(habit, date));
   const completedHabits = habits.filter((habit) => dayProgress(habit, date).complete).length;
+  const habitProgress = habits.reduce((total, habit) => total + dayProgress(habit, date).percent / 100, 0);
   const focusMinutes = completedFocusMinutes(date, date);
   const completedSubtasks = completedSubtasksOn(records.tasks, date);
   const taskMinutes = completedTaskMinutes(date, date);
@@ -209,6 +214,7 @@ function metricsForDate(date) {
       : 0,
     habitScheduled: habits.length,
     habitCompleted: completedHabits,
+    habitProgress,
     focusMinutes,
     taskMinutes,
     journalEntries: records.journal.filter((entry) => entry.date === date).length,
@@ -256,7 +262,7 @@ function periodInput() {
 
 function periodSummaryData(metrics) {
   const habitPercent = metrics.scheduled
-    ? Math.round(metrics.completed / metrics.scheduled * 100)
+    ? Math.round((metrics.progress ?? metrics.habitProgress ?? metrics.completed) / metrics.scheduled * 100)
     : 0;
   const taskTotal = metrics.completedTasks + metrics.plannedTasks;
   return [
@@ -508,8 +514,11 @@ function renderPeriodContent() {
 
 function periodCompletionPercent(metrics) {
   const taskTotal = metrics.completedTasks + metrics.plannedTasks;
-  const total = taskTotal + metrics.scheduled + metrics.completedSubtasks;
-  const completed = metrics.completedTasks + metrics.completed + metrics.completedSubtasks;
+  const completedSubtasks = metrics.completedSubtasks ?? 0;
+  const total = taskTotal + metrics.scheduled + completedSubtasks;
+  const completed = metrics.completedTasks
+    + completedSubtasks
+    + (metrics.progress ?? metrics.habitProgress ?? metrics.completed);
   return total ? Math.round(completed / total * 100) : 0;
 }
 
@@ -642,11 +651,17 @@ function bindEvents() {
       if (!habit) return;
       const complete = dayProgress(habit, selectedDate).complete;
       try {
-        await update("habits", setDayComplete(habit, selectedDate, !complete));
+        const details = complete
+          ? null
+          : await requestCompletionDetails({ title: habit.title, date: selectedDate });
+        if (!complete && !details) return;
+        let next = setDayComplete(habit, selectedDate, !complete);
+        if (details) next = setCompletionDetails(next, selectedDate, details);
+        await update("habits", next);
         showToast(complete ? "أُزيل تسجيل العادة." : "تم تسجيل العادة لليوم المحدد.");
       } catch (error) {
         console.error("تعذّر تحديث العادة من لوحة اليوم:", error);
-        showToast("تعذّر تحديث العادة. حاول مجدداً.", { isError: true });
+        showToast(error.message || "تعذّر تحديث العادة. حاول مجدداً.", { isError: true });
       }
       return;
     }

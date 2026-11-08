@@ -32,7 +32,7 @@ const themes = {
 let renderSequence = 0;
 let mountedRoute;
 const animatedCountSelector = "[data-count]";
-const LATEST_UPDATE_ID = "mobile-dashboard-and-daily-time-v125";
+const LATEST_UPDATE_ID = "completion-details-and-productivity-v126";
 
 function showLatestUpdates() {
   const previousUpdateId = localStorage.getItem("mihwar-seen-update");
@@ -71,7 +71,7 @@ async function render() {
   const routeKey = route.id === "tasks" ? `tasks:${taskView ? "habits" : "tasks"}` : route.id;
   document.querySelector("#page-scroll-container")?.scrollTo(0, 0);
   const periodDashboard = document.querySelector("#period-dashboard");
-  if (periodDashboard) periodDashboard.hidden = route.id !== "today";
+  if (periodDashboard) periodDashboard.hidden = true;
   if (mountedRoute && mountedRoute !== routeKey) {
     if (mountedRoute === "today") unmountTodayView();
     if (mountedRoute === "goals") unmountGoalsView();

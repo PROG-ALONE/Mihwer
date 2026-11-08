@@ -1,7 +1,8 @@
 import { add, getRecords, subscribe, update } from "../store.js";
-import { localDateString } from "../utils/dates.js";
+import { formatDate, localDateString } from "../utils/dates.js";
 import { ensureDefaultLifeAreas } from "../utils/life-areas.js";
 import { showToast } from "../utils/notifications.js";
+import { requestCompletionDetails } from "../utils/completion-dialog.js";
 
 const DAY_NAMES = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 const DAYS = 84;
@@ -20,6 +21,11 @@ function escapeHtml(value = "") {
 function dateOffset(offset, from = new Date()) {
   const date = new Date(from.getFullYear(), from.getMonth(), from.getDate() + offset);
   return localDateString(date);
+}
+
+function selectedDateFilter() {
+  const date = new URLSearchParams(window.location.hash.split("?")[1] ?? "").get("date") ?? "";
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : "";
 }
 
 function normalizedHistory(habit) {
@@ -71,7 +77,7 @@ export function dayProgress(habit, date) {
     const amountDetails = [...totalByUnit].map(([unit, total]) =>
       `${doneByUnit.get(unit) ?? 0}/${total} ${escapeHtml(unit)}`);
     return {
-      mode, logged, done: done.length, total: items.length, target,
+      mode, logged, done: Math.min(done.length, target), loggedCount: done.length, total: target, target, itemsTotal: items.length,
       complete: items.length > 0 && done.length >= target,
       amountDetails,
       percent: Math.min(100, Math.round((done.length / target) * 100)),
@@ -85,8 +91,22 @@ function withProgress(habit, date, change) {
   const next = { ...habit, history: normalizedHistory(habit), updatedAt: new Date().toISOString() };
   change(next);
   if (dayProgress(next, date).complete) next.history[date] = true;
-  else delete next.history[date];
+  else {
+    delete next.history[date];
+    if (next.completionLog) {
+      next.completionLog = { ...next.completionLog };
+      delete next.completionLog[date];
+    }
+  }
   return next;
+}
+
+export function setCompletionDetails(habit, date, details) {
+  return {
+    ...habit,
+    completionLog: { ...(habit.completionLog ?? {}), [date]: details },
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 export function setItemsLogged(habit, date, itemIds) {
@@ -142,8 +162,10 @@ const PRAYER_PRESET = [
   "سنة | سنة العصر القبلية | 4 | ركعة",
   "سنة | سنة المغرب البعدية | 2 | ركعة",
   "سنة | سنة العشاء البعدية | 2 | ركعة",
-  "نافلة | الوتر | 1 | ركعة",
   "نافلة | صلاة الضحى | 2 | ركعة",
+  "نافلة | قيام الليل | 2 | ركعة",
+  "نافلة | صلاة الشفع | 2 | ركعة",
+  "نافلة | الوتر | 1 | ركعة",
 ].join("\n");
 
 function habitItemsMarkup(items, logged) {
@@ -223,27 +245,26 @@ function heatmap(habit) {
   }).join("");
 }
 
-function renderHabit(habit) {
-  const today = localDateString();
-  const progress = dayProgress(habit, today);
+function renderHabit(habit, date) {
+  const progress = dayProgress(habit, date);
   const checked = progress.complete;
   const unit = escapeHtml(habit.unit ?? "");
   const { current, longest } = streaks(habit);
   const stats = consistency(habit);
   const linkedObjective = records.objectives.find((objective) => objective.id === habit.objectiveId);
   const lifeArea = records.lifeAreas.find((area) => area.id === (habit.lifeAreaId ?? linkedObjective?.lifeAreaId));
-  return `<article class="habit-card" data-habit-id="${escapeHtml(habit.id)}">
+  return `<article class="habit-card" data-habit-id="${escapeHtml(habit.id)}" data-date="${escapeHtml(date)}">
     <span class="habit-color-dot" aria-hidden="true"></span>
     <div class="habit-card-heading">
       <button class="habit-today-toggle${checked ? " is-checked" : ""}" type="button" data-action="toggle-today" aria-pressed="${checked}" aria-label="${checked ? "إلغاء تحقق" : "تحقق"} ${escapeHtml(habit.title)}">
         <span aria-hidden="true">${checked ? "✓" : "+"}</span>
       </button>
-      <div class="habit-title-group"><h3>${escapeHtml(habit.title)}</h3><span>${checked ? "مكتملة اليوم" : progress.mode === "count" ? `${progress.done}/${progress.total} ${unit}` : `${current} يوم متتالٍ`}${lifeArea ? ` · ${escapeHtml(lifeArea.name)}` : ""}</span></div>
+      <div class="habit-title-group"><h3>${escapeHtml(habit.title)}</h3><span>${progress.mode === "items" ? `${progress.done}/${progress.target} بند · ${progress.percent}%` : checked ? "مكتملة اليوم" : progress.mode === "count" ? `${progress.done}/${progress.total} ${unit}` : `${current} يوم متتالٍ`}${lifeArea ? ` · ${escapeHtml(lifeArea.name)}` : ""}</span></div>
       <button class="icon-button" type="button" data-action="edit" aria-label="تعديل ${escapeHtml(habit.title)}">✎</button>
       <button class="icon-button" type="button" data-action="archive" aria-label="أرشفة ${escapeHtml(habit.title)}">×</button>
     </div>
     <details class="habit-details" data-habit-details="${escapeHtml(habit.id)}"${expandedHabitDetails.has(habit.id) ? " open" : ""}>
-      <summary><span>تفاصيل العادة</span><span class="habit-details-progress">${progress.mode === "items" ? `${progress.done}/${progress.total} بند` : progress.mode === "count" ? `${progress.done}/${progress.total} ${unit}` : checked ? "مكتملة اليوم" : "لم تكتمل اليوم"}</span></summary>
+      <summary><span>تفاصيل العادة</span><span class="habit-details-progress">${progress.mode === "items" ? `${progress.done}/${progress.target} بند · ${progress.percent}%` : progress.mode === "count" ? `${progress.done}/${progress.total} ${unit}` : checked ? "مكتملة اليوم" : "لم تكتمل اليوم"}</span></summary>
       <div class="habit-details-content">
     <div class="habit-focus-strip">
       <a class="habit-focus-link" href="#/focus?habit=${encodeURIComponent(habit.id)}">◉ ابدأ التركيز${habit.focusDurationMin ? ` · ${Number(habit.focusDurationMin)} د` : ""}</a>
@@ -258,7 +279,7 @@ function renderHabit(habit) {
     <div class="subtask-progress"><span style="width:${progress.percent}%"></span></div>` : ""}
     ${progress.mode === "items" ? `
     <div class="habit-items${requiresAllItems(habit) ? " requires-all-items" : ""}">
-      <div class="habit-items-heading"><div><strong>تفاصيل اليوم</strong><span>${requiresAllItems(habit) ? "أكمل كل البنود لتسجيل العادة" : "اختر البنود التي أنجزتها"}</span></div><strong>${progress.done}/${progress.total}</strong></div>
+      <div class="habit-items-heading"><div><strong>تفاصيل اليوم</strong><span>${requiresAllItems(habit) ? "أكمل كل البنود لتسجيل العادة" : `اختر ما أنجزته · الهدف ${progress.target} من ${progress.itemsTotal}`}</span></div><strong>${progress.loggedCount}/${progress.itemsTotal}</strong></div>
       ${habitItemsMarkup(habit.items, progress.logged)}
     </div>
     <p class="habit-item-summary">${requiresAllItems(habit) ? "لا تكتمل العادة إلا بإكمال جميع التفاصيل." : `هدف اليوم: ${progress.done}/${progress.target} بند`}${progress.amountDetails.length ? ` · الكميات (منجز/إجمالي): ${progress.amountDetails.join("، ")}` : ""}</p>
@@ -281,14 +302,17 @@ function renderHabit(habit) {
 function render() {
   const app = document.querySelector("#app");
   if (!app) return;
-  const habits = records.habits.filter((habit) => !habit.archived).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const date = selectedDateFilter();
+  const habits = records.habits.filter((habit) => !habit.archived && (!date || isScheduled(habit, date)))
+    .sort((a, b) => (Number(a.priority ?? 3) - Number(b.priority ?? 3)) || (a.order ?? 0) - (b.order ?? 0));
   app.innerHTML = `
     <section class="habits-page" aria-label="متابعة العادات">
       <header class="habits-heading">
-        <div><p class="goals-kicker">مساحة الإنجاز</p><h2>عاداتك</h2><p class="goals-subtitle">${habits.length} عادة · سجّل إنجازك بخطوة واحدة</p></div>
+        <div><p class="goals-kicker">${date ? `يوم ${escapeHtml(formatDate(date))}` : "مساحة الإنجاز"}</p><h2>${date ? "عادات اليوم" : "عاداتك"}</h2><p class="goals-subtitle">${habits.length} عادة · سجّل إنجازك بخطوة واحدة</p></div>
         <button class="habits-heading-add" type="button" data-action="new-habit" aria-label="إضافة عادة"><span aria-hidden="true">＋</span></button>
       </header>
-      ${habits.length ? `<div class="habits-list">${habits.map(renderHabit).join("")}</div>` : `<div class="goals-empty">ابدأ بعادة صغيرة تريد بناءها. ويمكنك ربطها بهدف سنوي.</div>`}
+      ${date ? `<a class="day-filter-back-link" href="#/today?date=${encodeURIComponent(date)}">↗ العودة إلى خارطة اليوم</a>` : ""}
+      ${habits.length ? `<div class="habits-list">${habits.map((habit) => renderHabit(habit, date || localDateString())).join("")}</div>` : `<div class="goals-empty">${date ? "لا توجد عادات مجدولة لهذا اليوم." : "ابدأ بعادة صغيرة تريد بناءها. ويمكنك ربطها بهدف سنوي."}</div>`}
       <p class="habits-status" role="status" aria-live="polite"></p>
       <dialog class="goal-dialog" id="habit-dialog">
         <form id="habit-form">
@@ -298,6 +322,8 @@ function render() {
           <div class="goal-dialog-fields">
             <label>نوع العادة<select name="kind"><option value="build">بناء عادة</option><option value="quit">تقليل عادة</option></select></label>
             <label>الجدول<select name="schedule"><option value="daily">كل يوم</option><option value="weekdays">أيام العمل</option><option value="weekends">نهاية الأسبوع</option></select></label>
+            <label>الأولوية<select name="priority"><option value="0">عاجلة ومهمة</option><option value="1">مهمة</option><option value="2">عاجلة</option><option value="3" selected>عادية</option></select></label>
+            <label>وقتها المعتاد<input name="dailyTime" type="time"><small>يظهر هذا الوقت على خريطة يومك.</small></label>
             <label>طريقة التتبع<select name="mode"><option value="check">تأشير (تمت/لم تتم)</option><option value="count">عدّاد بهدف يومي</option><option value="items">بنود (مثل الصلوات)</option></select></label>
             <label data-mode-field="count">الهدف اليومي (العدد)<input name="targetPerDay" type="number" min="1" max="10000" value="1"></label>
             <label>مدة التركيز المستهدفة بالدقائق<input name="focusDurationMin" type="number" min="1" max="180" step="1" placeholder="المدة الافتراضية"></label>
@@ -362,6 +388,10 @@ function bindEvents(app) {
     }
     if (!button) return;
     const action = button.dataset.action;
+    const cardDate = button.closest("[data-habit-id]")?.dataset.date;
+    const date = button.dataset.date && /^\d{4}-\d{2}-\d{2}$/.test(button.dataset.date)
+      ? button.dataset.date
+      : cardDate && /^\d{4}-\d{2}-\d{2}$/.test(cardDate) ? cardDate : localDateString();
     if (action === "new-habit") {
       app.querySelector("#habit-form").reset();
       app.querySelector("#habit-form").elements.id.value = "";
@@ -375,8 +405,8 @@ function bindEvents(app) {
       form.elements.items.value = PRAYER_PRESET;
       form.elements.unit.value = "ركعة";
       form.elements.mode.value = "items";
-      form.elements.requireAllItems.checked = true;
-      form.elements.targetItemsPerDay.value = String(PRAYER_PRESET.split("\n").length);
+      form.elements.requireAllItems.checked = false;
+      form.elements.targetItemsPerDay.value = String(Math.min(10, PRAYER_PRESET.split("\n").length));
       if (!form.elements.title.value) form.elements.title.value = "الصلاة بتفاصيلها";
       form.elements.lifeAreaId.value = "mihwar-area-religion";
       syncModeFields(form);
@@ -391,23 +421,39 @@ function bindEvents(app) {
     if (!habit) return;
     try {
       if (action === "toggle-today") {
-        const today = localDateString();
-        const next = setDayComplete(habit, today, !dayProgress(habit, today).complete);
+        const nextComplete = !dayProgress(habit, date).complete;
+        const details = nextComplete
+          ? await requestCompletionDetails({ title: habit.title, date })
+          : null;
+        if (nextComplete && !details) return;
+        let next = setDayComplete(habit, date, nextComplete);
+        if (details) next = setCompletionDetails(next, date, details);
         await update("habits", next);
-        setStatus(next.history[today] ? "تم تسجيل العادة لهذا اليوم." : "أُزيل تسجيل اليوم.");
+        setStatus(next.history[date] ? "تم تسجيل العادة لهذا اليوم." : "أُزيل تسجيل اليوم.");
       } else if (action === "count-inc" || action === "count-dec") {
-        const today = localDateString();
-        const value = Math.max(0, (Number(habit.progress?.[today]) || 0) + (action === "count-inc" ? 1 : -1));
-        await update("habits", withProgress(habit, today, (next) => { next.progress = { ...(habit.progress ?? {}), [today]: value }; }));
+        const wasComplete = dayProgress(habit, date).complete;
+        const value = Math.max(0, (Number(habit.progress?.[date]) || 0) + (action === "count-inc" ? 1 : -1));
+        let next = withProgress(habit, date, (updated) => { updated.progress = { ...(habit.progress ?? {}), [date]: value }; });
+        if (!wasComplete && dayProgress(next, date).complete) {
+          const details = await requestCompletionDetails({ title: habit.title, date });
+          if (!details) return;
+          next = setCompletionDetails(next, date, details);
+        }
+        await update("habits", next);
       } else if (action === "toggle-item") {
-        const today = localDateString();
+        const wasComplete = dayProgress(habit, date).complete;
         const id = button.dataset.itemId;
-        const logged = new Set(habit.itemLog?.[today] ?? []);
+        const logged = new Set(habit.itemLog?.[date] ?? []);
         if (logged.has(id)) logged.delete(id);
         else logged.add(id);
-        const next = setItemsLogged(habit, today, [...logged]);
+        let next = setItemsLogged(habit, date, [...logged]);
+        if (!wasComplete && dayProgress(next, date).complete) {
+          const details = await requestCompletionDetails({ title: habit.title, date });
+          if (!details) return;
+          next = setCompletionDetails(next, date, details);
+        }
         await update("habits", next);
-        setStatus(`تقدّم ${habit.title}: ${dayProgress(next, today).done} من ${dayProgress(next, today).target} بند للهدف اليومي.`);
+        setStatus(`تقدّم ${habit.title}: ${dayProgress(next, date).done} من ${dayProgress(next, date).target} بند للهدف اليومي.`);
       } else if (action === "edit") {
         const form = app.querySelector("#habit-form");
         const linkedObjective = records.objectives.find((objective) => objective.id === habit.objectiveId);
@@ -415,6 +461,8 @@ function bindEvents(app) {
         form.elements.title.value = habit.title;
         form.elements.kind.value = habit.kind ?? "build";
         form.elements.schedule.value = ["daily", "weekdays", "weekends"].includes(habit.schedule) ? habit.schedule : "daily";
+        form.elements.priority.value = String(Number.isInteger(habit.priority) ? habit.priority : 3);
+        form.elements.dailyTime.value = habit.dailyTime ?? "";
         form.elements.targetPerDay.value = habit.targetPerDay ?? 1;
         form.elements.focusDurationMin.value = habit.focusDurationMin ?? "";
         form.elements.targetItemsPerDay.value = habit.targetItemsPerDay ?? (habit.items?.length || 1);
@@ -446,9 +494,15 @@ function bindEvents(app) {
     const habit = records.habits.find((item) => item.id === card?.dataset.habitId);
     const date = cell.title.split(" · ")[0];
     if (!habit || !date) return;
-    const next = setDayComplete(habit, date, !isCompleted(habit, date));
-    const history = next.history;
     try {
+      const nextComplete = !isCompleted(habit, date);
+      const details = nextComplete
+        ? await requestCompletionDetails({ title: habit.title, date })
+        : null;
+      if (nextComplete && !details) return;
+      let next = setDayComplete(habit, date, nextComplete);
+      if (details) next = setCompletionDetails(next, date, details);
+      const history = next.history;
       await update("habits", next);
       setStatus(history[date] ? `سُجّل إنجاز ${date}.` : `أُزيل إنجاز ${date}.`);
     } catch (error) {
@@ -469,6 +523,8 @@ function bindEvents(app) {
       title: form.elements.title.value.trim(),
       kind: form.elements.kind.value,
       schedule: form.elements.schedule.value,
+      priority: Number(form.elements.priority.value),
+      dailyTime: form.elements.dailyTime.value || null,
       mode: form.elements.mode.value,
       targetPerDay: Math.max(1, Number(form.elements.targetPerDay.value) || 1),
       focusDurationMin: form.elements.focusDurationMin.value ? Number(form.elements.focusDurationMin.value) : null,
@@ -540,4 +596,5 @@ export function unmountHabitsView() {
   unsubscribe = undefined;
   eventController?.abort();
   eventController = undefined;
+  expandedHabitDetails.clear();
 }

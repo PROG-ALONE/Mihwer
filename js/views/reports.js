@@ -65,6 +65,154 @@ function inRange(value, start, end) {
   return date >= start && date <= end;
 }
 
+function taskCompletionEvents(tasks, start, end) {
+  return tasks.flatMap((task) => {
+    const saved = Array.isArray(task.completionLog) ? task.completionLog : [];
+    const entries = saved.length
+      ? saved
+      : task.status === "done" && task.completedAt
+        ? [{ completedAt: task.completedAt, durationMin: null }]
+        : [];
+    return entries.filter((entry) => entry?.completedAt && inRange(entry.completedAt, start, end))
+      .map((entry) => ({
+        type: "task",
+        id: task.id,
+        title: task.title,
+        completedAt: entry.completedAt,
+        date: localDateString(new Date(entry.completedAt)),
+        durationMin: Number.isFinite(Number(entry.durationMin)) && Number(entry.durationMin) > 0
+          ? Number(entry.durationMin)
+          : null,
+        task,
+      }));
+  });
+}
+
+function habitCompletionEvents(habits, start, end) {
+  return habits.flatMap((habit) => Object.entries(habit.completionLog ?? {})
+    .filter(([date, entry]) => entry?.completedAt && inRange(date, start, end))
+    .map(([date, entry]) => ({
+      type: "habit",
+      id: habit.id,
+      title: habit.title,
+      completedAt: entry.completedAt,
+      date,
+      durationMin: Number.isFinite(Number(entry.durationMin)) && Number(entry.durationMin) > 0
+        ? Number(entry.durationMin)
+        : null,
+      habit,
+    })));
+}
+
+function formatClock(date) {
+  return new Intl.DateTimeFormat("ar", { hour: "2-digit", minute: "2-digit" }).format(date);
+}
+
+function latestTaskCompletion(task) {
+  const entries = Array.isArray(task.completionLog) ? task.completionLog : [];
+  return entries.slice().sort((left, right) =>
+    String(right.completedAt ?? "").localeCompare(String(left.completedAt ?? "")))[0] ?? null;
+}
+
+function completionStatistics(tasks, habits, start, end) {
+  const events = [
+    ...taskCompletionEvents(tasks, start, end),
+    ...habitCompletionEvents(habits, start, end),
+  ];
+  const durations = events.filter((event) => Number.isFinite(event.durationMin));
+  const taskDurations = durations.filter((event) => event.type === "task");
+  const habitDurations = durations.filter((event) => event.type === "habit");
+  const totalDuration = durations.reduce((sum, event) => sum + event.durationMin, 0);
+  const longestDuration = durations.reduce((longest, event) =>
+    !longest || event.durationMin > longest.durationMin ? event : longest, null);
+  const hourCounts = Array(24).fill(0);
+  for (const event of events) hourCounts[new Date(event.completedAt).getHours()] += 1;
+  const bestHour = hourCounts.reduce((best, count, hour) =>
+    count > (best?.count ?? 0) ? { hour, count } : best, null);
+  const bestHourFor = (entries) => {
+    const counts = Array(24).fill(0);
+    for (const event of entries) counts[new Date(event.completedAt).getHours()] += 1;
+    return counts.reduce((best, count, hour) =>
+      count > (best?.count ?? 0) ? { hour, count } : best, null);
+  };
+  const bestTaskHour = bestHourFor(events.filter((event) => event.type === "task"));
+  const bestHabitHour = bestHourFor(events.filter((event) => event.type === "habit"));
+  const longestTaskDuration = taskDurations.reduce((longest, event) =>
+    !longest || event.durationMin > longest.durationMin ? event : longest, null);
+  const longestHabitDuration = habitDurations.reduce((longest, event) =>
+    !longest || event.durationMin > longest.durationMin ? event : longest, null);
+  const taskEvents = events.filter((event) => event.type === "task");
+  const tasksWithDeadline = taskEvents.filter(({ task }) => task.due || task.scheduled);
+  const onTime = tasksWithDeadline.filter(({ task, completedAt }) => {
+    const dueDate = (task.due || task.scheduled).slice(0, 10);
+    const dueTime = /^\d{2}:\d{2}$/.test(task.dueTime ?? "") ? task.dueTime : "23:59";
+    return new Date(completedAt) <= new Date(`${dueDate}T${dueTime}`);
+  }).length;
+  const fullDays = [];
+  const finishTimes = [];
+  const dayWindow = rangeForCharts();
+  const cursor = new Date(`${dayWindow.start}T12:00:00`);
+  const last = new Date(`${dayWindow.end}T12:00:00`);
+  let daysVisited = 0;
+  while (cursor <= last && daysVisited < 366) {
+    daysVisited += 1;
+    const date = localDateString(cursor);
+    const dayTaskEvents = taskEvents.filter((event) => event.date === date);
+    const completedTaskIds = new Set(dayTaskEvents.map((event) => event.id));
+    const plannedTasks = tasks.filter((task) => {
+      const dates = [task.scheduled, task.due].filter(Boolean).map((value) =>
+        /^\d{4}-\d{2}-\d{2}$/.test(value)
+          ? value
+          : Number.isNaN(new Date(value).getTime()) ? "" : localDateString(new Date(value)));
+      return dates.includes(date) || completedTaskIds.has(task.id);
+    });
+    const plannedHabits = habits.filter((habit) =>
+      scheduledDays(habit, date, date).length > 0);
+    const dayHabitEvents = events.filter((event) => event.type === "habit" && event.date === date);
+    const completedHabitIds = new Set(dayHabitEvents.map((event) => event.id));
+    const allTasksDone = plannedTasks.every((task) =>
+      taskEvents.some((event) => event.id === task.id && event.date <= date));
+    const allHabitsDone = plannedHabits.every((habit) =>
+      dayProgress(habit, date).complete);
+    if (plannedTasks.length + plannedHabits.length && allTasksDone && allHabitsDone) {
+      fullDays.push(date);
+      if (plannedHabits.every((habit) => completedHabitIds.has(habit.id)) &&
+        plannedTasks.every((task) => dayTaskEvents.some((event) => event.id === task.id))) {
+        const dayEvents = events.filter((event) => event.date === date);
+        const latest = dayEvents.reduce((value, event) =>
+          Math.max(value, new Date(event.completedAt).getTime()), 0);
+        if (latest) finishTimes.push(new Date(latest));
+      }
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  const averageFinishMinutes = finishTimes.length
+    ? Math.round(finishTimes.reduce((sum, value) => sum + value.getHours() * 60 + value.getMinutes(), 0) / finishTimes.length)
+    : null;
+  const averageFinish = averageFinishMinutes === null
+    ? "—"
+    : formatClock(new Date(2000, 0, 1, Math.floor(averageFinishMinutes / 60), averageFinishMinutes % 60));
+  return {
+    events,
+    durations,
+    taskDurations,
+    habitDurations,
+    totalDuration,
+    averageDuration: durations.length ? Math.round(totalDuration / durations.length) : 0,
+    longestDuration,
+    bestHour: bestHour?.count ? bestHour : null,
+    bestTaskHour: bestTaskHour?.count ? bestTaskHour : null,
+    bestHabitHour: bestHabitHour?.count ? bestHabitHour : null,
+    longestTaskDuration,
+    longestHabitDuration,
+    onTimeRate: tasksWithDeadline.length ? Math.round(onTime / tasksWithDeadline.length * 100) : null,
+    fullDayCount: fullDays.length,
+    finishTimes,
+    averageFinish,
+    hourCounts,
+  };
+}
+
 function objectiveForTask(task) {
   return records.objectives.find((objective) => objective.id === task.objectiveId) ??
     records.objectives.find((objective) => records.keyResults.some((result) => result.id === task.keyResultId && result.objectiveId === objective.id));
@@ -106,7 +254,10 @@ function filteredTasks() {
     const subtaskDates = (Array.isArray(task.checklist) ? task.checklist : []).flatMap((item) =>
       typeof item === "string" ? [] : (Array.isArray(item.completionLog) ? item.completionLog : [])
         .filter((entry) => entry?.completed).map((entry) => entry.date));
-    const taskDates = [task.completedAt, task.due, task.scheduled, task.createdAt, ...subtaskDates].filter(Boolean);
+    const loggedCompletionDates = Array.isArray(task.completionLog)
+      ? task.completionLog.map((entry) => entry.completedAt).filter(Boolean)
+      : [];
+    const taskDates = [task.completedAt, task.due, task.scheduled, task.createdAt, ...loggedCompletionDates, ...subtaskDates].filter(Boolean);
     return taskDates.some((date) => inRange(date, start, end)) && matchesTaskFilters(task);
   });
 }
@@ -452,13 +603,19 @@ function svgBarChart(entries, label, suffix = "") {
 
 function dailyCompletions(tasks, start, end) {
   const days = [];
+  const counts = new Map();
+  for (const event of taskCompletionEvents(tasks, start, end)) {
+    counts.set(event.date, (counts.get(event.date) ?? 0) + 1);
+  }
   const cursor = new Date(`${start}T12:00:00`);
   const last = new Date(`${end}T12:00:00`);
   while (cursor <= last && days.length < 366) {
     const date = localDateString(cursor);
-    const count = tasks.filter((task) => task.status === "done" && task.completedAt?.slice(0, 10) === date).length
-      + completedSubtaskCount(tasks, date, date);
-    days.push({ date, value: count, label: new Intl.DateTimeFormat("ar", { day: "numeric", month: "short" }).format(cursor) });
+    days.push({
+      date,
+      value: (counts.get(date) ?? 0) + completedSubtaskCount(tasks, date, date),
+      label: new Intl.DateTimeFormat("ar", { day: "numeric", month: "short" }).format(cursor),
+    });
     cursor.setDate(cursor.getDate() + 1);
   }
   return days;
@@ -549,6 +706,15 @@ function render() {
       </section>
       <p class="report-period-label">${range === "all" ? "كامل السجل · خريطة النشاط تعرض آخر 12 شهراً" : `<bdi dir="ltr">${escapeHtml(start)} — ${escapeHtml(end)}</bdi>`} · ${completedTasks} مهام منجزة</p>
       ${renderReportCharts(tasks)}
+      <details class="report-table-details">
+        <summary>سجل المهام بالتفصيل <span>${tasks.length} مهمة</span></summary>
+        <section class="today-panel report-table-wrap">${tasks.length ? `<table class="report-table"><thead><tr><th>المهمة</th><th>الحالة</th><th>التاريخ</th><th>آخر إنجاز</th><th>مدته</th><th>مجموع مدد الإنجاز</th><th>وقت العمل المسجل</th><th>المشروع</th></tr></thead><tbody>${tasks.slice().sort((a, b) => (b.completedAt ?? b.due ?? "").localeCompare(a.completedAt ?? a.due ?? "")).map((task) => {
+          const latest = latestTaskCompletion(task);
+          const durationTotal = (Array.isArray(task.completionLog) ? task.completionLog : [])
+            .reduce((sum, entry) => sum + Math.max(0, Number(entry.durationMin) || 0), 0);
+          return `<tr><td>${escapeHtml(task.title)}</td><td>${task.status === "done" ? "مكتملة" : "مفتوحة"}</td><td>${escapeHtml((task.completedAt ?? task.due ?? task.scheduled ?? "").slice(0, 10))}</td><td>${latest?.completedAt ? escapeHtml(formatClock(new Date(latest.completedAt))) : "—"}</td><td>${latest?.durationMin ? formatDuration(latest.durationMin) : "—"}</td><td>${formatDuration(durationTotal)}</td><td>${formatDuration(totalRecordedTaskMinutes(task))}</td><td>${escapeHtml(records.projects.find((project) => project.id === task.projectId)?.name ?? "—")}</td></tr>`;
+        }).join("")}</tbody></table>` : `<p class="report-empty">لا توجد مهام ضمن هذه الفترة والفلاتر.</p>`}</section>
+      </details>
       <p class="reports-status" role="status" aria-live="polite"></p>
     </section>`;
   bindEvents(app);
@@ -558,7 +724,7 @@ function taskRows(tasks) {
   const headers = [
     "المعرّف", "العنوان", "الوصف والملاحظات", "الحالة", "تاريخ الإنشاء", "آخر تحديث",
     "تاريخ الجدولة", "الموعد النهائي", "وقت التنفيذ", "تاريخ الإنجاز", "مهم", "عاجل",
-    "الوقت المتوقع بالدقائق", "الوقت المنفق بالدقائق", "الوسوم",
+    "الوقت المتوقع بالدقائق", "وقت العمل المسجل بالدقائق", "سجل أوقات الإنجاز ومددها", "الوسوم",
     "المجال", "المشروع", "معرّف المشروع", "الهدف", "معرّف الهدف", "النتيجة الرئيسية", "معرّف النتيجة",
     "التكرار", "المهام الفرعية", "الترتيب",
   ];
@@ -567,7 +733,7 @@ function taskRows(tasks) {
     rows: [headers, ...tasks.map((task) => [
       task.id, task.title, task.notes, task.status, task.createdAt, task.updatedAt,
       task.scheduled, task.due, task.dueTime, task.completedAt, Boolean(task.important), Boolean(task.urgent),
-      task.estimateMin, totalRecordedTaskMinutes(task), (task.tags ?? []).join("، "),
+      task.estimateMin, totalRecordedTaskMinutes(task), JSON.stringify(task.completionLog ?? []), (task.tags ?? []).join("، "),
       records.lifeAreas.find((item) => item.id === taskLifeAreaId(task))?.name ?? "",
       records.projects.find((item) => item.id === task.projectId)?.name ?? "", task.projectId,
       objectiveForTask(task)?.title ?? "", objectiveForTask(task)?.id ?? "",
@@ -616,7 +782,7 @@ function buildExportSheets(tasks) {
   };
   const habitLogs = {
     name: "سجل العادات",
-    rows: [["معرّف العادة", "العادة", "التاريخ", "مكتملة", "العدد", "هدف العدد", "البنود المنجزة", "تفاصيل البنود"]],
+    rows: [["معرّف العادة", "العادة", "التاريخ", "مكتملة", "العدد", "هدف العدد", "البنود المنجزة", "تفاصيل البنود", "وقت الإنجاز", "مدة الإنجاز بالدقائق"]],
   };
   for (const habit of habits) {
     const history = Array.isArray(habit.history)
@@ -626,6 +792,7 @@ function buildExportSheets(tasks) {
       ...Object.keys(history),
       ...Object.keys(habit.progress ?? {}),
       ...Object.keys(habit.itemLog ?? {}),
+      ...Object.keys(habit.completionLog ?? {}),
     ].filter((date) => inRange(date, start, end)));
     for (const date of [...dates].sort()) {
       const itemLog = new Set(habit.itemLog?.[date] ?? []);
@@ -635,6 +802,8 @@ function buildExportSheets(tasks) {
         habit.progress?.[date] ?? "", habit.targetPerDay ?? "",
         completedItems.map((item) => item.name).join("، "),
         completedItems.map((item) => `${item.category ?? "عام"} | ${item.name} | ${item.amount ?? ""} ${item.unit ?? ""}`).join("\n"),
+        habit.completionLog?.[date]?.completedAt ?? "",
+        habit.completionLog?.[date]?.durationMin ?? "",
       ]);
     }
   }
@@ -738,6 +907,8 @@ function buildExportAnalytics(tasks) {
   const selectedRange = dateRange();
   const { start, end } = rangeForCharts();
   const summary = reportSummary(tasks, selectedRange.start, selectedRange.end);
+  const habits = records.habits.filter((habit) => !habit.archived && matchesHabitFilters(habit));
+  const completionStats = completionStatistics(tasks, habits, selectedRange.start, selectedRange.end);
   const charts = [];
   const completedTasks = dailyCompletions(tasks, start, end);
   charts.push({ section: "tasks", title: "إنجاز المهام عبر الزمن", type: "line", unit: "مهمة", values: completedTasks });
@@ -752,6 +923,30 @@ function buildExportAnalytics(tasks) {
       { label: "مفتوحة", value: openTasks.length },
     ],
   });
+  if (completionStats.events.length) {
+    charts.push({
+      section: "tasks",
+      title: "أوقات الإنجاز بحسب الساعة",
+      type: "bar",
+      unit: "إنجاز",
+      values: completionStats.hourCounts.flatMap((value, hour) => value
+        ? [{ label: formatClock(new Date(2000, 0, 1, hour)), value }]
+        : []),
+    });
+    const completionDurationsByDay = dailyCompletions([], start, end).map((day) => ({
+      ...day,
+      value: completionStats.durations
+        .filter((event) => event.date === day.date)
+        .reduce((sum, event) => sum + event.durationMin, 0),
+    }));
+    charts.push({
+      section: "tasks",
+      title: "دقائق الإنجاز يومياً",
+      type: "line",
+      unit: "دقيقة",
+      values: completionDurationsByDay,
+    });
+  }
 
   const focusByGroup = new Map();
   const focusSessions = reportSessions(start, end);
@@ -771,7 +966,6 @@ function buildExportAnalytics(tasks) {
     values: [...focusByGroup].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value),
   });
 
-  const habits = records.habits.filter((habit) => !habit.archived && matchesHabitFilters(habit));
   charts.push({
     section: "habits",
     title: "ثبات العادات",
@@ -947,10 +1141,8 @@ function buildExportAnalytics(tasks) {
   const last = new Date(`${end}T12:00:00`);
   const taskCounts = new Map();
   const subtaskCounts = new Map();
-  for (const task of tasks) {
-    if (task.status !== "done" || !inRange(task.completedAt, start, end)) continue;
-    const date = task.completedAt.slice(0, 10);
-    taskCounts.set(date, (taskCounts.get(date) ?? 0) + 1);
+  for (const event of taskCompletionEvents(tasks, start, end)) {
+    taskCounts.set(event.date, (taskCounts.get(event.date) ?? 0) + 1);
   }
   for (const task of tasks) {
     for (const item of Array.isArray(task.checklist) ? task.checklist : []) {
@@ -1001,6 +1193,13 @@ function buildExportAnalytics(tasks) {
     .filter((session) => session.taskId)
     .reduce((sum, session) => sum + Math.max(0, Number(session.durationMin) || 0), 0);
   const totalTaskMinutes = manualTaskMinutes(tasks, selectedRange.start, selectedRange.end) + taskFocusMinutes;
+  const taskDurationTotal = completionStats.taskDurations.reduce((sum, event) => sum + event.durationMin, 0);
+  const habitDurationTotal = completionStats.habitDurations.reduce((sum, event) => sum + event.durationMin, 0);
+  const taskEvents = completionStats.events.filter((event) => event.type === "task");
+  const habitEvents = completionStats.events.filter((event) => event.type === "habit");
+  const hourLabel = (entry) => entry
+    ? formatClock(new Date(2000, 0, 1, entry.hour))
+    : "—";
   const moodEntries = journalEntries.filter((entry) => Number(entry.mood) >= 1 && Number(entry.mood) <= 5);
   const averageMood = moodEntries.length
     ? Number((moodEntries.reduce((sum, entry) => sum + Number(entry.mood), 0) / moodEntries.length).toFixed(1))
@@ -1009,15 +1208,19 @@ function buildExportAnalytics(tasks) {
   const taskDetails = tasks.map((task) => {
     const checklist = Array.isArray(task.checklist) ? task.checklist : [];
     const done = checklist.filter((item) => typeof item === "object" && item.done).length;
+    const taskLogs = taskCompletionEvents([task], selectedRange.start, selectedRange.end);
+    const completionDuration = taskLogs.reduce((sum, event) => sum + (event.durationMin ?? 0), 0);
     return {
       title: task.title,
       value: checklist.length ? `${done}/${checklist.length} فرعية` : task.status === "done" ? "مكتملة" : "مفتوحة",
-      detail: [task.notes?.trim(), `الوقت المسجّل: ${formatDuration(totalRecordedTaskMinutes(task))} · المتوقع: ${Math.max(0, Number(task.estimateMin) || 0)} د`].filter(Boolean).join(" · "),
+      detail: [task.notes?.trim(), `مدة الإنجاز المسجلة: ${formatDuration(completionDuration)}`, `وقت العمل المسجّل: ${formatDuration(totalRecordedTaskMinutes(task))}`, `المتوقع: ${formatDuration(task.estimateMin)}`].filter(Boolean).join(" · "),
       subtaskTotal: checklist.length,
       subtaskDone: done,
       metrics: [
-        { label: "الوقت المنفّذ", value: formatDuration(totalRecordedTaskMinutes(task)) },
-        { label: "الوقت المتوقع", value: `${Math.max(0, Number(task.estimateMin) || 0)} د` },
+        { label: "مرات الإنجاز", value: taskLogs.length },
+        { label: "مدة الإنجاز", value: formatDuration(completionDuration) },
+        { label: "وقت العمل المسجّل", value: formatDuration(totalRecordedTaskMinutes(task)) },
+        { label: "الوقت المتوقع", value: formatDuration(task.estimateMin) },
         ...(checklist.length ? [{ label: "المهام الفرعية", value: `${done} من ${checklist.length}` }] : []),
       ],
       children: checklist.map((item) => {
@@ -1187,6 +1390,15 @@ function buildExportAnalytics(tasks) {
         { label: "المكتملة", value: summary.completedTasks, detail: `${summary.completionRate}% من الإجمالي`, percent: summary.completionRate },
         { label: "المفتوحة", value: openTasks.length, detail: "بحاجة إلى إنجاز" },
         { label: "وقت العمل المسجّل", value: formatDuration(totalTaskMinutes), detail: `${totalTaskMinutes} دقيقة · وقت يدوي وجلسات تركيز` },
+        { label: "مرات الإنجاز المسجلة", value: taskEvents.length, detail: "يشمل إعادة إكمال المهمة" },
+        { label: "مدة إنجاز المهام", value: formatDuration(taskDurationTotal), detail: `${completionStats.taskDurations.length} مدة مسجلة` },
+        { label: "متوسط مدة المهمة", value: formatDuration(completionStats.taskDurations.length ? Math.round(taskDurationTotal / completionStats.taskDurations.length) : 0), detail: "من مدد الإنجاز المسجلة" },
+        { label: "أطول مدة مهمة", value: completionStats.longestTaskDuration ? `${formatDuration(completionStats.longestTaskDuration.durationMin)} · ${completionStats.longestTaskDuration.title}` : "—", detail: "ضمن الفترة المحددة" },
+        { label: "أفضل ساعة للإنجاز", value: hourLabel(completionStats.bestTaskHour), detail: completionStats.bestTaskHour ? `${completionStats.bestTaskHour.count} إنجازات` : "تظهر بعد تسجيل أوقات الإنجاز" },
+        { label: "الالتزام بالمواعيد", value: completionStats.onTimeRate === null ? "—" : `${completionStats.onTimeRate}%`, detail: "للمهام ذات موعد محدد", percent: completionStats.onTimeRate ?? undefined },
+        { label: "أيام أُكمل فيها المخطط", value: completionStats.fullDayCount, detail: "المهام والعادات المجدولة مكتملة" },
+        { label: "متوسط إنهاء اليوم", value: completionStats.averageFinish, detail: `${completionStats.finishTimes.length} أيام بوقت إنجاز مكتمل` },
+        { label: "وقت التركيز المسجّل", value: formatDuration(tasks.reduce((sum, task) => sum + Math.max(0, Number(task.timeSpentMin) || 0), 0)), detail: "جلسات التركيز المرتبطة بالمهام" },
         { label: "المهام الفرعية ضمن الفترة", value: completedSubtaskCount(tasks, selectedRange.start, selectedRange.end), detail: "تُحسب بتاريخ إنجاز كل بند" },
         { label: "إجمالي تقدم القوائم", value: `${taskDetails.reduce((sum, task) => sum + task.subtaskDone, 0)} من ${taskDetails.reduce((sum, task) => sum + task.subtaskTotal, 0)}`, detail: "من قوائم المهام" },
       ],
@@ -1214,6 +1426,11 @@ function buildExportAnalytics(tasks) {
         { label: "أيام مجدولة", value: scheduledHabitDays, detail: "بحسب جداول العادات" },
         { label: "أيام مكتملة", value: completedHabitDays, detail: "وفق إنجاز الهدف أو البنود" },
         { label: "نسبة الثبات", value: `${scheduledHabitDays ? Math.round(completedHabitDays / scheduledHabitDays * 100) : 0}%`, detail: "من الأيام المجدولة", percent: scheduledHabitDays ? Math.round(completedHabitDays / scheduledHabitDays * 100) : 0 },
+        { label: "مرات إنجاز العادات", value: habitEvents.length, detail: "من أوقات الإنجاز المسجلة" },
+        { label: "مدة العادات المسجلة", value: formatDuration(habitDurationTotal), detail: `${completionStats.habitDurations.length} مدة مسجلة` },
+        { label: "متوسط مدة العادة", value: formatDuration(completionStats.habitDurations.length ? Math.round(habitDurationTotal / completionStats.habitDurations.length) : 0), detail: "من مدد الإنجاز المسجلة" },
+        { label: "أفضل ساعة للعادات", value: hourLabel(completionStats.bestHabitHour), detail: completionStats.bestHabitHour ? `${completionStats.bestHabitHour.count} إنجازات` : "تظهر بعد تسجيل أوقات الإنجاز" },
+        { label: "أطول مدة عادة", value: completionStats.longestHabitDuration ? `${formatDuration(completionStats.longestHabitDuration.durationMin)} · ${completionStats.longestHabitDuration.title}` : "—", detail: "ضمن الفترة المحددة" },
         { label: "إجمالي الكميات", value: [...habitQuantities].map(([unit, total]) => `${total} ${unit}`).join(" · ") || "—", detail: "مجمعة حسب الوحدة" },
       ],
     },
@@ -1263,7 +1480,14 @@ function buildExportAnalytics(tasks) {
   const domainHeatmaps = buildDomainHeatmaps(tasks, start, end, focusSessions);
   return {
     period: { start: selectedRange.start, end: selectedRange.end, chartStart: start, chartEnd: end },
-    summary,
+    summary: {
+      ...summary,
+      recordedCompletions: completionStats.events.length,
+      recordedCompletionDurationMin: completionStats.totalDuration,
+      bestCompletionHour: hourLabel(completionStats.bestHour),
+      averageDayFinish: completionStats.averageFinish,
+      completedScheduleDays: completionStats.fullDayCount,
+    },
     sections,
     charts,
     activity,
