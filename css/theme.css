@@ -18235,19 +18235,17 @@ body.today-route .topbar > div:first-child {
   background: color-mix(in srgb, var(--color-primary-soft) 82%, var(--map-panel));
 }
 
-.space-sleep-card > span:first-child {
-  color: var(--color-primary);
-  font-size: 1rem;
-}
-
 .space-sleep-card strong {
   color: var(--map-ink);
   font-size: .73rem;
 }
 
-.space-sleep-card .space-sleep-card-arrow {
-  color: var(--map-muted);
-  font-size: .8rem;
+.space-day-start {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.space-day-start-copy {
+  gap: 0;
 }
 
 .space-sleep-dialog {
@@ -18291,13 +18289,6 @@ body.today-route .topbar > div:first-child {
 .space-sleep-dialog-heading h2 {
   margin: 4px 0 0;
   font-size: 1.25rem;
-}
-
-.space-sleep-dialog-intro {
-  margin: 0;
-  color: var(--color-muted);
-  font-size: .84rem;
-  line-height: 1.65;
 }
 
 .space-sleep-dialog-grid {
@@ -18368,22 +18359,6 @@ body.today-route .topbar > div:first-child {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 9px;
-}
-
-.space-sleep-insights {
-  display: grid;
-  gap: 5px;
-  padding: 11px 13px;
-  border-inline-start: 3px solid var(--color-accent);
-  border-radius: 10px;
-  background: var(--color-surface-muted);
-}
-
-.space-sleep-insights p {
-  margin: 0;
-  color: var(--color-muted);
-  font-size: .75rem;
-  line-height: 1.6;
 }
 
 .space-sleep-dialog-actions {

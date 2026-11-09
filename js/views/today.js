@@ -539,36 +539,32 @@ function renderSleepDialog(date) {
   const previousDate = dateOffset(date, -1);
   const previousLog = sleepLogFor(previousDate) ?? {};
   const preferences = sleepSettings();
-  const pattern = learnedSleepPattern(date);
-  const bedtime = log.bedTime ?? pattern.bedtime;
+  const wakeTime = wakeTimeFor(date);
+  const wakeValue = wakeTime || (date === localDateString() ? currentTimeValue() : "");
   const previousBedtime = clockMinutes(previousLog.bedTime) === null ? "" : previousLog.bedTime;
   const napStart = log.napStart ?? (preferences.napExpected ? preferences.napTime : "");
   const napDuration = Number(log.napDurationMin) > 0 ? log.napDurationMin : "";
-  const napStatus = Number.isFinite(Number(log.napDurationMin))
-    ? Number(log.napDurationMin) > 0 ? `قيلولة مسجّلة · ${formatSleepDuration(Number(log.napDurationMin))}` : "سُجّل عدم أخذ قيلولة"
-    : "لم تُسجّل قيلولة بعد";
   const dialog = document.querySelector("#space-sleep-dialog");
   if (!dialog) return;
   dialog.innerHTML = `<div class="space-sleep-dialog-content">
     <header class="space-sleep-dialog-heading">
-      <div><small>إيقاع يومك</small><h2>النوم والقيلولة</h2></div>
+      <div><small>إيقاع يومك</small><h2>تفاصيل النوم</h2></div>
       <button class="icon-button" type="button" data-action="close-sleep-dialog" aria-label="إغلاق">×</button>
     </header>
-    <p class="space-sleep-dialog-intro">سجّل أوقات راحتك لهذا اليوم؛ يساعدك ذلك على فهم نمط نومك وتنظيم مهامك.</p>
     <div class="space-sleep-dialog-grid">
       <section class="space-sleep-panel">
-        <h3>نوم الليلة السابقة</h3>
+        <h3>وقت الاستيقاظ</h3>
+        <label>وقت الاستيقاظ
+          <input type="time" data-wake-time value="${escapeHtml(wakeValue)}" aria-label="وقت الاستيقاظ لهذا اليوم">
+        </label>
+        <button type="button" data-action="save-wake-time">${wakeTime ? "تحديث وقت الاستيقاظ" : "تسجيل وقت الاستيقاظ"}</button>
+      </section>
+      <section class="space-sleep-panel">
+        <h3>نوم الليلة الماضية</h3>
         <label>وقت النوم
           <input type="time" data-previous-bedtime value="${escapeHtml(previousBedtime)}" aria-label="وقت نوم الليلة السابقة">
         </label>
         <button type="button" data-action="save-previous-bedtime">${previousBedtime ? "تحديث وقت النوم" : "تسجيل وقت النوم"}</button>
-      </section>
-      <section class="space-sleep-panel">
-        <h3>نوم الليلة</h3>
-        <label>موعد النوم
-          <input type="time" data-bedtime value="${escapeHtml(bedtime)}" aria-label="وقت النوم لهذه الليلة">
-        </label>
-        <button type="button" data-action="save-bedtime">${log.bedTime ? "تحديث موعد النوم" : "تسجيل موعد النوم"}</button>
       </section>
       <section class="space-sleep-panel space-sleep-nap-panel">
         <h3>قيلولة اليوم</h3>
@@ -586,10 +582,6 @@ function renderSleepDialog(date) {
         </div>
       </section>
     </div>
-    <div class="space-sleep-insights">
-      <p class="space-sleep-status">${escapeHtml(napStatus)} · موعد نومك المعتاد ${escapeHtml(timeLabel(pattern.bedtime))}</p>
-      <p class="space-sleep-pattern">إيقاعك ${escapeHtml(pattern.chronotype)} · متوسط النوم ${formatSleepDuration(pattern.averageSleepMin)} · الاستيقاظ ${pattern.wakeTime ? escapeHtml(timeLabel(pattern.wakeTime)) : "بانتظار التسجيل"} · متوسط القيلولة ${formatSleepDuration(pattern.averageNapMin)}</p>
-    </div>
     <div class="space-sleep-dialog-actions">
       <button class="button button-secondary" type="button" data-action="close-sleep-dialog">إغلاق</button>
     </div>
@@ -598,28 +590,10 @@ function renderSleepDialog(date) {
 }
 
 function renderDayStart(date) {
-  const previousDate = dateOffset(date, -1);
-  const previousLog = sleepLogFor(previousDate) ?? {};
-  const wakeTime = wakeTimeFor(date);
-  const isToday = date === localDateString();
-  const wakeValue = wakeTime || (isToday ? currentTimeValue() : "");
-  const previousBedtime = clockMinutes(previousLog.bedTime) === null ? "" : previousLog.bedTime;
   return `<article class="space-day-start" aria-label="بداية يومك من وقت الاستيقاظ">
-    <span class="space-day-start-mark" aria-hidden="true">✦</span>
     <div class="space-day-start-copy">
-      <div class="space-day-sleep-pair">
-        <span><small>نوم أمس</small><strong>${previousBedtime ? escapeHtml(timeLabel(previousBedtime)) : "—"}</strong></span>
-        <span><small>استيقاظ اليوم</small><strong>${wakeTime ? escapeHtml(timeLabel(wakeTime)) : "—"}</strong></span>
-      </div>
-      ${isToday ? `<span class="space-current-clock">الوقت الآن <b data-live-clock>${escapeHtml(timeLabel(currentTimeValue()))}</b></span>` : ""}
-      <div class="space-wake-control">
-        <label>وقت الاستيقاظ
-          <input type="time" data-wake-time value="${escapeHtml(wakeValue)}" aria-label="وقت الاستيقاظ لهذا اليوم">
-        </label>
-        <button type="button" data-action="save-wake-time">${wakeTime ? "تحديث الاستيقاظ" : "سجّل استيقاظي"}</button>
-      </div>
       <button class="space-sleep-card" type="button" data-action="open-sleep-dialog">
-        <span aria-hidden="true">☾</span><strong>النوم والقيلولة</strong><span class="space-sleep-card-arrow" aria-hidden="true">↗</span>
+        <strong>تفاصيل النوم</strong>
       </button>
     </div>
   </article>`;
@@ -1454,22 +1428,13 @@ function bindEvents(app) {
       return;
     }
     if (button.dataset.action === "save-wake-time") {
-      const input = button.closest(".space-day-start")?.querySelector("[data-wake-time]");
+      const input = sleepDialog?.querySelector("[data-wake-time]");
       const time = input?.value || currentTimeValue();
       if (clockMinutes(time) === null) {
         showToast("أدخل وقت استيقاظ صحيحًا أولاً.", { isError: true });
         return;
       }
       await saveSleepLogWithFeedback(mapDate, { wakeTime: time }, `سُجّل استيقاظك عند ${timeLabel(time)} وبدأ يومك الشخصي من ذلك الوقت.`);
-      return;
-    }
-    if (button.dataset.action === "save-bedtime") {
-      const time = sleepDialog?.querySelector("[data-bedtime]")?.value;
-      if (clockMinutes(time) === null) {
-        showToast("أدخل وقت نوم صحيحًا أولاً.", { isError: true });
-        return;
-      }
-      await saveSleepLogWithFeedback(mapDate, { bedTime: time }, `سُجّل وقت نومك عند ${timeLabel(time)}، وستُخفف المهام العالية الأولوية قبل النوم بثلاث ساعات.`);
       return;
     }
     if (button.dataset.action === "save-previous-bedtime") {
