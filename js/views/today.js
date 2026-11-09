@@ -604,22 +604,18 @@ function renderTaskNode(task) {
   const priorityPercent = (4 - priority) * 25;
   const detailsOpen = expandedMapTaskDetails.has(task.id);
   const bedtimeWarning = task.status !== "done" && isHeavyTaskNearBedtime(task, mapDate);
-  const meta = [overdue ? "متأخرة" : "", outsidePersonalDay ? "خارج نافذة يومك الشخصي" : "", bedtimeWarning ? "ثقيلة قرب النوم · يُفضّل تقديمها" : "", checklist.length ? `${formatArabicNumber(checklistDone)} / ${formatArabicNumber(checklist.length)} فرعية` : task.estimateMin ? `${formatArabicNumber(task.estimateMin)} د` : ""]
+  const meta = [overdue ? "متأخرة" : "", outsidePersonalDay ? "خارج وقتك" : "", bedtimeWarning ? "قرب موعد النوم" : "", checklist.length ? `${formatArabicNumber(checklistDone)} / ${formatArabicNumber(checklist.length)} فرعية` : task.estimateMin ? `${formatArabicNumber(task.estimateMin)} د` : ""]
     .filter(Boolean)
     .join(" · ");
   return `<article class="space-node space-node-task priority-${priority} ${progressState}" data-priority-level="${priority}" style="--task-progress:${progress}%;--priority-progress:${priorityPercent}%">
-    <span class="space-node-orbit" aria-hidden="true">✦</span>
     <div class="space-node-copy">
       <strong>${escapeHtml(task.title)}</strong>
       ${meta ? `<span class="space-node-meta">${escapeHtml(meta)}</span>` : ""}
-      ${bedtimeWarning ? `<span class="space-bedtime-warning">أولوية عالية ضمن آخر ٣ ساعات قبل النوم</span>` : ""}
-      <div class="space-node-priority" role="img" aria-label="الأولوية ${priorityLabel(priority)}، ${formatArabicNumber(priorityPercent)} بالمئة">
-        <i aria-hidden="true"><b></b></i><strong>${formatArabicNumber(priorityPercent)}٪</strong>
-      </div>
-      <div class="space-node-progress-row" role="img" aria-label="إنجاز المهمة ${formatArabicNumber(progress)} بالمئة">
+      <span class="space-node-priority-label">الأولوية ${priorityLabel(priority)}</span>
+      ${checklist.length ? `<div class="space-node-progress-row" role="img" aria-label="إنجاز المهمة ${formatArabicNumber(progress)} بالمئة">
         <i class="space-node-progress space-task-progress" aria-hidden="true"><b></b></i>
         <strong>${formatArabicNumber(progress)}٪</strong>
-      </div>
+      </div>` : ""}
       ${checklist.length || task.notes ? `<details class="space-node-details" data-map-task-details="${escapeHtml(task.id)}"${detailsOpen ? " open" : ""}>
         <summary>التفاصيل${checklist.length ? ` · ${formatArabicNumber(checklistDone)}/${formatArabicNumber(checklist.length)}` : ""}</summary>
         ${task.notes ? `<p>${escapeHtml(task.notes)}</p>` : ""}
@@ -673,11 +669,9 @@ function renderHabitNode(habit, today) {
     : `<button class="space-node-check" type="button" data-action="${progress.mode === "count" ? "habit-count" : "habit-check"}" data-habit-id="${escapeHtml(habit.id)}" data-date="${escapeHtml(today)}" aria-pressed="${progress.complete}">${progress.complete ? "✓" : "○"}</button>`;
 
   return `<article class="space-node space-node-habit priority-${priority} ${progressState}" data-priority-level="${priority}" style="--habit-progress:${progress.percent}%">
-    <span class="space-node-orbit" aria-hidden="true">✧</span>
     <div class="space-node-copy">
       <strong>${escapeHtml(habit.title)}</strong>
-      ${progressText ? `<span class="space-node-meta">${progressText}</span>` : ""}
-      ${outsidePersonalDay ? `<span class="space-node-meta">خارج نافذة يومك الشخصي</span>` : ""}
+      ${progressText || outsidePersonalDay ? `<span class="space-node-meta">${[progressText, outsidePersonalDay ? "خارج وقتك" : ""].filter(Boolean).join(" · ")}</span>` : ""}
       ${ritualWisdom ? `<details class="space-ritual-wisdom"><summary>الفضل والذكر</summary><span>«${escapeHtml(ritualWisdom.text)}» <b>${escapeHtml(ritualWisdom.source)}</b></span></details>` : ""}
       <div class="space-node-progress-row" role="img" aria-label="إنجاز العادة ${formatArabicNumber(progress.percent)} بالمئة">
         <i class="space-node-progress" aria-hidden="true"><b></b></i>
@@ -699,7 +693,6 @@ function renderPrayerNode(event) {
   const priority = event.priority ?? 3;
   const wisdom = PRAYER_WISDOM[prayer.name];
   return `<article class="space-node space-node-prayer priority-${priority} ${status}" data-priority-level="${priority}" aria-label="${escapeHtml(prayer.name)}: الفرض ${formatArabicNumber(fardDone)} من ${formatArabicNumber(fardItems.length)}${sunnahItems.length ? `، السنة ${formatArabicNumber(sunnahDone)} من ${formatArabicNumber(sunnahItems.length)}` : ""}">
-    <span class="space-node-orbit" aria-hidden="true">☼</span>
     <div class="space-node-copy">
       <strong>${escapeHtml(prayer.name)}</strong>
       ${Number.isFinite(prayer.time) ? `<span class="space-node-meta">${escapeHtml(formatPrayerTime(prayer.time))}</span>` : ""}
