@@ -16795,7 +16795,88 @@ body.today-route .topbar > div:first-child {
 
 .space-recap-actions {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   justify-content: end;
+}
+
+.space-day-recap-content {
+  gap: 12px;
+}
+
+.space-day-recap-content .space-recap-actions > button {
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+.space-day-recap-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.space-day-recap-grid > article {
+  display: grid;
+  min-width: 0;
+  min-height: 62px;
+  align-content: center;
+  gap: 5px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+}
+
+.space-day-recap-grid span {
+  color: var(--color-muted);
+  font-size: .63rem;
+  line-height: 1.35;
+}
+
+.space-day-recap-grid strong {
+  color: var(--color-primary);
+  font-size: .95rem;
+  white-space: nowrap;
+}
+
+.space-day-recap-grid > .is-highlight {
+  border-color: color-mix(in srgb, var(--color-accent) 36%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+}
+
+.space-day-recap-grid > .is-highlight strong,
+.space-day-recap-grid > article:nth-child(n + 4) strong {
+  color: var(--color-accent);
+}
+
+.space-day-recap-grid > article:nth-child(n + 4) strong {
+  font-size: .88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 420px) {
+  .space-day-recap-content {
+    gap: 9px;
+    padding: 14px;
+  }
+
+  .space-day-recap-grid {
+    gap: 5px;
+  }
+
+  .space-day-recap-grid > article {
+    min-height: 56px;
+    padding: 6px;
+  }
+
+  .space-day-recap-grid span {
+    font-size: .57rem;
+  }
+
+  .space-day-recap-grid strong,
+  .space-day-recap-grid > article:nth-child(n + 4) strong {
+    font-size: .8rem;
+  }
 }
 
 @media (max-width: 700px) {
@@ -17846,8 +17927,9 @@ body.today-route .topbar > div:first-child {
 }
 
 .cosmic-map-route:not(.is-overview) .space-map-stop.is-time-passed.is-stop-pending .space-node {
-  border-color: color-mix(in srgb, #ff6a78 72%, var(--map-edge));
-  box-shadow: 0 0 22px rgb(255 106 120 / 25%), 0 9px 24px var(--color-shadow);
+  border-color: var(--map-edge);
+  border-inline-start-color: var(--space-status-color);
+  box-shadow: 0 5px 16px var(--color-shadow);
 }
 
 .cosmic-map-route:not(.is-overview) .space-map-stop.is-current-time .space-map-connector {
@@ -18429,48 +18511,105 @@ body.today-route .topbar > div:first-child {
 
 .cosmic-map[data-map-mode="day"] .space-node {
   min-height: 0;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 7px;
-  padding: 9px 10px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px var(--color-shadow);
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 10px 11px;
+  border: 1px solid color-mix(in srgb, var(--space-accent) 24%, var(--map-edge));
+  border-inline-start: 3px solid var(--space-accent);
+  border-radius: 16px;
+  background: var(--map-panel);
+  box-shadow: 0 5px 16px color-mix(in srgb, var(--color-shadow) 80%, transparent);
 }
 
 .cosmic-map[data-map-mode="day"] .space-node:hover {
   transform: none;
-  box-shadow: 0 5px 14px var(--color-shadow);
+  box-shadow: 0 7px 18px var(--color-shadow);
 }
 
 .cosmic-map[data-map-mode="day"] .space-node-copy {
+  align-content: center;
   gap: 3px;
 }
 
 .cosmic-map[data-map-mode="day"] .space-node-copy > strong {
-  font-size: .82rem;
-  line-height: 1.4;
+  color: var(--map-ink);
+  font-size: .9rem;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .cosmic-map[data-map-mode="day"] .space-node-copy > .space-node-meta {
-  font-size: .68rem;
+  color: var(--map-muted);
+  font-size: .73rem;
   line-height: 1.4;
 }
 
-.space-node-priority-label {
-  width: fit-content;
-  color: var(--space-accent);
-  font-size: .62rem;
-  line-height: 1.3;
+.cosmic-map[data-map-mode="day"] .space-node.is-done {
+  border-color: color-mix(in srgb, #28835b 34%, var(--map-edge));
+  border-inline-start-color: #28835b;
+  background: color-mix(in srgb, #28835b 7%, var(--map-panel));
 }
 
 .cosmic-map[data-map-mode="day"] .space-node-check {
-  width: 30px;
-  height: 30px;
+  width: 25px;
+  height: 25px;
+  border-radius: 8px;
+  color: var(--map-muted);
+  background: color-mix(in srgb, var(--map-panel) 75%, var(--space-accent) 8%);
+  font-size: .86rem;
 }
 
-.cosmic-map[data-map-mode="day"] .space-node-progress-row {
-  max-width: 190px;
-  gap: 6px;
-  margin-block-start: 1px;
+.cosmic-map[data-map-mode="day"] .space-node-check[aria-pressed="true"] {
+  border-color: #28835b;
+  color: #fff;
+  background: #28835b;
+}
+
+.cosmic-map[data-map-mode="day"] .space-prayer-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-block-start: 2px;
+}
+
+.space-prayer-count {
+  display: inline-block;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--map-muted);
+  background: transparent;
+  font-size: .67rem;
+  line-height: 1.35;
+}
+
+.space-prayer-count b {
+  color: var(--map-muted);
+  font-weight: 500;
+}
+
+.cosmic-map[data-map-mode="day"] .space-node-prayer {
+  border-color: var(--map-edge);
+  border-inline-start-color: var(--space-status-color, var(--space-accent));
+}
+
+.cosmic-map[data-map-mode="day"] .space-node-prayer.is-pending {
+  --space-status-color: #d98a92;
+}
+
+.cosmic-map[data-map-mode="day"] .space-node-prayer.is-partial {
+  --space-status-color: #d7ae67;
+}
+
+.cosmic-map[data-map-mode="day"] .space-node-prayer.is-done {
+  --space-status-color: #36a978;
+}
+
+.cosmic-map[data-map-mode="day"] .space-node-prayer .space-node-copy {
+  align-content: center;
+  justify-items: start;
+  text-align: start;
 }
 
 .cosmic-map[data-map-mode="day"] .space-prayer-wisdom,
@@ -18484,28 +18623,117 @@ body.today-route .topbar > div:first-child {
 .cosmic-map[data-map-mode="day"] .space-ritual-wisdom > summary {
   width: fit-content;
   padding-block: 1px;
+  list-style: none;
+}
+
+.cosmic-map[data-map-mode="day"] .space-prayer-wisdom > summary::-webkit-details-marker,
+.cosmic-map[data-map-mode="day"] .space-ritual-wisdom > summary::-webkit-details-marker {
+  display: none;
+}
+
+.cosmic-map[data-map-mode="day"] .space-prayer-wisdom > summary::before,
+.cosmic-map[data-map-mode="day"] .space-ritual-wisdom > summary::before {
+  margin-inline-end: 5px;
+  color: var(--color-accent);
+  content: "＋";
+}
+
+.cosmic-map[data-map-mode="day"] .space-prayer-wisdom[open] > summary::before,
+.cosmic-map[data-map-mode="day"] .space-ritual-wisdom[open] > summary::before {
+  content: "−";
+}
+
+.cosmic-map[data-map-mode="day"] .space-prayer-wisdom > span,
+.cosmic-map[data-map-mode="day"] .space-ritual-wisdom > span {
+  display: block;
+  margin-block-start: 5px;
+  color: var(--map-muted);
+  line-height: 1.6;
 }
 
 @media (max-width: 520px) {
   .cosmic-map[data-map-mode="day"] .space-node {
-    gap: 6px;
-    padding: 8px;
-    border-radius: 11px;
+    grid-template-columns: 27px minmax(0, 1fr);
+    gap: 7px;
+    padding: 9px;
+    border-radius: 14px;
   }
 
   .cosmic-map[data-map-mode="day"] .space-node-copy > strong {
-    font-size: .77rem;
+    font-size: .85rem;
   }
 
   .cosmic-map[data-map-mode="day"] .space-node-copy > .space-node-meta,
-  .space-node-priority-label {
-    font-size: .62rem;
+  .space-prayer-count {
+    font-size: .68rem;
   }
 }
 
 @media (max-width: 420px) {
   .cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-node {
     min-height: 0;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: 25px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 360px) {
+  .cosmic-day-heading {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .cosmic-day-heading > div:first-child {
+    flex: 1 1 100%;
+  }
+
+  .cosmic-map[data-map-mode="day"] .cosmic-day-progress {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+
+  .cosmic-map-route:not(.is-overview) {
+    padding-inline: 8px;
+  }
+
+  .cosmic-map-route:not(.is-overview)::before {
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop:not(.is-start):not(.is-night):not(.is-night-prayers):not(.is-day-close) {
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr);
+    align-items: center;
+    gap: 0;
+    padding-block: 7px;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop:not(.is-start):not(.is-night):not(.is-night-prayers):not(.is-day-close) .space-map-time {
+    grid-column: 1;
+    grid-row: 1;
+    text-align: center;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop:not(.is-start):not(.is-night):not(.is-night-prayers):not(.is-day-close) .space-map-event {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: stretch;
+    width: calc(100% - 3px);
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop:not(.is-start):not(.is-night):not(.is-night-prayers):not(.is-day-close) .space-map-connector {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-left:not(.is-start):not(.is-night):not(.is-night-prayers):not(.is-day-close) .space-map-time {
+    grid-column: 3;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-left:not(.is-start):not(.is-night):not(.is-night-prayers):not(.is-day-close) .space-map-event {
+    grid-column: 1;
+    justify-self: end;
   }
 }

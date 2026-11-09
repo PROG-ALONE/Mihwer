@@ -377,10 +377,6 @@ function prayerMinutes(value) {
   return Number.isFinite(value) ? Math.round(value * 60) % 1440 : null;
 }
 
-function priorityLabel(priority) {
-  return ["عاجلة ومهمة", "مهمة", "عاجلة", "عادية"][priority] ?? "عادية";
-}
-
 function linkedPrayerHabit() {
   return records.habits.find((habit) =>
     !habit.archived && habit.mode === "items" && /صلاة|الصلوات/.test(habit.title ?? ""));
@@ -599,23 +595,18 @@ function renderTaskNode(task) {
     typeof item === "string" ? { text: item, done: false } : item);
   const checklistDone = checklist.filter((item) => item.done).length;
   const progress = Math.round(taskCompletion(task) * 100);
-  const outsidePersonalDay = !isWithinPersonalDay(mapDate, task.dueTime);
-  const progressState = `${done ? "is-done" : progress ? "is-partial" : "is-pending"}${outsidePersonalDay ? " is-outside-personal-day" : ""}`;
-  const priorityPercent = (4 - priority) * 25;
+  const progressState = done ? "is-done" : progress ? "is-partial" : "is-pending";
   const detailsOpen = expandedMapTaskDetails.has(task.id);
   const bedtimeWarning = task.status !== "done" && isHeavyTaskNearBedtime(task, mapDate);
-  const meta = [overdue ? "متأخرة" : "", outsidePersonalDay ? "خارج وقتك" : "", bedtimeWarning ? "قرب موعد النوم" : "", checklist.length ? `${formatArabicNumber(checklistDone)} / ${formatArabicNumber(checklist.length)} فرعية` : task.estimateMin ? `${formatArabicNumber(task.estimateMin)} د` : ""]
+  const meta = [overdue ? "متأخرة" : "", bedtimeWarning ? "قرب موعد النوم" : "", task.estimateMin ? `${formatArabicNumber(task.estimateMin)} دقيقة` : ""]
     .filter(Boolean)
     .join(" · ");
-  return `<article class="space-node space-node-task priority-${priority} ${progressState}" data-priority-level="${priority}" style="--task-progress:${progress}%;--priority-progress:${priorityPercent}%">
+  return `<article class="space-node space-node-task priority-${priority} ${progressState}" data-priority-level="${priority}" style="--task-progress:${progress}%">
+    <button class="space-node-check" type="button" data-action="toggle-task" data-task-id="${escapeHtml(task.id)}" aria-pressed="${done}" aria-label="${done ? "إعادة فتح" : "إنجاز"} ${escapeHtml(task.title)}">${done ? "✓" : "○"}</button>
     <div class="space-node-copy">
       <strong>${escapeHtml(task.title)}</strong>
+      ${checklist.length ? `<span class="space-node-meta">${formatArabicNumber(checklistDone)} من ${formatArabicNumber(checklist.length)} خطوات</span>` : ""}
       ${meta ? `<span class="space-node-meta">${escapeHtml(meta)}</span>` : ""}
-      <span class="space-node-priority-label">الأولوية ${priorityLabel(priority)}</span>
-      ${checklist.length ? `<div class="space-node-progress-row" role="img" aria-label="إنجاز المهمة ${formatArabicNumber(progress)} بالمئة">
-        <i class="space-node-progress space-task-progress" aria-hidden="true"><b></b></i>
-        <strong>${formatArabicNumber(progress)}٪</strong>
-      </div>` : ""}
       ${checklist.length || task.notes ? `<details class="space-node-details" data-map-task-details="${escapeHtml(task.id)}"${detailsOpen ? " open" : ""}>
         <summary>التفاصيل${checklist.length ? ` · ${formatArabicNumber(checklistDone)}/${formatArabicNumber(checklist.length)}` : ""}</summary>
         ${task.notes ? `<p>${escapeHtml(task.notes)}</p>` : ""}
@@ -623,7 +614,6 @@ function renderTaskNode(task) {
         <a href="#/tasks?date=${encodeURIComponent(mapDate)}">فتح المهام</a>
       </details>` : ""}
     </div>
-    <button class="space-node-check" type="button" data-action="toggle-task" data-task-id="${escapeHtml(task.id)}" aria-pressed="${done}" aria-label="${done ? "إعادة فتح" : "إنجاز"} ${escapeHtml(task.title)}">${done ? "✓" : "○"}</button>
   </article>`;
 }
 
@@ -648,13 +638,12 @@ function isWithinPersonalDay(date, time) {
 function renderHabitNode(habit, today) {
   const progress = dayProgress(habit, today);
   const priority = habitPriority(habit);
-  const outsidePersonalDay = !isWithinPersonalDay(today, habit.dailyTime);
-  const progressState = `${progress.complete ? "is-done" : progress.percent ? "is-partial" : "is-pending"}${outsidePersonalDay ? " is-outside-personal-day" : ""}`;
+  const progressState = progress.complete ? "is-done" : progress.percent ? "is-partial" : "is-pending";
   const unit = habit.unit ? ` ${escapeHtml(habit.unit)}` : "";
   const progressText = progress.mode === "items"
-    ? `${formatArabicNumber(progress.done)} / ${formatArabicNumber(progress.target)} بنود`
+    ? `${formatArabicNumber(progress.done)} من ${formatArabicNumber(progress.target)}${unit || " بنود"}`
     : progress.mode === "count"
-      ? `${formatArabicNumber(progress.done)} / ${formatArabicNumber(progress.total)}${unit}`
+      ? `${formatArabicNumber(progress.done)} من ${formatArabicNumber(progress.total)}${unit}`
       : "";
   const ritualWisdom = /الضحى/.test(habit.title ?? "")
     ? { text: "ويجزئ من ذلك ركعتان يركعهما من الضحى", source: "مسلم، ٧٢٠" }
@@ -668,17 +657,13 @@ function renderHabitNode(habit, today) {
       : `<a class="space-node-check is-complete-link" href="#/habits?date=${encodeURIComponent(today)}" aria-label="عرض العادة المكتملة: ${escapeHtml(habit.title)}">✓</a>`
     : `<button class="space-node-check" type="button" data-action="${progress.mode === "count" ? "habit-count" : "habit-check"}" data-habit-id="${escapeHtml(habit.id)}" data-date="${escapeHtml(today)}" aria-pressed="${progress.complete}">${progress.complete ? "✓" : "○"}</button>`;
 
-  return `<article class="space-node space-node-habit priority-${priority} ${progressState}" data-priority-level="${priority}" style="--habit-progress:${progress.percent}%">
+  return `<article class="space-node space-node-habit priority-${priority} ${progressState}" data-priority-level="${priority}">
+    ${action}
     <div class="space-node-copy">
       <strong>${escapeHtml(habit.title)}</strong>
-      ${progressText || outsidePersonalDay ? `<span class="space-node-meta">${[progressText, outsidePersonalDay ? "خارج وقتك" : ""].filter(Boolean).join(" · ")}</span>` : ""}
+      ${progressText ? `<span class="space-node-meta">${escapeHtml(progressText)}</span>` : ""}
       ${ritualWisdom ? `<details class="space-ritual-wisdom"><summary>الفضل والذكر</summary><span>«${escapeHtml(ritualWisdom.text)}» <b>${escapeHtml(ritualWisdom.source)}</b></span></details>` : ""}
-      <div class="space-node-progress-row" role="img" aria-label="إنجاز العادة ${formatArabicNumber(progress.percent)} بالمئة">
-        <i class="space-node-progress" aria-hidden="true"><b></b></i>
-        <strong>${formatArabicNumber(progress.percent)}٪</strong>
-      </div>
     </div>
-    ${action}
   </article>`;
 }
 
@@ -692,14 +677,17 @@ function renderPrayerNode(event) {
   const status = complete ? "is-done" : fardDone || sunnahDone ? "is-partial" : "is-pending";
   const priority = event.priority ?? 3;
   const wisdom = PRAYER_WISDOM[prayer.name];
+  const fardCount = fardItems.length
+    ? `<span class="space-prayer-count"><b>الفرض</b> ${formatArabicNumber(fardDone)} من ${formatArabicNumber(fardItems.length)}</span>` : "";
+  const sunnahCount = sunnahItems.length
+    ? `<span class="space-prayer-count"><b>السنة</b> ${formatArabicNumber(sunnahDone)} من ${formatArabicNumber(sunnahItems.length)}</span>` : "";
   return `<article class="space-node space-node-prayer priority-${priority} ${status}" data-priority-level="${priority}" aria-label="${escapeHtml(prayer.name)}: الفرض ${formatArabicNumber(fardDone)} من ${formatArabicNumber(fardItems.length)}${sunnahItems.length ? `، السنة ${formatArabicNumber(sunnahDone)} من ${formatArabicNumber(sunnahItems.length)}` : ""}">
+    <button class="space-node-check space-prayer-open" type="button" data-action="open-prayer-log" data-habit-id="${escapeHtml(habit?.id ?? "")}" data-prayer="${escapeHtml(prayer.name)}" data-date="${escapeHtml(today)}" aria-pressed="${complete}" aria-label="تسجيل صلاة ${escapeHtml(prayer.name)}">${complete ? "✓" : "○"}</button>
     <div class="space-node-copy">
       <strong>${escapeHtml(prayer.name)}</strong>
-      ${Number.isFinite(prayer.time) ? `<span class="space-node-meta">${escapeHtml(formatPrayerTime(prayer.time))}</span>` : ""}
-      ${items.length ? `<span class="space-node-meta">الفرض ${formatArabicNumber(fardDone)} / ${formatArabicNumber(fardItems.length)}${sunnahItems.length ? ` · السنة ${formatArabicNumber(sunnahDone)} / ${formatArabicNumber(sunnahItems.length)}` : ""}</span>` : ""}
+      ${fardCount || sunnahCount ? `<div class="space-prayer-counts">${fardCount}${sunnahCount}</div>` : ""}
       ${wisdom ? `<details class="space-prayer-wisdom"><summary>حكمة</summary><span>«${escapeHtml(wisdom.text)}» <b>${escapeHtml(wisdom.source)}</b></span></details>` : ""}
     </div>
-    <button class="space-node-check space-prayer-open" type="button" data-action="open-prayer-log" data-habit-id="${escapeHtml(habit?.id ?? "")}" data-prayer="${escapeHtml(prayer.name)}" data-date="${escapeHtml(today)}" aria-pressed="${complete}" aria-label="تسجيل صلاة ${escapeHtml(prayer.name)}">${complete ? "✓" : "○"}</button>
   </article>`;
 }
 
@@ -754,7 +742,7 @@ function renderEvent(event, index) {
 
   const time = event.type === "prayer"
     ? Number.isFinite(event.prayer.time) ? formatPrayerTime(event.prayer.time) : ""
-    : timeLabel(event.displayTime ?? event.time);
+    : event.time ? timeLabel(event.time) : "";
   const label = event.type === "prayer" ? event.prayer.name
       : event.type === "task" ? "مهمة"
         : "عادة";
@@ -780,7 +768,7 @@ function renderEvent(event, index) {
   const eventKind = event.type;
   const progressState = progress >= 1 ? "done" : progress > 0 ? "partial" : "pending";
   return `<div class="space-map-stop${index % 2 ? " is-left" : " is-right"}${stopStatus}"${Number.isFinite(eventMinute) ? ` data-event-minute="${eventMinute}"` : ""} data-event-kind="${eventKind}" data-stop-status="${progressState}" style="--node-index:${index};animation-delay:${Math.min(index * 55, 700)}ms">
-    <span class="space-map-time">${event.displayTime && !event.time ? "مرن · " : ""}${escapeHtml(time || "وقتك")}</span>
+    ${time ? `<span class="space-map-time">${escapeHtml(time)}</span>` : ""}
     <span class="space-map-connector" aria-hidden="true"></span>
     <div class="space-map-event" data-kind="${event.type}" aria-label="${escapeHtml(label)}">${node}</div>
   </div>`;
@@ -943,6 +931,10 @@ function taskDatesInRange(task, start, end) {
 }
 
 function renderPeriodRecap(start, end, label) {
+  if (label === "حصاد اليوم" && start === end) {
+    return renderDayRecap(start, label);
+  }
+
   const dates = eachDate(start, end);
   const tasks = records.tasks.filter((task) => taskDatesInRange(task, start, end));
   const habits = records.habits.filter((habit) => !habit.archived);
@@ -1062,6 +1054,37 @@ function renderPeriodRecap(start, end, label) {
       <button class="button button-secondary" type="button" data-action="share-period" data-start="${start}" data-end="${end}" data-label="${escapeHtml(label)}">مشاركة التقرير</button>
       <button class="button button-secondary" type="button" data-action="print-period" data-start="${start}" data-end="${end}" data-label="${escapeHtml(label)}">حفظ PDF</button>
       <button class="button button-primary" type="button" data-action="close-recap">أغلق وأنا فخور بما أنجزت</button>
+    </div>
+  </div>`;
+}
+
+function renderDayRecap(date, label) {
+  const metrics = periodMetrics(date, date);
+  const previousSleep = sleepLogFor(dateOffset(date, -1)) ?? {};
+  const todaySleep = sleepLogFor(date) ?? {};
+  const bedtime = clockMinutes(previousSleep.bedTime) === null ? "—" : timeLabel(previousSleep.bedTime);
+  const wakeTime = clockMinutes(todaySleep.wakeTime) === null ? "—" : timeLabel(todaySleep.wakeTime);
+  const nap = Number(todaySleep.napDurationMin) > 0
+    ? `${todaySleep.napStart ? `${timeLabel(todaySleep.napStart)} · ` : ""}${formatArabicNumber(todaySleep.napDurationMin)} د`
+    : "—";
+  const taskTotal = metrics.completedTasks + metrics.plannedTasks;
+
+  return `<div class="space-recap-content space-day-recap-content">
+    <header class="space-recap-heading">
+      <div><p>ختام يومك</p><h2>${escapeHtml(label)}</h2><span>${escapeHtml(formatDate(date))}</span></div>
+      <button class="icon-button" type="button" data-action="close-recap" aria-label="إغلاق">×</button>
+    </header>
+    <section class="space-day-recap-grid" aria-label="إحصائيات اليوم والنوم">
+      <article class="is-highlight"><span>الإنجاز</span><strong><bdi dir="ltr">${formatArabicNumber(metrics.percent)}٪</bdi></strong></article>
+      <article><span>المهام</span><strong><bdi dir="ltr">${formatArabicNumber(metrics.completedTasks)} / ${formatArabicNumber(taskTotal)}</bdi></strong></article>
+      <article><span>العادات</span><strong><bdi dir="ltr">${formatArabicNumber(metrics.completedHabits)} / ${formatArabicNumber(metrics.scheduledHabits)}</bdi></strong></article>
+      <article><span>النوم</span><strong><bdi dir="ltr">${bedtime}</bdi></strong></article>
+      <article><span>الاستيقاظ</span><strong><bdi dir="ltr">${wakeTime}</bdi></strong></article>
+      <article><span>القيلولة</span><strong><bdi dir="ltr">${nap}</bdi></strong></article>
+    </section>
+    <div class="space-recap-actions">
+      <button class="button button-secondary" type="button" data-action="share-period" data-start="${date}" data-end="${date}" data-label="${escapeHtml(label)}">مشاركة</button>
+      <button class="button button-primary" type="button" data-action="close-recap">إغلاق</button>
     </div>
   </div>`;
 }
