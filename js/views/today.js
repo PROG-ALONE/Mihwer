@@ -534,15 +534,12 @@ function renderPrayerSettings() {
     : "تظهر أوقات الصلاة بعد السماح بالموقع. لا تُرسل الإحداثيات إلى خادم."}</small>`;
 }
 
-function renderDayStart(date) {
+function renderSleepDialog(date) {
   const log = sleepLogFor(date) ?? {};
   const previousDate = dateOffset(date, -1);
   const previousLog = sleepLogFor(previousDate) ?? {};
   const preferences = sleepSettings();
   const pattern = learnedSleepPattern(date);
-  const wakeTime = wakeTimeFor(date);
-  const isToday = date === localDateString();
-  const wakeValue = wakeTime || (isToday ? currentTimeValue() : "");
   const bedtime = log.bedTime ?? pattern.bedtime;
   const previousBedtime = clockMinutes(previousLog.bedTime) === null ? "" : previousLog.bedTime;
   const napStart = log.napStart ?? (preferences.napExpected ? preferences.napTime : "");
@@ -550,6 +547,63 @@ function renderDayStart(date) {
   const napStatus = Number.isFinite(Number(log.napDurationMin))
     ? Number(log.napDurationMin) > 0 ? `قيلولة مسجّلة · ${formatSleepDuration(Number(log.napDurationMin))}` : "سُجّل عدم أخذ قيلولة"
     : "لم تُسجّل قيلولة بعد";
+  const dialog = document.querySelector("#space-sleep-dialog");
+  if (!dialog) return;
+  dialog.innerHTML = `<div class="space-sleep-dialog-content">
+    <header class="space-sleep-dialog-heading">
+      <div><small>إيقاع يومك</small><h2>النوم والقيلولة</h2></div>
+      <button class="icon-button" type="button" data-action="close-sleep-dialog" aria-label="إغلاق">×</button>
+    </header>
+    <p class="space-sleep-dialog-intro">سجّل أوقات راحتك لهذا اليوم؛ يساعدك ذلك على فهم نمط نومك وتنظيم مهامك.</p>
+    <div class="space-sleep-dialog-grid">
+      <section class="space-sleep-panel">
+        <h3>نوم الليلة السابقة</h3>
+        <label>وقت النوم
+          <input type="time" data-previous-bedtime value="${escapeHtml(previousBedtime)}" aria-label="وقت نوم الليلة السابقة">
+        </label>
+        <button type="button" data-action="save-previous-bedtime">${previousBedtime ? "تحديث وقت النوم" : "تسجيل وقت النوم"}</button>
+      </section>
+      <section class="space-sleep-panel">
+        <h3>نوم الليلة</h3>
+        <label>موعد النوم
+          <input type="time" data-bedtime value="${escapeHtml(bedtime)}" aria-label="وقت النوم لهذه الليلة">
+        </label>
+        <button type="button" data-action="save-bedtime">${log.bedTime ? "تحديث موعد النوم" : "تسجيل موعد النوم"}</button>
+      </section>
+      <section class="space-sleep-panel space-sleep-nap-panel">
+        <h3>قيلولة اليوم</h3>
+        <div class="space-sleep-nap-fields">
+          <label>وقت البداية
+            <input type="time" data-nap-start value="${escapeHtml(napStart)}" aria-label="بداية القيلولة">
+          </label>
+          <label>المدة بالدقائق
+            <input type="number" data-nap-duration min="1" max="240" step="1" value="${escapeHtml(napDuration)}" aria-label="مدة القيلولة بالدقائق">
+          </label>
+        </div>
+        <div class="space-sleep-panel-actions">
+          <button type="button" data-action="save-nap">تسجيل القيلولة</button>
+          <button class="space-sleep-skip" type="button" data-action="skip-nap">لم آخذ قيلولة</button>
+        </div>
+      </section>
+    </div>
+    <div class="space-sleep-insights">
+      <p class="space-sleep-status">${escapeHtml(napStatus)} · موعد نومك المعتاد ${escapeHtml(timeLabel(pattern.bedtime))}</p>
+      <p class="space-sleep-pattern">إيقاعك ${escapeHtml(pattern.chronotype)} · متوسط النوم ${formatSleepDuration(pattern.averageSleepMin)} · الاستيقاظ ${pattern.wakeTime ? escapeHtml(timeLabel(pattern.wakeTime)) : "بانتظار التسجيل"} · متوسط القيلولة ${formatSleepDuration(pattern.averageNapMin)}</p>
+    </div>
+    <div class="space-sleep-dialog-actions">
+      <button class="button button-secondary" type="button" data-action="close-sleep-dialog">إغلاق</button>
+    </div>
+  </div>`;
+  dialog.showModal();
+}
+
+function renderDayStart(date) {
+  const previousDate = dateOffset(date, -1);
+  const previousLog = sleepLogFor(previousDate) ?? {};
+  const wakeTime = wakeTimeFor(date);
+  const isToday = date === localDateString();
+  const wakeValue = wakeTime || (isToday ? currentTimeValue() : "");
+  const previousBedtime = clockMinutes(previousLog.bedTime) === null ? "" : previousLog.bedTime;
   return `<article class="space-day-start" aria-label="بداية يومك من وقت الاستيقاظ">
     <span class="space-day-start-mark" aria-hidden="true">✦</span>
     <div class="space-day-start-copy">
@@ -564,29 +618,9 @@ function renderDayStart(date) {
         </label>
         <button type="button" data-action="save-wake-time">${wakeTime ? "تحديث الاستيقاظ" : "سجّل استيقاظي"}</button>
       </div>
-      <details class="space-sleep-routine">
-        <summary>تفاصيل النوم والقيلولة</summary>
-        <div class="space-sleep-fields">
-          <label>وقت نوم الليلة السابقة
-            <input type="time" data-previous-bedtime value="${escapeHtml(previousBedtime)}" aria-label="وقت نوم الليلة السابقة">
-          </label>
-          <button type="button" data-action="save-previous-bedtime">${previousBedtime ? "تحديث نوم أمس" : "سجّل نوم أمس"}</button>
-          <label>موعد النوم الليلة
-            <input type="time" data-bedtime value="${escapeHtml(bedtime)}" aria-label="وقت النوم لهذا اليوم">
-          </label>
-          <button type="button" data-action="save-bedtime">${log.bedTime ? "تحديث النوم" : "سجّل النوم"}</button>
-          <label>بداية القيلولة
-            <input type="time" data-nap-start value="${escapeHtml(napStart)}" aria-label="بداية القيلولة">
-          </label>
-          <label>مدتها بالدقائق
-            <input type="number" data-nap-duration min="1" max="240" step="1" value="${escapeHtml(napDuration)}" aria-label="مدة القيلولة بالدقائق">
-          </label>
-          <button type="button" data-action="save-nap">سجّل القيلولة</button>
-          <button class="space-nap-skip" type="button" data-action="skip-nap">لم آخذ قيلولة</button>
-        </div>
-        <small class="space-sleep-status">${escapeHtml(napStatus)} · موعد نومك المعتاد ${escapeHtml(timeLabel(pattern.bedtime))}</small>
-        <small class="space-sleep-pattern">إيقاعك ${escapeHtml(pattern.chronotype)} · متوسط النوم ${formatSleepDuration(pattern.averageSleepMin)} · الاستيقاظ ${pattern.wakeTime ? escapeHtml(timeLabel(pattern.wakeTime)) : "بانتظار التسجيل"} · القيلولة ${formatSleepDuration(pattern.averageNapMin)}</small>
-      </details>
+      <button class="space-sleep-card" type="button" data-action="open-sleep-dialog">
+        <span aria-hidden="true">☾</span><strong>النوم والقيلولة</strong><span class="space-sleep-card-arrow" aria-hidden="true">↗</span>
+      </button>
     </div>
   </article>`;
 }
@@ -1215,7 +1249,8 @@ function render() {
     </div>
   </section>
   <dialog class="space-period-recap-dialog" id="space-period-recap-dialog" aria-label="حصاد الفترة"></dialog>
-  <dialog class="space-prayer-log-dialog" id="space-prayer-log-dialog" aria-label="تسجيل الصلاة"></dialog>`;
+  <dialog class="space-prayer-log-dialog" id="space-prayer-log-dialog" aria-label="تسجيل الصلاة"></dialog>
+  <dialog class="space-sleep-dialog" id="space-sleep-dialog" aria-label="تفاصيل النوم والقيلولة"></dialog>`;
 }
 
 function updateLiveClock() {
@@ -1360,6 +1395,11 @@ function bindEvents(app) {
       prayerDialog.close();
       return;
     }
+    const sleepDialog = app.querySelector("#space-sleep-dialog");
+    if (event.target === sleepDialog) {
+      sleepDialog.close();
+      return;
+    }
     const button = event.target.closest("[data-action]");
     if (!button) return;
     if (button.dataset.action === "close-recap") {
@@ -1368,6 +1408,14 @@ function bindEvents(app) {
     }
     if (button.dataset.action === "close-prayer-log") {
       prayerDialog?.close();
+      return;
+    }
+    if (button.dataset.action === "open-sleep-dialog") {
+      renderSleepDialog(mapDate);
+      return;
+    }
+    if (button.dataset.action === "close-sleep-dialog") {
+      sleepDialog?.close();
       return;
     }
     if (button.dataset.action === "prayer-mark-category") {
@@ -1416,7 +1464,7 @@ function bindEvents(app) {
       return;
     }
     if (button.dataset.action === "save-bedtime") {
-      const time = button.closest(".space-day-start")?.querySelector("[data-bedtime]")?.value;
+      const time = sleepDialog?.querySelector("[data-bedtime]")?.value;
       if (clockMinutes(time) === null) {
         showToast("أدخل وقت نوم صحيحًا أولاً.", { isError: true });
         return;
@@ -1425,7 +1473,7 @@ function bindEvents(app) {
       return;
     }
     if (button.dataset.action === "save-previous-bedtime") {
-      const time = button.closest(".space-day-start")?.querySelector("[data-previous-bedtime]")?.value;
+      const time = sleepDialog?.querySelector("[data-previous-bedtime]")?.value;
       if (clockMinutes(time) === null) {
         showToast("أدخل وقت نوم الليلة السابقة صحيحًا أولاً.", { isError: true });
         return;
@@ -1435,9 +1483,8 @@ function bindEvents(app) {
       return;
     }
     if (button.dataset.action === "save-nap") {
-      const card = button.closest(".space-day-start");
-      const start = card?.querySelector("[data-nap-start]")?.value;
-      const duration = Number(card?.querySelector("[data-nap-duration]")?.value);
+      const start = sleepDialog?.querySelector("[data-nap-start]")?.value;
+      const duration = Number(sleepDialog?.querySelector("[data-nap-duration]")?.value);
       if (clockMinutes(start) === null || !Number.isInteger(duration) || duration < 1 || duration > 240) {
         showToast("أدخل وقت بداية القيلولة ومدتها بين دقيقة و٢٤٠ دقيقة.", { isError: true });
         return;
