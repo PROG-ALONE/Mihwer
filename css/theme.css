@@ -18240,6 +18240,12 @@ body.today-route .topbar > div:first-child {
   font-size: .73rem;
 }
 
+.space-map-sleep-start {
+  display: flex;
+  justify-content: center;
+  margin-block: 4px 10px;
+}
+
 .space-day-start {
   grid-template-columns: minmax(0, 1fr);
 }

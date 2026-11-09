@@ -501,15 +501,7 @@ function buildEvents(tasks, habits, schedule, today) {
       || (first.priority ?? 4) - (second.priority ?? 4)
       || (first.task?.order ?? first.habit?.order ?? 0) - (second.task?.order ?? second.habit?.order ?? 0);
   });
-  const wakeMinute = clockMinutes(wakeTimeFor(today));
-  const startMinute = wakeMinute ?? 0;
-  const routeEvents = [{
-    type: "day-start",
-    time: startMinute,
-    sortMinute: startMinute,
-    priority: -1,
-    label: wakeMinute === null ? "بداية اليوم" : "بداية يومك",
-  }, ...orderedEvents, {
+  const routeEvents = [...orderedEvents, {
     type: "night-prayers",
     time: null,
     habit: prayerHabit,
@@ -589,8 +581,8 @@ function renderSleepDialog(date) {
   dialog.showModal();
 }
 
-function renderDayStart(date) {
-  return `<article class="space-day-start" aria-label="بداية يومك من وقت الاستيقاظ">
+function renderDayStart() {
+  return `<article class="space-day-start" aria-label="تفاصيل النوم">
     <div class="space-day-start-copy">
       <button class="space-sleep-card" type="button" data-action="open-sleep-dialog">
         <strong>تفاصيل النوم</strong>
@@ -767,18 +759,13 @@ function renderEvent(event, index) {
       </div>`;
   }
 
-  const time = event.type === "day-start"
-    ? event.time === null ? "" : timeLabel(minuteTime(event.time))
-    : event.type === "prayer"
-      ? Number.isFinite(event.prayer.time) ? formatPrayerTime(event.prayer.time) : ""
-      : timeLabel(event.displayTime ?? event.time);
-  const label = event.type === "day-start" ? event.label
-    : event.type === "prayer" ? event.prayer.name
+  const time = event.type === "prayer"
+    ? Number.isFinite(event.prayer.time) ? formatPrayerTime(event.prayer.time) : ""
+    : timeLabel(event.displayTime ?? event.time);
+  const label = event.type === "prayer" ? event.prayer.name
       : event.type === "task" ? "مهمة"
         : "عادة";
-  const node = event.type === "day-start"
-    ? renderDayStart(mapDate)
-    : event.type === "task" ? renderTaskNode(event.task)
+  const node = event.type === "task" ? renderTaskNode(event.task)
       : event.type === "habit" ? renderHabitNode({ ...event.habit, dailyTime: event.time ?? event.habit.dailyTime }, mapDate)
         : renderPrayerNode({ ...event, today: mapDate });
   const progress = event.type === "task" ? taskCompletion(event.task)
@@ -793,15 +780,14 @@ function renderEvent(event, index) {
           : 0;
       })()
       : 0;
-  const stopStatus = event.type === "day-start" ? ""
-    : progress >= 1 ? " is-stop-done"
+  const stopStatus = progress >= 1 ? " is-stop-done"
       : progress > 0 ? " is-stop-partial"
         : " is-stop-pending";
   const eventMinute = Number.isFinite(event.sortMinute) ? event.sortMinute : event.time;
   const eventKind = event.type;
   const progressState = progress >= 1 ? "done" : progress > 0 ? "partial" : "pending";
-  return `<div class="space-map-stop${index % 2 ? " is-left" : " is-right"}${event.type === "day-start" ? " is-start" : ""}${stopStatus}"${Number.isFinite(eventMinute) ? ` data-event-minute="${eventMinute}"` : ""} data-event-kind="${eventKind}" data-stop-status="${progressState}" style="--node-index:${index};animation-delay:${Math.min(index * 55, 700)}ms">
-    ${event.type === "day-start" ? `<span class="space-map-time">${escapeHtml(time || "٠٠:٠٠")} · ${escapeHtml(label)}</span>` : `<span class="space-map-time">${event.displayTime && !event.time ? "مرن · " : ""}${escapeHtml(time || "وقتك")}</span>`}
+  return `<div class="space-map-stop${index % 2 ? " is-left" : " is-right"}${stopStatus}"${Number.isFinite(eventMinute) ? ` data-event-minute="${eventMinute}"` : ""} data-event-kind="${eventKind}" data-stop-status="${progressState}" style="--node-index:${index};animation-delay:${Math.min(index * 55, 700)}ms">
+    <span class="space-map-time">${event.displayTime && !event.time ? "مرن · " : ""}${escapeHtml(time || "وقتك")}</span>
     <span class="space-map-connector" aria-hidden="true"></span>
     <div class="space-map-event" data-kind="${event.type}" aria-label="${escapeHtml(label)}">${node}</div>
   </div>`;
@@ -1143,17 +1129,13 @@ function openPeriodRecap(start, end, label) {
 }
 
 function renderMapControls() {
-  const parentMode = mapParentMode ?? { day: "week", week: "month", month: "year" }[mapMode];
   return `<div class="space-map-controls">
     <nav class="space-map-modes" aria-label="مدى خارطة اليوم">
       ${MAP_MODES.map((mode) => `<button type="button" data-action="map-mode" data-mode="${mode}" aria-pressed="${mapMode === mode}">${MAP_MODE_LABELS[mode]}</button>`).join("")}
     </nav>
-    <nav class="space-map-period-controls" aria-label="التنقل بين الفترات: ${escapeHtml(formatMapPeriod())}">
-      ${parentMode ? `<button type="button" data-action="map-parent" aria-label="العودة إلى ${MAP_MODE_LABELS[parentMode]}">↗ ${MAP_MODE_LABELS[parentMode]}</button>` : ""}
+    <nav class="space-map-period-controls" aria-label="التنقل بين الفترات">
       <button type="button" data-action="map-shift" data-direction="-1" aria-label="الفترة السابقة">‹</button>
-      ${mapMode === "day" ? "" : `<strong>${escapeHtml(formatMapPeriod())}</strong>`}
       <button type="button" data-action="map-shift" data-direction="1" aria-label="الفترة التالية">›</button>
-      <button type="button" data-action="map-today">اليوم</button>
     </nav>
   </div>`;
 }
@@ -1201,6 +1183,7 @@ function render() {
         </div>
       </header>
       ${renderMapControls()}
+      ${mapMode === "day" ? `<div class="space-map-sleep-start">${renderDayStart()}</div>` : ""}
       ${mapMode === "day" ? `<nav class="space-map-day-links" aria-label="تفاصيل ${escapeHtml(formatDate(mapDate))}">
         <a href="#/tasks?date=${encodeURIComponent(mapDate)}">مهام اليوم <strong>${formatArabicNumber(tasks.length)}</strong></a>
         <a href="#/habits?date=${encodeURIComponent(mapDate)}">عادات اليوم <strong>${formatArabicNumber(habits.length)}</strong></a>
