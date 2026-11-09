@@ -20,19 +20,21 @@ const themeToggle = document.querySelector("#theme-toggle");
 const themeDialog = document.querySelector("#theme-dialog");
 const connectionStatus = document.querySelector("#connection-status");
 const themes = {
-  dark: { label: "ليلي", color: "#11101e" },
   midnight: { label: "منتصف الليل", color: "#0c1220" },
   rose: { label: "وردي غباري", color: "#fbf0f3" },
-  lavender: { label: "لافندر", color: "#f4f0ff" },
-  blossom: { label: "زهري هادئ", color: "#fff2f5" },
-  lilac: { label: "ليلكي", color: "#f5f0ff" },
-  sage: { label: "نعناعي", color: "#edf4ee" },
-  sunshine: { label: "شمس دافئة", color: "#fff9e8" },
+  sage: { label: "أخضر هادئ", color: "#edf4ee" },
   ocean: { label: "أزرق هادئ", color: "#eef5f8" },
-  forest: { label: "غابة", color: "#edf4ef" },
   sand: { label: "رملي", color: "#f7f1e8" },
   light: { label: "فاتح واضح", color: "#ffffff" },
-  clarity: { label: "وضوح عالٍ", color: "#ffffff" },
+};
+const legacyThemes = {
+  dark: "midnight",
+  lavender: "light",
+  blossom: "rose",
+  lilac: "light",
+  sunshine: "sand",
+  forest: "sage",
+  clarity: "light",
 };
 
 let renderSequence = 0;
@@ -123,7 +125,7 @@ async function render() {
 }
 
 function applyTheme(theme) {
-  const selectedTheme = Object.hasOwn(themes, theme) ? theme : "dark";
+  const selectedTheme = Object.hasOwn(themes, theme) ? theme : legacyThemes[theme] ?? "midnight";
   document.documentElement.dataset.theme = selectedTheme;
   themeToggle.setAttribute("aria-label", `اختيار المظهر، الحالي: ${themes[selectedTheme].label}`);
   document.querySelector('meta[name="theme-color"]').content = themes[selectedTheme].color;

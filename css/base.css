@@ -1451,12 +1451,12 @@ a:focus-visible {
   background: var(--color-surface-muted);
 }
 
-:root[data-theme="dark"] .status-label-at-risk {
+:is(:root[data-theme="dark"], :root[data-theme="midnight"]) .status-label-at-risk {
   color: #f3bd72;
   background: #463722;
 }
 
-:root[data-theme="dark"] .status-label-blocked {
+:is(:root[data-theme="dark"], :root[data-theme="midnight"]) .status-label-blocked {
   color: #ff9aa6;
   background: #482a32;
 }
@@ -1774,7 +1774,7 @@ a:focus-visible {
   background: var(--color-accent);
 }
 
-:root[data-theme="dark"] .heat-missed {
+:is(:root[data-theme="dark"], :root[data-theme="midnight"]) .heat-missed {
   background: #564a37;
 }
 
@@ -2169,7 +2169,7 @@ a:focus-visible {
   background: var(--color-surface);
 }
 
-:root[data-theme="dark"] .review-reminder {
+:is(:root[data-theme="dark"], :root[data-theme="midnight"]) .review-reminder {
   border-color: #564a37;
   color: #f3bd72;
   background: #30291f;
