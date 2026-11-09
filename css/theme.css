@@ -18246,6 +18246,31 @@ body.today-route .topbar > div:first-child {
   margin-block: 4px 10px;
 }
 
+.cosmic-map[data-map-mode="day"] .space-map-sleep-start .space-day-start {
+  width: min(100%, 430px);
+  min-height: 0;
+  height: auto;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  justify-items: stretch;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.space-map-sleep-start .space-day-start-copy {
+  width: 100%;
+  min-width: 0;
+  gap: 0;
+}
+
+.space-map-sleep-start .space-sleep-card {
+  width: 100%;
+  justify-content: center;
+}
+
 .space-day-start {
   grid-template-columns: minmax(0, 1fr);
 }
