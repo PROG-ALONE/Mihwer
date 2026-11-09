@@ -531,6 +531,14 @@ function pushFrame(frames, context, canvas, delay) {
   });
 }
 
+export function pushGifFrame(frames, context, canvas, delay = 16) {
+  pushFrame(frames, context, canvas, delay);
+}
+
+export function createGifFile(frames, width, height, filename) {
+  return new File([toGifBytes(frames, width, height)], filename, { type: "image/gif" });
+}
+
 function drawProgressBar(context, x, y, width, progress, color, height = 3) {
   roundedRect(context, x, y, width, height, height / 2);
   context.fillStyle = "#ffffff30";

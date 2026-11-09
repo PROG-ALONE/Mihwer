@@ -1,4 +1,4 @@
-import { add, getRecords, subscribe, update } from "../store.js";
+import { add, getRecords, remove, subscribe, update } from "../store.js";
 import { formatDate, localDateString } from "../utils/dates.js";
 import { ensureDefaultLifeAreas } from "../utils/life-areas.js";
 import { showToast } from "../utils/notifications.js";
@@ -364,12 +364,12 @@ function renderHabit(habit, date) {
       <button class="habit-today-toggle${checked ? " is-checked" : ""}" type="button" data-action="toggle-today" aria-pressed="${checked}" aria-label="${checked ? "إلغاء تحقق" : "تحقق"} ${escapeHtml(habit.title)}">
         <span aria-hidden="true">${checked ? "✓" : "+"}</span>
       </button>
-      <div class="habit-title-group"><h3>${escapeHtml(habit.title)}</h3><span>${progress.mode === "items" ? `${progress.done}/${progress.target} بند · ${progress.percent}%` : checked ? "مكتملة اليوم" : progress.mode === "count" ? `${progress.done}/${progress.total} ${unit}` : `${current} يوم متتالٍ`}${lifeArea ? ` · ${escapeHtml(lifeArea.name)}` : ""}</span></div>
+      <div class="habit-title-group"><h3>${escapeHtml(habit.title)}</h3><span>${progress.mode === "items" ? `${progress.done}/${progress.target} بند · ${progress.percent}%` : progress.mode === "count" ? `${progress.done}/${progress.total} ${unit}` : checked ? "مكتملة اليوم" : "لم تكتمل اليوم"}${lifeArea ? ` · ${escapeHtml(lifeArea.name)}` : ""}</span></div>
       <button class="icon-button" type="button" data-action="edit" aria-label="تعديل ${escapeHtml(habit.title)}">✎</button>
       <button class="icon-button" type="button" data-action="archive" aria-label="أرشفة ${escapeHtml(habit.title)}">×</button>
     </div>
     <details class="habit-details" data-habit-details="${escapeHtml(habit.id)}"${expandedHabitDetails.has(habit.id) ? " open" : ""}>
-      <summary><span>تفاصيل العادة</span><span class="habit-details-progress">${progress.mode === "items" ? `${progress.done}/${progress.target} بند · ${progress.percent}%` : progress.mode === "count" ? `${progress.done}/${progress.total} ${unit}` : checked ? "مكتملة اليوم" : "لم تكتمل اليوم"}</span></summary>
+      <summary><span>سجل العادة وتفاصيلها</span></summary>
       <div class="habit-details-content">
     <div class="habit-focus-strip">
       <a class="habit-focus-link" href="#/focus?habit=${encodeURIComponent(habit.id)}">◉ ابدأ التركيز${habit.focusDurationMin ? ` · ${Number(habit.focusDurationMin)} د` : ""}</a>
@@ -384,10 +384,9 @@ function renderHabit(habit, date) {
     <div class="subtask-progress"><span style="width:${progress.percent}%"></span></div>` : ""}
     ${progress.mode === "items" ? `
     <div class="habit-items${requiresAllItems(habit) ? " requires-all-items" : ""}">
-      <div class="habit-items-heading"><div><strong>تفاصيل اليوم</strong><span>${requiresAllItems(habit) ? "أكمل كل البنود لتسجيل العادة" : `اختر ما أنجزته · الهدف ${progress.target} من ${progress.itemsTotal}`}</span></div><strong>${progress.loggedCount}/${progress.itemsTotal}</strong></div>
+      <div class="habit-items-heading"><div><strong>تفاصيل اليوم</strong><span>${requiresAllItems(habit) ? "أكمل كل البنود لتسجيل العادة" : "اختر البنود التي أنجزتها"}</span></div></div>
       ${habitItemsMarkup(habit.items, progress.logged)}
     </div>
-    <p class="habit-item-summary">${requiresAllItems(habit) ? "لا تكتمل العادة إلا بإكمال جميع التفاصيل." : `هدف اليوم: ${progress.done}/${progress.target} بند`}${progress.amountDetails.length ? ` · الكميات (منجز/إجمالي): ${progress.amountDetails.join("، ")}` : ""}</p>
     <div class="subtask-progress"><span style="width:${progress.percent}%"></span></div>` : ""}
     <div class="habit-metrics">
       <div><strong>${current}</strong><span>السلسلة الحالية</span></div>
@@ -413,7 +412,7 @@ function render() {
   app.innerHTML = `
     <section class="habits-page" aria-label="متابعة العادات">
       <header class="habits-heading">
-        <div><p class="goals-kicker">${date ? `يوم ${escapeHtml(formatDate(date))}` : "مساحة الإنجاز"}</p><h2>${date ? "عادات اليوم" : "عاداتك"}</h2><p class="goals-subtitle">${habits.length} عادة · سجّل إنجازك بخطوة واحدة</p></div>
+        <div><p class="goals-kicker">${date ? `يوم ${escapeHtml(formatDate(date))}` : "مساحة الإنجاز"}</p><h2>${date ? "عادات اليوم" : "عاداتك"}</h2><p class="goals-subtitle">${habits.length} عادة · سجّل إنجازك بخطوة واحدة <span class="swipe-delete-hint">· اسحب البطاقة للحذف</span></p></div>
         <button class="habits-heading-add" type="button" data-action="new-habit" aria-label="إضافة عادة"><span aria-hidden="true">＋</span></button>
       </header>
       ${date ? `<a class="day-filter-back-link" href="#/today?date=${encodeURIComponent(date)}">↗ العودة إلى خارطة اليوم</a>` : ""}
@@ -470,6 +469,61 @@ function bindEvents(app) {
   eventController?.abort();
   eventController = new AbortController();
   const { signal } = eventController;
+  let swipeState = null;
+  let suppressClickUntil = 0;
+  app.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "mouse" || event.target.closest("a, input, label, summary, button, textarea, select")) return;
+    const card = event.target.closest(".habit-card[data-habit-id]");
+    if (!card) return;
+    swipeState = { card, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false };
+    card.classList.add("is-swipe-ready");
+    card.setPointerCapture(event.pointerId);
+  }, { signal });
+
+  app.addEventListener("pointermove", (event) => {
+    if (!swipeState || event.pointerId !== swipeState.pointerId) return;
+    const deltaX = event.clientX - swipeState.startX;
+    const deltaY = event.clientY - swipeState.startY;
+    if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
+      swipeState.card.classList.remove("is-swipe-ready", "is-swipe-delete");
+      swipeState.card.style.transform = "";
+      swipeState = null;
+      return;
+    }
+    if (Math.abs(deltaX) < 8) return;
+    swipeState.moved = true;
+    const distance = Math.max(-150, Math.min(150, deltaX));
+    swipeState.card.style.transform = `translateX(${distance}px)`;
+    swipeState.card.classList.toggle("is-swipe-delete", Math.abs(distance) >= 90);
+    event.preventDefault();
+  }, { signal, passive: false });
+
+  app.addEventListener("pointerup", async (event) => {
+    if (!swipeState || event.pointerId !== swipeState.pointerId) return;
+    const { card, moved } = swipeState;
+    const shouldDelete = card.classList.contains("is-swipe-delete");
+    const habit = records.habits.find((item) => item.id === card.dataset.habitId);
+    swipeState = null;
+    if (moved) suppressClickUntil = Date.now() + 700;
+    card.classList.remove("is-swipe-ready", "is-swipe-delete");
+    card.style.transform = "";
+    if (!moved || !shouldDelete || !habit || !window.confirm(`حذف العادة «${habit.title}» نهائياً؟ سيُحذف سجل إنجازها أيضاً.`)) return;
+    try {
+      await remove("habits", habit.id);
+      setStatus("حُذفت العادة وسجل إنجازها.");
+    } catch (error) {
+      console.error("تعذّر حذف العادة بالسحب:", error);
+      setStatus(error.message, true);
+    }
+  }, { signal });
+
+  app.addEventListener("pointercancel", (event) => {
+    if (!swipeState || event.pointerId !== swipeState.pointerId) return;
+    swipeState.card.classList.remove("is-swipe-ready", "is-swipe-delete");
+    swipeState.card.style.transform = "";
+    swipeState = null;
+  }, { signal });
+
   app.addEventListener("click", (event) => {
     const summary = event.target.closest(".habit-details > summary");
     if (!summary) return;
@@ -484,6 +538,7 @@ function bindEvents(app) {
   syncModeFields(habitForm);
 
   app.addEventListener("click", async (event) => {
+    if (Date.now() < suppressClickUntil) return;
     const button = event.target.closest("[data-action]");
     const card = event.target.closest(".habit-card[data-habit-id]");
     if (!button && card && !event.target.closest("a, input, label, details, summary, button")) {
@@ -649,6 +704,8 @@ function bindEvents(app) {
       if (habit.mode === "items" && !habit.requireAllItems && habit.targetItemsPerDay > habit.items.length) {
         throw new Error("هدف الإنجاز اليومي لا يمكن أن يتجاوز عدد البنود. أضف بنوداً أو خفّض الهدف.");
       }
+      const saveButton = form.querySelector('button[type="submit"]');
+      saveButton.disabled = true;
       if (existing) await update("habits", habit);
       else await add("habits", habit);
       form.closest("dialog").close();
@@ -656,6 +713,9 @@ function bindEvents(app) {
     } catch (error) {
       console.error("تعذّر حفظ العادة:", error);
       setStatus(error.message, true);
+    } finally {
+      const saveButton = form.querySelector('button[type="submit"]');
+      if (saveButton) saveButton.disabled = false;
     }
   }, { signal });
 }

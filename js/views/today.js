@@ -14,6 +14,7 @@ import { formatDuration } from "../utils/task-metrics.js";
 import { shareTextReport } from "../export/share.js";
 import { printStructuredReport } from "../export/pdf.js";
 import { animatedDayStoryFile, shareOrDownloadStoryFile } from "../export/day-story.js";
+import { animatedPeriodStoryFile } from "../export/period-story.js";
 
 const PRAYER_METHODS = ["auto", "mwl", "isna", "egypt", "ummAlQura", "karachi"];
 const PRAYER_ITEM_NAMES = {
@@ -59,6 +60,7 @@ let mapDate = /^\d{4}-\d{2}-\d{2}$/.test(localStorage.getItem("mihwar-map-date")
   ? localStorage.getItem("mihwar-map-date")
   : localDateString();
 const expandedMapTaskDetails = new Set();
+const periodDayMetricsCache = new Map();
 let activeStoryIndex = 0;
 
 function escapeHtml(value = "") {
@@ -805,13 +807,21 @@ function periodMetrics(start, end) {
   let completedHabits = 0;
   let habitProgress = 0;
   for (const date of dates) {
-    for (const habit of habits) {
-      if (!scheduledHabit(habit, date)) continue;
-      scheduledHabits += 1;
-      const progress = dayProgress(habit, date);
-      habitProgress += progress.percent / 100;
-      if (progress.complete) completedHabits += 1;
+    let dailyMetrics = periodDayMetricsCache.get(date);
+    if (!dailyMetrics) {
+      dailyMetrics = { scheduled: 0, completed: 0, progress: 0 };
+      for (const habit of habits) {
+        if (!scheduledHabit(habit, date)) continue;
+        dailyMetrics.scheduled += 1;
+        const progress = dayProgress(habit, date);
+        dailyMetrics.progress += progress.percent / 100;
+        if (progress.complete) dailyMetrics.completed += 1;
+      }
+      periodDayMetricsCache.set(date, dailyMetrics);
     }
+    scheduledHabits += dailyMetrics.scheduled;
+    completedHabits += dailyMetrics.completed;
+    habitProgress += dailyMetrics.progress;
   }
   const total = tasks.length + scheduledHabits;
   return {
@@ -911,9 +921,14 @@ function renderPeriodSummary(metrics) {
         <span aria-hidden="true">✦</span><strong>العادات</strong><small>${formatArabicNumber(metrics.completedHabits)} / ${formatArabicNumber(metrics.scheduledHabits)}</small>
       </div>
     </div>
-    <button class="space-map-recap-action" type="button" data-action="period-recap" data-start="${start}" data-end="${end}" data-label="حصاد ${MAP_MODE_LABELS[mapMode]}">
-      <span aria-hidden="true">✦</span> افتح حصاد الفترة وتفاصيلها
-    </button>
+    <div class="space-map-summary-actions">
+      <button class="space-map-recap-action is-share" type="button" data-action="share-period-path" aria-label="مشاركة مسار ${MAP_MODE_LABELS[mapMode]} مع رسوم بيانية وإحصاءات مفصلة">
+        <span aria-hidden="true">↗</span> مشاركة المسار والرسوم
+      </button>
+      <button class="space-map-recap-action" type="button" data-action="period-recap" data-start="${start}" data-end="${end}" data-label="حصاد ${MAP_MODE_LABELS[mapMode]}">
+        <span aria-hidden="true">✦</span> افتح حصاد الفترة وتفاصيلها
+      </button>
+    </div>
   </section>`;
 }
 
@@ -1642,6 +1657,7 @@ function renderMapControls() {
 function render() {
   const app = document.querySelector("#app");
   if (!app || !isMounted) return;
+  periodDayMetricsCache.clear();
   const selectedDate = mapDate;
   const tasks = dayTasks(selectedDate).sort((first, second) =>
     taskPriority(first) - taskPriority(second)
@@ -1900,6 +1916,37 @@ function bindEvents(app) {
     }
     if (button.dataset.action === "share-day-story") {
       openDayStoryDialog(mapDate);
+      return;
+    }
+    if (button.dataset.action === "share-period-path") {
+      try {
+        const { start, end } = mapBounds();
+        const title = `مسار ${MAP_MODE_LABELS[mapMode]}`;
+        const report = periodReport(start, end, `حصاد ${MAP_MODE_LABELS[mapMode]}`);
+        const series = periodStops().map((stop) => ({
+          title: stop.title,
+          subtitle: stop.subtitle,
+          metrics: periodMetrics(stop.start, stop.end),
+        }));
+        const file = await animatedPeriodStoryFile({
+          mode: mapMode,
+          title,
+          period: report.period,
+          summary: report.summary,
+          series,
+          sections: report.sections,
+        });
+        const result = await shareOrDownloadStoryFile(
+          file,
+          `${title} · مِحوَر`,
+          `تقرير ${title} للفترة ${report.period}، مع الرسوم البيانية والإحصاءات والتفاصيل.`,
+        );
+        if (result === "shared") showToast("أُرفق مسار الفترة ورسومه وإحصاءاته للمشاركة.");
+        else if (result === "downloaded") showToast("نُزّل مسار الفترة كصورة GIF متحركة، ويمكنك مشاركته.");
+      } catch (error) {
+        console.error("تعذّر تجهيز مسار الفترة للمشاركة:", error);
+        showToast(`تعذّر تجهيز التقرير: ${error.message}`, { isError: true });
+      }
       return;
     }
     if (button.dataset.action === "close-day-story") {
@@ -2257,6 +2304,7 @@ export async function mountTodayView(isCurrent = () => true) {
 
 export function unmountTodayView() {
   isMounted = false;
+  periodDayMetricsCache.clear();
   window.clearInterval(storyPlaybackInterval);
   storyPlaybackInterval = undefined;
   activeStoryEvents = [];

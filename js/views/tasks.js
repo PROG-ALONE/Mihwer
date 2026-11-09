@@ -176,7 +176,7 @@ function taskCard(task) {
       <div class="task-card-details${detailsOpen ? " is-open" : ""}"${detailsOpen ? "" : " hidden"}>
         <div class="task-focus-strip">
           <a class="task-focus-link" href="#/focus?task=${encodeURIComponent(task.id)}">◉ ابدأ التركيز${task.estimateMin ? ` · ${Number(task.estimateMin)} د` : ""}</a>
-          ${statusLabel ? `<span class="task-video-status${done ? " is-done" : ""}">${statusLabel}</span>` : `<span>ضمن قائمة المهام</span>`}
+          ${statusLabel ? `<span class="task-video-status${done ? " is-done" : ""}">${statusLabel}</span>` : ""}
           ${trackedMinutes ? `<span class="task-time-total">الوقت المسجّل: ${formatDuration(trackedMinutes)}</span>` : ""}
         </div>
         ${subtasksBlock(task)}
@@ -338,7 +338,7 @@ function render() {
   app.innerHTML = `
     <section class="tasks-page" aria-label="إدارة المهام">
       <header class="tasks-heading">
-        <div><p class="goals-kicker">${date ? `يوم ${escapeHtml(formatDate(date))}` : "مساحة الإنجاز"}</p><h2>${date ? "مهام اليوم" : "المهام"}</h2><p class="tasks-heading-note"><span class="task-count" data-count="${visibleTotal}">٠</span> مهمة في القائمة</p></div>
+        <div><p class="goals-kicker">${date ? `يوم ${escapeHtml(formatDate(date))}` : "مساحة الإنجاز"}</p><h2>${date ? "مهام اليوم" : "المهام"}</h2><p class="tasks-heading-note"><span class="task-count" data-count="${visibleTotal}">٠</span> مهمة في القائمة <span class="swipe-delete-hint">· اسحب البطاقة للحذف</span></p></div>
         <div class="tasks-heading-actions">
           <button class="button button-secondary" type="button" data-action="share-task-list">حفظ القائمة PDF</button>
           <button class="tasks-heading-add" type="button" data-action="new-task" aria-label="إضافة مهمة"><span aria-hidden="true">＋</span></button>
@@ -535,18 +535,21 @@ function bindEvents(app) {
   app.querySelector("#task-dialog")?.addEventListener("close", () => render(), { signal });
 
   app.addEventListener("pointerdown", (event) => {
-    if (event.pointerType === "mouse" || event.target.closest("a, input, label, details, summary, button")) return;
+    if (event.pointerType === "mouse" || event.target.closest("a, input, label, details, summary, button:not(.task-card-summary)")) return;
     const card = event.target.closest(".task-card[data-task-id]");
     if (!card) return;
-    swipeState = { card, startX: event.clientX, startY: event.clientY, moved: false };
+    swipeState = { card, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false };
     card.classList.add("is-swipe-ready");
+    card.setPointerCapture(event.pointerId);
   }, { signal });
 
   app.addEventListener("pointermove", (event) => {
-    if (!swipeState) return;
+    if (!swipeState || event.pointerId !== swipeState.pointerId) return;
     const deltaX = event.clientX - swipeState.startX;
     const deltaY = event.clientY - swipeState.startY;
     if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
+      swipeState.card.classList.remove("is-swipe-ready", "is-swipe-delete");
+      swipeState.card.style.transform = "";
       swipeState = null;
       return;
     }
@@ -558,8 +561,8 @@ function bindEvents(app) {
     event.preventDefault();
   }, { signal, passive: false });
 
-  app.addEventListener("pointerup", async () => {
-    if (!swipeState) return;
+  app.addEventListener("pointerup", async (event) => {
+    if (!swipeState || event.pointerId !== swipeState.pointerId) return;
     const { card, moved } = swipeState;
     const shouldDelete = card.classList.contains("is-swipe-delete");
     const task = records.tasks.find((item) => item.id === card.dataset.taskId);
@@ -576,8 +579,8 @@ function bindEvents(app) {
     }
   }, { signal });
 
-  app.addEventListener("pointercancel", () => {
-    if (!swipeState) return;
+  app.addEventListener("pointercancel", (event) => {
+    if (!swipeState || event.pointerId !== swipeState.pointerId) return;
     swipeState.card.classList.remove("is-swipe-ready", "is-swipe-delete");
     swipeState.card.style.transform = "";
     swipeState = null;
@@ -873,6 +876,8 @@ function bindEvents(app) {
       if (manualMinutes > 0) {
         timeLog.push({ date: localDateString(), minutes: manualMinutes, createdAt: new Date().toISOString() });
       }
+      const saveButton = form.querySelector('button[type="submit"]');
+      saveButton.disabled = true;
       await update("tasks", {
         ...task,
         title: form.elements.title.value.trim(),
@@ -892,10 +897,14 @@ function bindEvents(app) {
         tags: form.elements.tags.value.split(/[,،]/).map((tag) => tag.trim().replace(/^#/, "")).filter(Boolean),
         updatedAt: new Date().toISOString(),
       });
+      form.closest("dialog")?.close();
       setStatus("حُفظت تعديلات المهمة.");
     } catch (error) {
       console.error("تعذّر حفظ تعديلات المهمة:", error);
       setStatus(error.message, true);
+    } finally {
+      const saveButton = form.querySelector('button[type="submit"]');
+      if (saveButton) saveButton.disabled = false;
     }
   }, { signal });
 

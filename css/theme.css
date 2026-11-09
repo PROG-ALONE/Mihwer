@@ -4392,7 +4392,6 @@ details.objective-card > .objective-card-summary::after {
   transform: rotate(45deg);
 }
 
-.habit-details-progress,
 .today-habit-details > summary > span:last-child {
   margin-inline-start: auto;
   padding: 4px 9px;
@@ -9535,6 +9534,26 @@ body {
   border-color: #d34f70;
   background: color-mix(in srgb, #d34f70 16%, var(--color-surface));
   box-shadow: 0 0 0 3px color-mix(in srgb, #d34f70 18%, transparent);
+}
+
+.habit-card {
+  touch-action: pan-y;
+  transition: transform 180ms ease, border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.habit-card.is-swipe-ready {
+  transition: none;
+}
+
+.habit-card.is-swipe-delete {
+  border-color: #d34f70;
+  background: color-mix(in srgb, #d34f70 16%, var(--color-surface));
+  box-shadow: 0 0 0 3px color-mix(in srgb, #d34f70 18%, transparent);
+}
+
+.swipe-delete-hint {
+  color: var(--color-muted);
+  font-size: .72em;
 }
 
 .task-card.is-done {
@@ -18708,6 +18727,19 @@ body.today-route .topbar > div:first-child {
   }
 }
 
+.space-map-summary-actions {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.space-map-recap-action.is-share {
+  border-color: color-mix(in srgb, var(--color-primary) 52%, var(--map-edge));
+  color: var(--map-ink);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--color-primary) 20%, var(--map-panel)), var(--map-control));
+}
+
 .cosmic-map[data-map-mode="day"] .space-node {
   min-height: 0;
   grid-template-columns: 30px minmax(0, 1fr);
@@ -18871,7 +18903,7 @@ body.today-route .topbar > div:first-child {
 @media (max-width: 420px) {
   .cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-node {
     min-height: 0;
-    grid-template-columns: 25px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -19007,5 +19039,97 @@ body.today-route .topbar > div:first-child {
 
   .cosmic-map-route .space-map-stop {
     animation: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .cosmic-day-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .cosmic-day-heading h2 {
+    overflow-wrap: normal;
+    word-break: normal;
+    white-space: normal;
+  }
+
+  .cosmic-day-progress {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    flex: none;
+  }
+
+  .space-period-node,
+  .space-node {
+    min-width: 0;
+  }
+
+  .space-period-copy,
+  .space-node-copy {
+    min-width: 0;
+  }
+
+  .space-period-copy > strong,
+  .space-node-copy > strong,
+  .space-node-copy > span,
+  .cosmic-map[data-map-mode="day"] .space-node-copy > strong,
+  .cosmic-map[data-map-mode="day"] .space-node-copy > span {
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  .space-map-summary-item > small {
+    white-space: normal;
+    overflow-wrap: normal;
+  }
+}
+
+@media (max-width: 520px) {
+  .space-map-summary-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .section-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .section-summary-card {
+    min-width: 0;
+  }
+
+  .task-card-heading {
+    grid-template-columns: 42px minmax(0, 1fr);
+    column-gap: 9px;
+    row-gap: 6px;
+    padding-inline-end: 0;
+  }
+
+  .task-card-heading > .task-check {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .task-card-heading > .task-card-summary {
+    grid-column: 2;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .task-card-heading > .task-card-actions {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .task-card-meta {
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 }
