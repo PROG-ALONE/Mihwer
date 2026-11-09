@@ -587,6 +587,205 @@
     }
   }
 
+  .space-map-day-links > button {
+    display: inline-flex;
+    min-height: 34px;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 12px;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 40%, var(--map-edge));
+    border-radius: 999px;
+    color: var(--map-ink);
+    background: color-mix(in srgb, var(--color-primary-soft) 86%, transparent);
+    font: inherit;
+    font-size: .68rem;
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .space-map-day-links > button:hover,
+  .space-map-day-links > button:focus-visible {
+    border-color: var(--color-primary);
+    outline: 2px solid color-mix(in srgb, var(--color-primary) 55%, transparent);
+    outline-offset: 2px;
+  }
+
+  .space-day-story-dialog {
+    width: min(720px, calc(100vw - 24px));
+    max-height: min(90dvh, 840px);
+    padding: 0;
+    overflow: auto;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 28%, var(--color-border));
+    border-radius: 24px;
+    color: var(--color-text);
+    background:
+      radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--color-primary-soft) 70%, transparent), transparent 42%),
+      var(--color-surface);
+    box-shadow: 0 26px 90px rgb(0 0 0 / 48%);
+  }
+
+  .space-day-story-dialog::backdrop {
+    background: rgb(5 4 14 / 76%);
+    backdrop-filter: blur(7px);
+  }
+
+  .space-day-story-content {
+    display: grid;
+    gap: 14px;
+    padding: clamp(16px, 4vw, 26px);
+  }
+
+  .space-day-story-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .space-day-story-heading small,
+  .space-day-story-current > span {
+    color: var(--color-primary);
+    font-size: .76rem;
+    font-weight: 700;
+  }
+
+  .space-day-story-heading h2 {
+    margin: 4px 0 0;
+    font-size: 1.25rem;
+  }
+
+  .space-day-story-name {
+    display: grid;
+    gap: 6px;
+    color: var(--color-muted);
+    font-size: .78rem;
+  }
+
+  .space-day-story-name input {
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 11px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    color: var(--color-text);
+    background: var(--color-surface);
+    font: inherit;
+  }
+
+  .space-day-story-current {
+    display: grid;
+    min-height: 126px;
+    align-content: center;
+    gap: 7px;
+    padding: 17px;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 25%, var(--color-border));
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--color-surface) 82%, var(--color-primary-soft));
+  }
+
+  .space-day-story-current > strong {
+    font-size: 1.03rem;
+    line-height: 1.55;
+  }
+
+  .space-day-story-current > p {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: .84rem;
+    line-height: 1.7;
+  }
+
+  .space-day-story-controls {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) 42px 42px;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .space-day-story-controls button {
+    min-height: 40px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    color: var(--color-text);
+    background: var(--color-surface);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .space-day-story-controls input {
+    width: 100%;
+    accent-color: var(--color-primary);
+  }
+
+  .space-day-story-stops {
+    display: grid;
+    max-height: 250px;
+    gap: 6px;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding-inline-end: 2px;
+  }
+
+  .space-day-story-stops > button {
+    display: grid;
+    grid-template-columns: minmax(44px, auto) minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: 7px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    color: var(--color-text);
+    background: var(--color-surface);
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .space-day-story-stops > button > span {
+    color: var(--color-muted);
+    font-size: .75rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .space-day-story-stops > button > strong {
+    overflow: hidden;
+    font-size: .78rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .space-day-story-stops > button[aria-current="step"] {
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+  }
+
+  .space-day-story-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .space-day-story-actions .button {
+    justify-content: center;
+    min-height: 44px;
+    text-align: center;
+  }
+
+  .space-day-story-privacy {
+    color: var(--color-muted);
+    font-size: .68rem;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  @media (max-width: 480px) {
+    .space-day-story-actions {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
   .space-map-day-links {
     display: flex;
     justify-content: center;
@@ -18735,5 +18934,78 @@ body.today-route .topbar > div:first-child {
   .cosmic-map-route:not(.is-overview) .space-map-stop.is-left:not(.is-start):not(.is-night):not(.is-night-prayers):not(.is-day-close) .space-map-event {
     grid-column: 1;
     justify-self: end;
+  }
+}
+
+.cosmic-map[data-map-mode="day"] .space-node {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.cosmic-map[data-map-mode="day"] .space-node[data-card-action] {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.cosmic-map[data-map-mode="day"] .space-node[data-card-action]:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 720px) {
+  html,
+  body {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: auto;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .app-shell {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .main-content {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible;
+    padding-block-end: calc(102px + env(safe-area-inset-bottom));
+  }
+
+  .page-scroll-container {
+    min-height: 0;
+    flex: 0 0 auto;
+    overflow: visible;
+    overscroll-behavior: auto;
+    -webkit-overflow-scrolling: auto;
+  }
+
+  .page-content {
+    animation: none;
+  }
+
+  .cosmic-map-stars {
+    animation: none;
+  }
+
+  .cosmic-map-nebula {
+    filter: blur(24px);
+  }
+
+  .cosmic-map-route .space-map-stop {
+    animation: none;
   }
 }

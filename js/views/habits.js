@@ -125,8 +125,28 @@ export function setCompletionDetails(habit, date, details) {
 export function setItemsLogged(habit, date, itemIds) {
   const logged = [...new Set(itemIds)];
   return withProgress(habit, date, (next) => {
-    next.itemLog = { ...(habit.itemLog ?? {}), [date]: logged };
+    applyLoggedItems(next, habit, date, logged);
   });
+}
+
+function applyLoggedItems(next, habit, date, itemIds) {
+  const logged = [...new Set(itemIds)];
+  const previous = new Set(habit.itemLog?.[date] ?? []);
+  const allTimestamps = { ...(habit.itemLogTimes ?? {}) };
+  const timestamps = { ...(allTimestamps[date] ?? {}) };
+  const now = date === localDateString() ? new Date().toISOString() : "";
+  for (const id of logged) {
+    if (!previous.has(id)) {
+      if (now) timestamps[id] = now;
+      else delete timestamps[id];
+    }
+  }
+  for (const id of Object.keys(timestamps)) {
+    if (!logged.includes(id)) delete timestamps[id];
+  }
+  next.itemLog = { ...(habit.itemLog ?? {}), [date]: logged };
+  allTimestamps[date] = timestamps;
+  next.itemLogTimes = allTimestamps;
 }
 
 export function setDayComplete(habit, date, complete) {
@@ -143,12 +163,7 @@ export function setDayComplete(habit, date, complete) {
         : habit.items.slice(0, requiresAllItems(habit)
           ? habit.items.length
           : Math.max(1, Number(habit.targetItemsPerDay) || habit.items.length));
-      next.itemLog = {
-        ...(habit.itemLog ?? {}),
-        [date]: complete
-          ? targetItems.map((item) => item.id)
-          : [],
-      };
+      applyLoggedItems(next, habit, date, complete ? targetItems.map((item) => item.id) : []);
     } else if (complete) next.history[date] = true;
     else delete next.history[date];
   });

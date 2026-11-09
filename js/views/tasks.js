@@ -122,6 +122,10 @@ function subtasksBlock(task) {
     <details class="subtasks"${isOpen ? " open" : ""}>
       <summary>مهام فرعية${items.length ? ` <span class="subtask-count">${doneCount}/${items.length}</span>` : ""}</summary>
       ${items.length ? `<div class="subtask-progress" role="progressbar" aria-label="إنجاز المهام الفرعية" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100"><span style="width:${percent}%"></span></div>` : ""}
+      <form class="subtask-add" data-subtask-form>
+        <input type="text" name="text" placeholder="أضف مهمة فرعية…" aria-label="مهمة فرعية جديدة" maxlength="200">
+        <button class="button button-secondary" type="submit">إضافة</button>
+      </form>
       <ul class="subtask-list">
         ${items.map((item, index) => `
           <li class="${item.done ? "is-done" : ""}">
@@ -129,10 +133,6 @@ function subtasksBlock(task) {
             <button class="icon-button" type="button" data-action="delete-subtask" data-index="${index}" aria-label="حذف المهمة الفرعية">×</button>
           </li>`).join("")}
       </ul>
-      <form class="subtask-add" data-subtask-form>
-        <input type="text" name="text" placeholder="أضف مهمة فرعية…" aria-label="مهمة فرعية جديدة" maxlength="200">
-        <button class="button button-secondary" type="submit">إضافة</button>
-      </form>
     </details>`;
 }
 
@@ -226,6 +226,29 @@ function visibleTasksReport(tasks, date) {
   const title = date ? "مهام اليوم" : statusFilter === "done" ? "المهام المنجزة" : "المهام قيد الإنجاز";
   const period = date ? formatDate(date) : "القائمة الحالية";
   const completed = tasks.filter((task) => task.status === "done").length;
+  const sections = PRIORITY_LABELS.map((priorityLabel, priority) => {
+    const priorityTasks = tasks.filter((task) => priorityIndex(task) === priority);
+    return {
+      title: `${priorityLabel} · ${arabicDigits(priorityTasks.length)}`,
+      items: priorityTasks.map((task) => {
+        const checklist = normalizedChecklist(task);
+        const dueDate = task.due || task.scheduled;
+        const details = [
+          { label: "الحالة", value: task.status === "done" ? "مكتملة" : "قيد الإنجاز" },
+          ...(dueDate ? [{ label: "الموعد", value: `${formatDate(dueDate)}${task.dueTime ? ` · ${task.dueTime}` : ""}` }] : []),
+          ...(task.lifeAreaId ? [{ label: "المجال", value: records.lifeAreas.find((area) => area.id === task.lifeAreaId)?.name ?? "—" }] : []),
+          ...(task.projectId ? [{ label: "المشروع", value: records.projects.find((project) => project.id === task.projectId)?.name ?? "—" }] : []),
+          ...(task.notes ? [{ label: "ملاحظات", value: task.notes }] : []),
+          ...checklist.map((item) => ({ label: item.done ? "✓" : "○", value: item.text })),
+        ];
+        return {
+          title: task.title,
+          detail: task.status === "done" ? "مكتملة" : "قيد الإنجاز",
+          details,
+        };
+      }),
+    };
+  }).filter((section) => section.items.length);
   return {
     title,
     period,
@@ -234,18 +257,7 @@ function visibleTasksReport(tasks, date) {
       { label: "المكتملة", value: arabicDigits(completed) },
       { label: "قيد الإنجاز", value: arabicDigits(tasks.length - completed) },
     ],
-    sections: [{
-      title,
-      items: tasks.map((task) => {
-        const checklist = normalizedChecklist(task);
-        const dueDate = task.due || task.scheduled;
-        return {
-          title: task.title,
-          detail: `${task.status === "done" ? "مكتملة" : "قيد الإنجاز"}${dueDate ? ` · ${formatDate(dueDate)}` : ""}${task.dueTime ? ` · ${task.dueTime}` : ""}`,
-          details: checklist.map((item) => ({ label: item.done ? "✓" : "○", value: item.text })),
-        };
-      }),
-    }],
+    sections,
   };
 }
 
@@ -328,7 +340,7 @@ function render() {
       <header class="tasks-heading">
         <div><p class="goals-kicker">${date ? `يوم ${escapeHtml(formatDate(date))}` : "مساحة الإنجاز"}</p><h2>${date ? "مهام اليوم" : "المهام"}</h2><p class="tasks-heading-note"><span class="task-count" data-count="${visibleTotal}">٠</span> مهمة في القائمة</p></div>
         <div class="tasks-heading-actions">
-          <button class="button button-secondary" type="button" data-action="share-task-list">مشاركة القائمة</button>
+          <button class="button button-secondary" type="button" data-action="share-task-list">حفظ القائمة PDF</button>
           <button class="tasks-heading-add" type="button" data-action="new-task" aria-label="إضافة مهمة"><span aria-hidden="true">＋</span></button>
         </div>
       </header>
@@ -356,11 +368,12 @@ function render() {
         </form>
       </dialog>
       <dialog class="task-dialog" id="task-dialog">
+        <div class="dialog-heading">
+          <h2>تفاصيل المهمة</h2>
+          <button class="icon-button" type="button" data-action="close-editor" aria-label="إغلاق">×</button>
+        </div>
+        <div class="task-editor-subtasks" id="task-editor-subtasks"></div>
         <form id="task-editor-form" method="dialog">
-          <div class="dialog-heading">
-            <h2>تفاصيل المهمة</h2>
-            <button class="icon-button" type="button" data-action="close-editor" aria-label="إغلاق">×</button>
-          </div>
           <input type="hidden" name="id">
           <label>عنوان المهمة<input name="title" required maxlength="240"></label>
           <div class="editor-fields">
@@ -389,7 +402,6 @@ function render() {
             <button class="button button-primary" type="submit">حفظ التعديلات</button>
           </div>
         </form>
-        <div class="task-editor-subtasks" id="task-editor-subtasks"></div>
       </dialog>
     </section>`;
 
@@ -683,7 +695,8 @@ function bindEvents(app) {
     }
     if (button.dataset.action === "share-task-list") {
       const tasks = currentTasks().filter((task) => !priorityModeEnabled || selectedPriority === null || priorityIndex(task) === selectedPriority);
-      await shareTextReport(visibleTasksReport(tasks, selectedDateFilter()));
+      const report = visibleTasksReport(tasks, selectedDateFilter());
+      printStructuredReport(report.title, report.period, report.summary, report.sections);
       return;
     }
     if (button.dataset.action === "share-task" || button.dataset.action === "print-task") {
@@ -930,6 +943,7 @@ export async function mountTasksView(isCurrent = () => true) {
           return;
         }
       }
+      if (editorDialog?.open) return;
       if (window.location.hash.startsWith("#/tasks")) render();
     }
   });

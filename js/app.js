@@ -77,7 +77,8 @@ async function render() {
   const taskView = route.id === "tasks"
     && new URLSearchParams(window.location.hash.split("?")[1] ?? "").get("view") === "habits";
   const routeKey = route.id === "tasks" ? `tasks:${taskView ? "habits" : "tasks"}` : route.id;
-  document.querySelector("#page-scroll-container")?.scrollTo(0, 0);
+  if (window.matchMedia("(max-width: 720px)").matches) window.scrollTo(0, 0);
+  else document.querySelector("#page-scroll-container")?.scrollTo(0, 0);
   const periodDashboard = document.querySelector("#period-dashboard");
   if (periodDashboard) periodDashboard.hidden = true;
   if (mountedRoute && mountedRoute !== routeKey) {

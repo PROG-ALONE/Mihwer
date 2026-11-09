@@ -13,6 +13,7 @@ import { requestCompletionDetails } from "../utils/completion-dialog.js";
 import { formatDuration } from "../utils/task-metrics.js";
 import { shareTextReport } from "../export/share.js";
 import { printStructuredReport } from "../export/pdf.js";
+import { animatedDayStoryFile, shareOrDownloadStoryFile } from "../export/day-story.js";
 
 const PRAYER_METHODS = ["auto", "mwl", "isna", "egypt", "ummAlQura", "karachi"];
 const PRAYER_ITEM_NAMES = {
@@ -44,7 +45,9 @@ const LOW_PROGRESS_THRESHOLD = 50;
 let unsubscribe;
 let eventController;
 let clockInterval;
+let storyPlaybackInterval;
 let isMounted = false;
+let activeStoryEvents = [];
 let records = { tasks: [], habits: [], objectives: [], keyResults: [], lifeAreas: [], sessions: [], device: [], profile: [] };
 let mapMode = MAP_MODES.includes(localStorage.getItem("mihwar-map-mode"))
   ? localStorage.getItem("mihwar-map-mode")
@@ -56,6 +59,7 @@ let mapDate = /^\d{4}-\d{2}-\d{2}$/.test(localStorage.getItem("mihwar-map-date")
   ? localStorage.getItem("mihwar-map-date")
   : localDateString();
 const expandedMapTaskDetails = new Set();
+let activeStoryIndex = 0;
 
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>"']/g, (char) => ({
@@ -601,8 +605,7 @@ function renderTaskNode(task) {
   const meta = [overdue ? "متأخرة" : "", bedtimeWarning ? "قرب موعد النوم" : "", task.estimateMin ? `${formatArabicNumber(task.estimateMin)} دقيقة` : ""]
     .filter(Boolean)
     .join(" · ");
-  return `<article class="space-node space-node-task priority-${priority} ${progressState}" data-priority-level="${priority}" style="--task-progress:${progress}%">
-    <button class="space-node-check" type="button" data-action="toggle-task" data-task-id="${escapeHtml(task.id)}" aria-pressed="${done}" aria-label="${done ? "إعادة فتح" : "إنجاز"} ${escapeHtml(task.title)}">${done ? "✓" : "○"}</button>
+  return `<article class="space-node space-node-task priority-${priority} ${progressState}" data-priority-level="${priority}" data-action="toggle-task" data-card-action data-task-id="${escapeHtml(task.id)}" role="button" tabindex="0" aria-pressed="${done}" aria-label="${done ? "إعادة فتح" : "إنجاز"} ${escapeHtml(task.title)}" style="--task-progress:${progress}%">
     <div class="space-node-copy">
       <strong>${escapeHtml(task.title)}</strong>
       ${checklist.length ? `<span class="space-node-meta">${formatArabicNumber(checklistDone)} من ${formatArabicNumber(checklist.length)} خطوات</span>` : ""}
@@ -652,13 +655,10 @@ function renderHabitNode(habit, today) {
       : null;
   const nextItem = progress.mode === "items" ? habit.items.find((item) => !progress.logged.has(item.id)) : null;
   const action = progress.mode === "items"
-    ? nextItem
-      ? `<button class="space-node-check" type="button" data-action="toggle-prayer" data-habit-id="${escapeHtml(habit.id)}" data-item-id="${escapeHtml(nextItem.id)}" data-date="${escapeHtml(today)}" aria-label="تسجيل البند التالي من ${escapeHtml(habit.title)}">○</button>`
-      : `<a class="space-node-check is-complete-link" href="#/habits?date=${encodeURIComponent(today)}" aria-label="عرض العادة المكتملة: ${escapeHtml(habit.title)}">✓</a>`
-    : `<button class="space-node-check" type="button" data-action="${progress.mode === "count" ? "habit-count" : "habit-check"}" data-habit-id="${escapeHtml(habit.id)}" data-date="${escapeHtml(today)}" aria-pressed="${progress.complete}">${progress.complete ? "✓" : "○"}</button>`;
+    ? nextItem ? "toggle-prayer" : "open-habit"
+    : progress.mode === "count" ? "habit-count" : "habit-check";
 
-  return `<article class="space-node space-node-habit priority-${priority} ${progressState}" data-priority-level="${priority}">
-    ${action}
+  return `<article class="space-node space-node-habit priority-${priority} ${progressState}" data-priority-level="${priority}" data-action="${action}" data-card-action data-habit-id="${escapeHtml(habit.id)}"${nextItem ? ` data-item-id="${escapeHtml(nextItem.id)}"` : ""} data-date="${escapeHtml(today)}" role="button" tabindex="0" aria-pressed="${progress.complete}" aria-label="${escapeHtml(habit.title)}${progressText ? `، ${escapeHtml(progressText)}` : ""}">
     <div class="space-node-copy">
       <strong>${escapeHtml(habit.title)}</strong>
       ${progressText ? `<span class="space-node-meta">${escapeHtml(progressText)}</span>` : ""}
@@ -681,8 +681,7 @@ function renderPrayerNode(event) {
     ? `<span class="space-prayer-count"><b>الفرض</b> ${formatArabicNumber(fardDone)} من ${formatArabicNumber(fardItems.length)}</span>` : "";
   const sunnahCount = sunnahItems.length
     ? `<span class="space-prayer-count"><b>السنة</b> ${formatArabicNumber(sunnahDone)} من ${formatArabicNumber(sunnahItems.length)}</span>` : "";
-  return `<article class="space-node space-node-prayer priority-${priority} ${status}" data-priority-level="${priority}" aria-label="${escapeHtml(prayer.name)}: الفرض ${formatArabicNumber(fardDone)} من ${formatArabicNumber(fardItems.length)}${sunnahItems.length ? `، السنة ${formatArabicNumber(sunnahDone)} من ${formatArabicNumber(sunnahItems.length)}` : ""}">
-    <button class="space-node-check space-prayer-open" type="button" data-action="open-prayer-log" data-habit-id="${escapeHtml(habit?.id ?? "")}" data-prayer="${escapeHtml(prayer.name)}" data-date="${escapeHtml(today)}" aria-pressed="${complete}" aria-label="تسجيل صلاة ${escapeHtml(prayer.name)}">${complete ? "✓" : "○"}</button>
+  return `<article class="space-node space-node-prayer priority-${priority} ${status}" data-priority-level="${priority}" data-action="open-prayer-log" data-card-action data-habit-id="${escapeHtml(habit?.id ?? "")}" data-prayer="${escapeHtml(prayer.name)}" data-date="${escapeHtml(today)}" role="button" tabindex="0" aria-pressed="${complete}" aria-label="${escapeHtml(prayer.name)}: الفرض ${formatArabicNumber(fardDone)} من ${formatArabicNumber(fardItems.length)}${sunnahItems.length ? `، السنة ${formatArabicNumber(sunnahDone)} من ${formatArabicNumber(sunnahItems.length)}` : ""}">
     <div class="space-node-copy">
       <strong>${escapeHtml(prayer.name)}</strong>
       ${fardCount || sunnahCount ? `<div class="space-prayer-counts">${fardCount}${sunnahCount}</div>` : ""}
@@ -1144,6 +1143,490 @@ function openPeriodRecap(start, end, label) {
   dialog.showModal();
 }
 
+function storyDisplayName() {
+  const profile = records.profile.find((item) => item.id === "user") ?? records.profile[0];
+  return String(profile?.displayName ?? profile?.fullName ?? profile?.name ?? "أنت").trim() || "أنت";
+}
+
+function storyTime(value) {
+  if (!value) return "";
+  const time = /^\d{2}:\d{2}$/.test(value) ? value : (() => {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? "" : currentTimeValue(parsed);
+  })();
+  return time ? timeLabel(time) : "";
+}
+
+function storyMinute(value) {
+  if (!value) return null;
+  if (/^\d{2}:\d{2}$/.test(value)) return clockMinutes(value);
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.getHours() * 60 + parsed.getMinutes();
+}
+
+function buildDayStory(date, requestedName = storyDisplayName()) {
+  const name = String(requestedName || storyDisplayName()).trim().slice(0, 60) || "أنت";
+  const events = [];
+  const addEvent = (event) => events.push({
+    kind: "activity",
+    time: "",
+    sortMinute: 25 * 60,
+    status: "pending",
+    progress: 0,
+    durationMin: 0,
+    ...event,
+  });
+  const sleepLog = sleepLogFor(date) ?? {};
+  const previousSleepLog = sleepLogFor(dateOffset(date, -1)) ?? {};
+  const wakeMinute = clockMinutes(sleepLog.wakeTime);
+  const previousBedMinute = clockMinutes(previousSleepLog.bedTime);
+  const previousSleepDuration = previousBedMinute === null || wakeMinute === null
+    ? null
+    : (wakeMinute - previousBedMinute + 1440) % 1440;
+  addEvent({
+    kind: "sleep",
+    role: "wake",
+    mapTitle: wakeMinute === null ? `بداية يوم ${name}` : `استيقظ ${name}`,
+    time: wakeMinute === null ? "" : timeLabel(sleepLog.wakeTime),
+    sortMinute: wakeMinute ?? 0,
+    status: wakeMinute === null ? "pending" : "done",
+    progress: wakeMinute === null ? 0 : 1,
+    timeIsActual: wakeMinute !== null,
+    title: wakeMinute === null ? `بداية يوم ${name}` : `استيقظ ${name} الآن`,
+    detailLines: [
+      wakeMinute === null ? "لم يُسجّل وقت الاستيقاظ." : `وقت الاستيقاظ: ${timeLabel(sleepLog.wakeTime)}`,
+      ...(previousBedMinute === null ? [] : [`النوم السابق: ${timeLabel(previousSleepLog.bedTime)}${previousSleepDuration ? ` · ${formatSleepDuration(previousSleepDuration)}` : ""}`]),
+    ],
+    detail: wakeMinute === null
+      ? "لم يُسجّل وقت الاستيقاظ لهذا اليوم."
+      : `استيقظ عند ${timeLabel(sleepLog.wakeTime)}${previousBedMinute === null ? "" : ` بعد نوم عند ${timeLabel(previousSleepLog.bedTime)}${previousSleepDuration ? ` · مدة النوم ${formatSleepDuration(previousSleepDuration)}` : ""}`}.`,
+  });
+  if (clockMinutes(sleepLog.napStart) !== null && Number(sleepLog.napDurationMin) > 0) {
+    addEvent({
+      kind: "sleep",
+      role: "nap",
+      mapTitle: `قيلولة ${name}`,
+      time: timeLabel(sleepLog.napStart),
+      sortMinute: clockMinutes(sleepLog.napStart),
+      status: "done",
+      progress: 1,
+      title: `أخذ ${name} قيلولة`,
+      detail: `استغرقت ${formatSleepDuration(Number(sleepLog.napDurationMin))}.`,
+    });
+  }
+
+  const tasks = dayTasks(date);
+  for (const task of tasks) {
+    const checklist = (task.checklist ?? [])
+      .map((item) => typeof item === "string" ? { text: item, done: false } : item)
+      .filter((item) => item && typeof item === "object");
+    const checklistDone = checklist.filter((item) => item.done).length;
+    const checklistDetail = checklist.length
+      ? `${formatArabicNumber(checklistDone)} من ${formatArabicNumber(checklist.length)} خطوات`
+      : "";
+    const checklistLines = checklist.map((item) => `${item.done ? "✓" : "○"} ${item.text}`);
+    const logs = (Array.isArray(task.completionLog) ? task.completionLog : [])
+      .filter((entry) => datePart(entry?.completedAt ?? entry?.date) === date);
+    const markedDoneToday = task.status === "done"
+      && (task.completedAt ? datePart(task.completedAt) === date : taskDates(task).includes(date));
+    const completionEntries = logs.length
+      ? logs
+      : markedDoneToday
+        ? [{ completedAt: task.completedAt }]
+        : [];
+    if (task.status === "done" && completionEntries.length) {
+      const entry = completionEntries.at(-1);
+      const completedTime = storyTime(entry.completedAt);
+      addEvent({
+        kind: "task",
+        mapTitle: task.title,
+        time: completedTime || (task.dueTime ? timeLabel(task.dueTime) : ""),
+        sortMinute: storyMinute(entry.completedAt) ?? clockMinutes(task.dueTime) ?? 24 * 60,
+        status: "done",
+        progress: 1,
+        durationMin: Number.isFinite(Number(entry.durationMin)) ? Number(entry.durationMin) : 0,
+        timeIsActual: Boolean(completedTime),
+        title: `أنجز ${name} المهمة: ${task.title}`,
+        taskId: task.id,
+        completedAt: completedTime,
+        taskTitle: task.title,
+        checklistDetail,
+        detailLines: [
+          `اكتملت الساعة ${completedTime || "وقت الإنجاز غير مسجل"}`,
+          ...(entry.durationMin ? [`مدة التركيز: ${formatDuration(entry.durationMin)}`] : []),
+          ...checklistLines,
+        ],
+        futureTitle: `مهمة: ${task.title}`,
+        detail: `${completedTime ? `اكتملت الساعة ${completedTime}` : "مكتملة · وقت الإنجاز غير مسجل"}${entry.durationMin ? ` · مدة التركيز ${formatDuration(entry.durationMin)}` : ""}${checklistDetail ? ` · ${checklistDetail}` : ""}.`,
+      });
+    } else if (task.status !== "done") {
+      const progress = taskCompletion(task);
+      addEvent({
+        kind: "task",
+        mapTitle: task.title,
+        taskId: task.id,
+        time: task.dueTime ? timeLabel(task.dueTime) : "",
+        sortMinute: clockMinutes(task.dueTime) ?? 24 * 60,
+        status: progress > 0 ? "partial" : "pending",
+        progress,
+        checklistDetail,
+        detailLines: [
+          progress > 0 ? `التقدم: ${formatArabicNumber(Math.round(progress * 100))}٪` : "لم يبدأ تسجيل الإنجاز.",
+          ...checklistLines,
+        ],
+        title: `موعد المهمة: ${task.title}`,
+        detail: progress > 0
+          ? `قيد الإنجاز · ${checklistDetail || `${formatArabicNumber(Math.round(progress * 100))}٪ من المهمة`}.`
+          : `لم يُسجّل إنجازها بعد.${checklistDetail ? ` · ${checklistDetail}` : ""}`,
+      });
+    }
+  }
+
+  let schedule;
+  try {
+    schedule = prayerSchedule(date);
+  } catch (error) {
+    console.error("تعذّر تجهيز مواقيت الصلاة لمسار المشاركة:", error);
+  }
+  const prayerHabit = linkedPrayerHabit();
+  const prayerTimes = new Map((schedule?.times ?? []).map((prayer) => [prayer.name, prayer]));
+  const prayerMinutesByName = new Map(Object.keys(PRAYER_ITEM_NAMES).map((prayerName) => {
+    const time = prayerTimes.get(prayerName);
+    return [prayerName, Number.isFinite(time?.time) ? prayerMinutes(time.time) : PRAYER_ORDER_IF_LOCATION_UNAVAILABLE[prayerName]];
+  }));
+  const itemLogTimes = prayerHabit?.itemLogTimes?.[date] ?? {};
+  const prayerItemsForCategory = (categoryItems) => {
+    const done = categoryItems.filter((item) => prayerStatus(item, prayerHabit, date));
+    const totalRakats = categoryItems.reduce((sum, item) => sum + Math.max(0, Number(item.amount) || 0), 0);
+    const doneRakats = done.reduce((sum, item) => sum + Math.max(0, Number(item.amount) || 0), 0);
+    return {
+      doneCount: done.length,
+      count: categoryItems.length,
+      doneRakats,
+      totalRakats,
+      done,
+    };
+  };
+  const prayerNames = Object.keys(PRAYER_ITEM_NAMES);
+  for (const prayerName of prayerNames) {
+    const prayer = prayerTimes.get(prayerName);
+    const items = prayerItemsFor(prayerHabit, prayerName);
+    const fard = items.filter((item) => item.category === "فرض");
+    const sunnah = items.filter((item) => item.category === "سنة");
+    const fardProgress = prayerItemsForCategory(fard);
+    const sunnahProgress = prayerItemsForCategory(sunnah);
+    const fardDone = fardProgress.doneCount;
+    const minute = Number.isFinite(prayer?.time)
+      ? prayerMinutes(prayer.time)
+      : PRAYER_ORDER_IF_LOCATION_UNAVAILABLE[prayerName];
+    const performedItems = [...fardProgress.done, ...sunnahProgress.done];
+    const performedAt = performedItems.map((item) => storyMinute(itemLogTimes[item.id]))
+      .filter((value) => value !== null)
+      .sort((first, second) => second - first)[0];
+    const completedTime = performedAt === undefined ? "" : timeLabel(minuteTime(performedAt));
+    const hasPrayerProgress = fardDone > 0 || sunnahProgress.doneCount > 0;
+    const prayerComplete = fard.length > 0 && fardDone === fard.length;
+    const prayerDetailLines = [...fard, ...sunnah].map((item) => {
+      const logged = prayerStatus(item, prayerHabit, date);
+      const loggedTime = storyTime(itemLogTimes[item.id]);
+      return `${logged ? "✓" : "○"} ${item.category}: ${item.name} · ${formatArabicNumber(Math.max(0, Number(item.amount) || 0))} ${item.unit || "ركعة"}${loggedTime ? ` · ${loggedTime}` : ""}`;
+    });
+    addEvent({
+      kind: "prayer",
+      mapTitle: `صلاة ${prayerName}`,
+      prayerName,
+      time: completedTime || (Number.isFinite(prayer?.time) ? formatPrayerTime(prayer.time) : ""),
+      sortMinute: performedAt ?? minute,
+      status: prayerComplete ? "done" : hasPrayerProgress ? "partial" : "pending",
+      progress: prayerComplete ? 1 : items.length ? performedItems.length / items.length : 0,
+      timeIsActual: performedAt !== undefined,
+      title: prayerComplete
+        ? `يصلي ${name} صلاة ${prayerName} الآن`
+        : hasPrayerProgress
+          ? `يتابع ${name} صلاة ${prayerName}`
+          : `موعد صلاة ${prayerName}`,
+      inProgressTitle: `يصلي ${name} صلاة ${prayerName} الآن`,
+      futureTitle: `صلاة ${prayerName}`,
+      prayerCounts: {
+        fardDone: fardProgress.doneRakats,
+        fardTotal: fardProgress.totalRakats,
+        sunnahDone: sunnahProgress.doneRakats,
+        sunnahTotal: sunnahProgress.totalRakats,
+      },
+      detailLines: [
+        `الفرض: ${formatArabicNumber(fardProgress.doneRakats)} من ${formatArabicNumber(fardProgress.totalRakats)} ركعة`,
+        ...(sunnah.length ? [`السنة: ${formatArabicNumber(sunnahProgress.doneRakats)} من ${formatArabicNumber(sunnahProgress.totalRakats)} ركعة`] : []),
+        ...prayerDetailLines,
+        ...(performedAt === undefined && hasPrayerProgress ? ["وقت الأداء الفعلي غير مسجل."] : []),
+      ],
+      detail: `${completedTime ? `وقت التسجيل ${completedTime} · ` : ""}الفرض: ${formatArabicNumber(fardProgress.doneRakats)} من ${formatArabicNumber(fardProgress.totalRakats)} ركعة (${formatArabicNumber(fardProgress.doneCount)} من ${formatArabicNumber(fardProgress.count)} بنود)${sunnah.length ? ` · السنة: ${formatArabicNumber(sunnahProgress.doneRakats)} من ${formatArabicNumber(sunnahProgress.totalRakats)} ركعة (${formatArabicNumber(sunnahProgress.doneCount)} من ${formatArabicNumber(sunnahProgress.count)} بنود)` : ""}${!hasPrayerProgress ? " · لم يُسجّل أداؤها بعد؛ الوقت المعروض هو موعد الصلاة." : performedAt === undefined ? " · وقت الأداء الفعلي غير مسجل." : ""}`,
+    });
+  }
+
+  for (const habit of dayHabits(date)) {
+    if (habit.id === prayerHabit?.id) continue;
+    const progress = dayProgress(habit, date);
+    const details = habit.completionLog?.[date] ?? {};
+    const recordedTime = storyTime(details.completedAt);
+    const title = habit.title ?? "";
+    const plannedMinute = clockMinutes(habit.dailyTime)
+      ?? (/أذكار الصباح/.test(title) ? (prayerMinutesByName.get("الفجر") + 20) % 1440
+        : /الضحى/.test(title) ? (prayerMinutesByName.get("الفجر") + 120) % 1440
+          : /أذكار المساء/.test(title) ? prayerMinutesByName.get("المغرب") : null);
+    const plannedTime = plannedMinute === null ? "" : minuteTime(plannedMinute);
+    const detail = progress.mode === "items"
+      ? `${formatArabicNumber(progress.done)} من ${formatArabicNumber(progress.target)} بنود.`
+      : progress.mode === "count"
+        ? `${formatArabicNumber(progress.done)} من ${formatArabicNumber(progress.target)} ${habit.unit || "مرات"}.`
+        : progress.complete ? "اكتمل تسجيل العادة." : "لم يُسجّل إنجازها بعد.";
+    const habitDetailLines = progress.mode === "items"
+      ? [
+        `التقدم: ${formatArabicNumber(progress.done)} من ${formatArabicNumber(progress.target)} بنود`,
+        ...(habit.items ?? []).map((item) => `${(habit.itemLog?.[date] ?? []).includes(item.id) ? "✓" : "○"} ${item.name}`),
+      ]
+      : progress.mode === "count"
+        ? [`العدد: ${formatArabicNumber(progress.done)} من ${formatArabicNumber(progress.target)} ${habit.unit || "مرات"}`]
+        : [progress.complete ? "اكتمل تسجيل العادة." : "لم يُسجّل إنجازها بعد."];
+    addEvent({
+      kind: "habit",
+      mapTitle: habit.title,
+      habitId: habit.id,
+      time: recordedTime || (plannedTime ? timeLabel(plannedTime) : ""),
+      sortMinute: storyMinute(details.completedAt) ?? plannedMinute ?? 24 * 60,
+      status: progress.complete ? "done" : progress.done > 0 ? "partial" : "pending",
+      progress: progress.percent / 100,
+      durationMin: Number(details.durationMin) || 0,
+      completedAt: recordedTime,
+      timeIsActual: Boolean(recordedTime),
+      habitTitle: habit.title,
+      detailLines: [
+        ...habitDetailLines,
+        ...(recordedTime ? [`وقت التسجيل: ${recordedTime}`] : plannedTime ? [`الموعد المخطط: ${timeLabel(plannedTime)}`] : []),
+      ],
+      futureTitle: `عادة: ${habit.title}`,
+      title: progress.complete
+        ? `أكمل ${name} عادة ${habit.title}`
+        : progress.done
+          ? `تقدّم ${name} في ${habit.title}`
+          : `موعد عادة ${habit.title}`,
+      detail: `${detail}${!progress.complete && progress.done === 0 ? "" : recordedTime ? "" : " وقتها المعروض مخطط لا وقت التسجيل."}`,
+    });
+  }
+
+  if (prayerHabit) {
+    const nightItems = (prayerHabit.items ?? []).filter((item) =>
+      NIGHT_PRAYERS.some((namePart) => item.name.includes(namePart)));
+    const nightDone = nightItems.filter((item) => prayerStatus(item, prayerHabit, date));
+    const nightRakats = nightDone.reduce((sum, item) => sum + Math.max(0, Number(item.amount) || 0), 0);
+    const nightTotalRakats = nightItems.reduce((sum, item) => sum + Math.max(0, Number(item.amount) || 0), 0);
+    const nightTimes = nightDone.map((item) => storyMinute(itemLogTimes[item.id]))
+      .filter((value) => value !== null)
+      .sort((first, second) => first - second);
+    const nightTime = nightTimes.length ? timeLabel(minuteTime(nightTimes.at(-1))) : "";
+    if (nightItems.length) {
+      addEvent({
+        kind: "night",
+        mapTitle: "قيام الليل · الشفع والوتر",
+        nightKey: "night",
+        time: nightTime,
+        sortMinute: nightTimes.at(-1) ?? 23 * 60,
+        status: nightDone.length === nightItems.length ? "done" : nightDone.length ? "partial" : "pending",
+        progress: nightItems.length ? nightDone.length / nightItems.length : 0,
+        timeIsActual: nightTimes.length > 0,
+        title: "قيام الليل · الشفع والوتر",
+        nightItems: nightItems.map((item) => ({
+          name: item.name,
+          amount: Math.max(0, Number(item.amount) || 0),
+          unit: item.unit || "ركعة",
+          category: item.category || "",
+          done: prayerStatus(item, prayerHabit, date),
+          time: storyTime(itemLogTimes[item.id]),
+        })),
+        detailLines: [
+          ...nightItems.map((item) => `${prayerStatus(item, prayerHabit, date) ? "✓" : "○"} ${item.category ? `${item.category}: ` : ""}${item.name} · ${formatArabicNumber(Math.max(0, Number(item.amount) || 0))} ${item.unit || "ركعة"}${storyTime(itemLogTimes[item.id]) ? ` · ${storyTime(itemLogTimes[item.id])}` : ""}`),
+          ...(nightTime ? [`وقت التسجيل: ${nightTime}`] : nightDone.length ? ["وقت الأداء الفعلي غير مسجل."] : []),
+        ],
+        nightCounts: {
+          done: nightRakats,
+          total: nightTotalRakats,
+          doneItems: nightDone.length,
+          totalItems: nightItems.length,
+        },
+        detail: `${nightItems.map((item) => `${item.category ? `${item.category}: ` : ""}${item.name}: ${prayerStatus(item, prayerHabit, date) ? `${formatArabicNumber(Math.max(0, Number(item.amount) || 0))} ${item.unit || "ركعة"}` : "لم يُسجّل"}`).join("\n")}${nightTime ? `\nوقت التسجيل ${nightTime}` : nightDone.length ? "\nوقت الأداء الفعلي غير مسجل." : ""}`,
+      });
+    }
+  }
+
+  const bedMinute = clockMinutes(sleepLog.bedTime);
+  if (bedMinute !== null) {
+    addEvent({
+      kind: "sleep",
+      role: "bed",
+      mapTitle: `نام ${name}`,
+      time: timeLabel(sleepLog.bedTime),
+      sortMinute: bedMinute,
+      status: "done",
+      progress: 1,
+      timeIsActual: true,
+      title: `نام ${name}`,
+      detailLines: [`وقت النوم: ${timeLabel(sleepLog.bedTime)}`],
+      detail: `سُجّل وقت النوم عند ${timeLabel(sleepLog.bedTime)}.`,
+    });
+  } else {
+    const expectedBedtime = sleepSettings().bedtime;
+    if (clockMinutes(expectedBedtime) !== null) {
+      addEvent({
+        kind: "sleep",
+        role: "bed",
+        mapTitle: `موعد نوم ${name}`,
+        time: timeLabel(expectedBedtime),
+        sortMinute: clockMinutes(expectedBedtime),
+        title: `موعد نوم ${name}`,
+        detailLines: [`موعد النوم المعتاد: ${timeLabel(expectedBedtime)}`, "هذا موعد مخطط وليس تسجيلًا فعليًا."],
+        detail: "هذا وقت النوم المعتاد، وليس تسجيلًا فعليًا لنوم اليوم.",
+      });
+    } else {
+      addEvent({
+        kind: "sleep",
+        role: "bed",
+        mapTitle: `نوم ${name}`,
+        title: `نوم ${name}`,
+        detailLines: ["لم يُسجّل وقت النوم لهذا اليوم."],
+        detail: "لم يُسجّل وقت النوم لهذا اليوم.",
+      });
+    }
+  }
+
+  events.sort((first, second) => first.sortMinute - second.sortMinute);
+  const wakeEvent = events.find((event) => event.role === "wake");
+  const bedEvent = events.find((event) => event.role === "bed");
+  const nightEvent = events.find((event) => event.kind === "night");
+  const dayEvents = events.filter((event) => !["wake", "bed"].includes(event.role) && event.kind !== "night");
+  const mapEvents = buildEvents(tasks, dayHabits(date), schedule, date);
+  const mapOrder = new Map(mapEvents.map((event, index) => {
+    const key = event.type === "task" ? `task:${event.task.id}`
+      : event.type === "habit" ? `habit:${event.habit.id}`
+        : event.type === "prayer" ? `prayer:${event.prayer.name}`
+          : "night";
+    return [key, index];
+  }));
+  const eventKey = (event) => event.kind === "task" ? `task:${event.taskId}`
+    : event.kind === "habit" ? `habit:${event.habitId}`
+      : event.kind === "prayer" ? `prayer:${event.prayerName}`
+        : event.nightKey;
+  const storyOrder = (event) => {
+    const key = eventKey(event);
+    if (mapOrder.has(key)) return mapOrder.get(key);
+    if (event.role === "nap") {
+      const next = mapEvents.findIndex((item) => item.sortMinute >= event.sortMinute);
+      return next < 0 ? mapEvents.length - 0.5 : next - 0.5;
+    }
+    return mapEvents.length;
+  };
+  dayEvents.sort((first, second) => storyOrder(first) - storyOrder(second));
+  dayEvents.forEach((event) => {
+    event.mapIndex = Math.max(0, Math.floor(storyOrder(event)));
+  });
+  const routeEvents = [
+    ...(wakeEvent ? [wakeEvent] : []),
+    ...dayEvents,
+    ...(nightEvent ? [nightEvent] : []),
+    ...(bedEvent ? [bedEvent] : []),
+  ];
+  const activities = routeEvents.filter((event) => ["task", "habit", "prayer", "night"].includes(event.kind));
+  const completedEvents = activities.filter((event) => event.status === "done").length;
+  const partialEvents = activities.filter((event) => event.status === "partial").length;
+  const pendingEvents = activities.filter((event) => event.status === "pending").length;
+  const score = buildScore(tasks, dayHabits(date), date);
+  return {
+    name,
+    date,
+    dateLabel: formatDate(date),
+    score: score.percent,
+    events: [
+      ...routeEvents,
+      {
+        kind: "end",
+        mapTitle: "ختام اليوم",
+        time: "",
+        status: "done",
+        progress: 1,
+        title: `ختام يوم ${name}`,
+        detail: `${formatArabicNumber(completedEvents)} مكتملة · ${formatArabicNumber(partialEvents)} جزئية · ${formatArabicNumber(pendingEvents)} لم تكتمل · إنجاز اليوم ${formatArabicNumber(score.percent)}٪.\nالاستيقاظ: ${wakeEvent?.timeIsActual ? wakeEvent.time : "غير مسجل"} · النوم: ${bedEvent?.timeIsActual ? bedEvent.time : "غير مسجل"}.`,
+        summary: { completed: completedEvents, partial: partialEvents, pending: pendingEvents },
+        sleepSummary: {
+          wakeTime: wakeEvent?.timeIsActual ? wakeEvent.time : "",
+          bedTime: bedEvent?.timeIsActual ? bedEvent.time : "",
+        },
+      },
+    ],
+  };
+}
+
+function renderDayStoryDialog(story) {
+  return `<div class="space-day-story-content" dir="rtl">
+    <header class="space-day-story-heading">
+      <div><small>حكاية يومك · ${escapeHtml(story.dateLabel)}</small><h2>معاينة مسار اليوم</h2></div>
+      <button class="icon-button" type="button" data-action="close-day-story" aria-label="إغلاق">×</button>
+    </header>
+    <label class="space-day-story-name">الاسم الظاهر في المشاركة
+      <input type="text" maxlength="60" data-story-name value="${escapeHtml(story.name)}">
+    </label>
+    <section class="space-day-story-current" aria-live="polite">
+      <span data-story-position></span><strong data-story-title></strong><p data-story-detail></p>
+    </section>
+    <div class="space-day-story-controls">
+      <button type="button" data-action="story-prev" aria-label="المحطة السابقة">‹</button>
+      <input type="range" min="0" max="${story.events.length - 1}" value="0" data-story-seek aria-label="التنقل بين محطات اليوم">
+      <button type="button" data-action="story-play" aria-label="تشغيل أو إيقاف المسار">▶</button>
+      <button type="button" data-action="story-next" aria-label="المحطة التالية">›</button>
+    </div>
+    <nav class="space-day-story-stops" aria-label="محطات اليوم">
+      ${story.events.map((event, index) => `<button type="button" data-story-index="${index}"${index === 0 ? ' aria-current="step"' : ""}>
+        <span>${event.time ? escapeHtml(event.time) : formatArabicNumber(index + 1)}</span><strong>${escapeHtml(event.title)}</strong>
+      </button>`).join("")}
+    </nav>
+    <footer class="space-day-story-actions">
+      <button class="button button-secondary" type="button" data-action="story-share-gif">مشاركة GIF متحرك</button>
+    </footer>
+    <small class="space-day-story-privacy">تُضمّن البيانات التي تختار مشاركتها داخل الملف فقط، ولا تُرفع إلى خادم.</small>
+  </div>`;
+}
+
+function updateDayStoryPosition(dialog, requestedIndex = activeStoryIndex) {
+  if (!dialog || !activeStoryEvents.length) return;
+  activeStoryIndex = (requestedIndex + activeStoryEvents.length) % activeStoryEvents.length;
+  const event = activeStoryEvents[activeStoryIndex];
+  dialog.querySelector("[data-story-position]").textContent =
+    `${event.time ? `${event.time} · ` : ""}المحطة ${formatArabicNumber(activeStoryIndex + 1)} من ${formatArabicNumber(activeStoryEvents.length)}`;
+  dialog.querySelector("[data-story-title]").textContent = event.title;
+  dialog.querySelector("[data-story-detail]").textContent = event.detail;
+  dialog.querySelector("[data-story-seek]").value = String(activeStoryIndex);
+  dialog.querySelectorAll("[data-story-index]").forEach((button, index) => {
+    if (index === activeStoryIndex) button.setAttribute("aria-current", "step");
+    else button.removeAttribute("aria-current");
+  });
+  dialog.querySelector(`[data-story-index="${activeStoryIndex}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+function openDayStoryDialog(date) {
+  const dialog = document.querySelector("#space-day-story-dialog");
+  if (!dialog) return;
+  window.clearInterval(storyPlaybackInterval);
+  const story = buildDayStory(date);
+  dialog.dataset.storyDate = date;
+  activeStoryEvents = story.events;
+  activeStoryIndex = 0;
+  dialog.innerHTML = renderDayStoryDialog(story);
+  dialog.showModal();
+  updateDayStoryPosition(dialog, 0);
+}
+
+function currentDayStory(dialog) {
+  const date = dialog?.dataset.storyDate || mapDate;
+  return buildDayStory(date, dialog?.querySelector("[data-story-name]")?.value);
+}
+
 function renderMapControls() {
   return `<div class="space-map-controls">
     <nav class="space-map-modes" aria-label="مدى خارطة اليوم">
@@ -1203,6 +1686,7 @@ function render() {
       ${mapMode === "day" ? `<nav class="space-map-day-links" aria-label="تفاصيل ${escapeHtml(formatDate(mapDate))}">
         <a href="#/tasks?date=${encodeURIComponent(mapDate)}">مهام اليوم <strong>${formatArabicNumber(tasks.length)}</strong></a>
         <a href="#/habits?date=${encodeURIComponent(mapDate)}">عادات اليوم <strong>${formatArabicNumber(habits.length)}</strong></a>
+        <button type="button" data-action="share-day-story">مشاركة مسار اليوم</button>
       </nav>` : ""}
       ${mapMode === "day" ? "" : renderPeriodSummary(score)}
       <div class="cosmic-map-route${mapMode === "day" ? "" : " is-overview"}" aria-label="${mapMode === "day" ? "تتابع محطات اليوم" : `محطات ${MAP_MODE_LABELS[mapMode]}`}">
@@ -1223,7 +1707,8 @@ function render() {
   </section>
   <dialog class="space-period-recap-dialog" id="space-period-recap-dialog" aria-label="حصاد الفترة"></dialog>
   <dialog class="space-prayer-log-dialog" id="space-prayer-log-dialog" aria-label="تسجيل الصلاة"></dialog>
-  <dialog class="space-sleep-dialog" id="space-sleep-dialog" aria-label="تفاصيل النوم والقيلولة"></dialog>`;
+  <dialog class="space-sleep-dialog" id="space-sleep-dialog" aria-label="تفاصيل النوم والقيلولة"></dialog>
+  <dialog class="space-day-story-dialog" id="space-day-story-dialog" aria-label="مشاركة مسار اليوم"></dialog>`;
 }
 
 function updateLiveClock() {
@@ -1349,6 +1834,16 @@ function bindEvents(app) {
   eventController = new AbortController();
   const { signal } = eventController;
 
+  app.addEventListener("close", (event) => {
+    if (!(event.target instanceof HTMLDialogElement)) return;
+    if (event.target.id === "space-day-story-dialog") {
+      window.clearInterval(storyPlaybackInterval);
+      storyPlaybackInterval = undefined;
+      activeStoryEvents = [];
+    }
+    if (isMounted) render();
+  }, { capture: true, signal });
+
   app.addEventListener("toggle", (event) => {
     const details = event.target.closest("[data-map-task-details]");
     if (!details) return;
@@ -1373,8 +1868,20 @@ function bindEvents(app) {
       sleepDialog.close();
       return;
     }
+    const storyDialog = app.querySelector("#space-day-story-dialog");
+    if (event.target === storyDialog) {
+      storyDialog.close();
+      return;
+    }
+    const storyStop = event.target.closest("[data-story-index]");
+    if (storyStop) {
+      updateDayStoryPosition(storyDialog, Number(storyStop.dataset.storyIndex));
+      return;
+    }
     const button = event.target.closest("[data-action]");
     if (!button) return;
+    if (button.matches("[data-card-action]")
+      && event.target.closest("a, button, input, summary, select, textarea, details")) return;
     if (button.dataset.action === "close-recap") {
       recapDialog?.close();
       return;
@@ -1389,6 +1896,53 @@ function bindEvents(app) {
     }
     if (button.dataset.action === "close-sleep-dialog") {
       sleepDialog?.close();
+      return;
+    }
+    if (button.dataset.action === "share-day-story") {
+      openDayStoryDialog(mapDate);
+      return;
+    }
+    if (button.dataset.action === "close-day-story") {
+      storyDialog?.close();
+      return;
+    }
+    if (button.dataset.action === "story-prev" || button.dataset.action === "story-next") {
+      updateDayStoryPosition(storyDialog, activeStoryIndex + (button.dataset.action === "story-prev" ? -1 : 1));
+      return;
+    }
+    if (button.dataset.action === "story-play") {
+      if (storyPlaybackInterval) {
+        window.clearInterval(storyPlaybackInterval);
+        storyPlaybackInterval = undefined;
+        button.textContent = "▶";
+      } else {
+        button.textContent = "Ⅱ";
+        storyPlaybackInterval = window.setInterval(() => {
+          if (!storyDialog?.open) {
+            window.clearInterval(storyPlaybackInterval);
+            storyPlaybackInterval = undefined;
+            return;
+          }
+          updateDayStoryPosition(storyDialog, activeStoryIndex + 1);
+        }, 2400);
+      }
+      return;
+    }
+    if (button.dataset.action === "story-share-gif") {
+      try {
+        const story = currentDayStory(storyDialog);
+        const file = await animatedDayStoryFile(story);
+        const result = await shareOrDownloadStoryFile(
+          file,
+          `حكاية يوم ${story.name} · مِحوَر`,
+          `خارطة ${story.dateLabel} من مِحوَر`,
+        );
+        if (result === "shared") showToast("أُرفق مسار اليوم للمشاركة.");
+        else if (result === "downloaded") showToast("نُزّل الملف؛ أرفقه في تطبيق المشاركة.");
+      } catch (error) {
+        console.error("تعذّر تجهيز مسار اليوم للمشاركة:", error);
+        showToast(`تعذّر تجهيز الملف: ${error.message}`, { isError: true });
+      }
       return;
     }
     if (button.dataset.action === "prayer-mark-category") {
@@ -1412,6 +1966,10 @@ function bindEvents(app) {
       if (habit) openPrayerLog(habit, button.dataset.prayer, button.dataset.date);
       return;
     }
+    if (button.dataset.action === "open-habit") {
+      window.location.hash = `/habits?date=${encodeURIComponent(button.dataset.date || mapDate)}`;
+      return;
+    }
     if (button.dataset.action === "period-recap") {
       const { start, end, label } = button.dataset;
       if (!/^\d{4}-\d{2}-\d{2}$/.test(start ?? "") || !/^\d{4}-\d{2}-\d{2}$/.test(end ?? "") || start > end) return;
@@ -1433,7 +1991,9 @@ function bindEvents(app) {
         showToast("أدخل وقت استيقاظ صحيحًا أولاً.", { isError: true });
         return;
       }
-      await saveSleepLogWithFeedback(mapDate, { wakeTime: time }, `سُجّل استيقاظك عند ${timeLabel(time)} وبدأ يومك الشخصي من ذلك الوقت.`);
+      if (await saveSleepLogWithFeedback(mapDate, { wakeTime: time }, `سُجّل استيقاظك عند ${timeLabel(time)} وبدأ يومك الشخصي من ذلك الوقت.`)) {
+        button.textContent = "تحديث وقت الاستيقاظ";
+      }
       return;
     }
     if (button.dataset.action === "save-previous-bedtime") {
@@ -1443,7 +2003,9 @@ function bindEvents(app) {
         return;
       }
       const previousDate = dateOffset(mapDate, -1);
-      await saveSleepLogWithFeedback(previousDate, { bedTime: time }, `سُجّل نوم الليلة السابقة عند ${timeLabel(time)}.`);
+      if (await saveSleepLogWithFeedback(previousDate, { bedTime: time }, `سُجّل نوم الليلة السابقة عند ${timeLabel(time)}.`)) {
+        button.textContent = "تحديث وقت النوم";
+      }
       return;
     }
     if (button.dataset.action === "save-nap") {
@@ -1453,7 +2015,9 @@ function bindEvents(app) {
         showToast("أدخل وقت بداية القيلولة ومدتها بين دقيقة و٢٤٠ دقيقة.", { isError: true });
         return;
       }
-      await saveSleepLogWithFeedback(mapDate, { napStart: start, napDurationMin: duration }, `سُجّلت قيلولتك: ${formatSleepDuration(duration)}.`);
+      if (await saveSleepLogWithFeedback(mapDate, { napStart: start, napDurationMin: duration }, `سُجّلت قيلولتك: ${formatSleepDuration(duration)}.`)) {
+        button.textContent = "تحديث القيلولة";
+      }
       return;
     }
     if (button.dataset.action === "skip-nap") {
@@ -1573,6 +2137,30 @@ function bindEvents(app) {
     }
   }, { signal });
 
+  app.addEventListener("input", (event) => {
+    const nameInput = event.target.closest("[data-story-name]");
+    if (!nameInput) return;
+    const dialog = nameInput.closest("#space-day-story-dialog");
+    const story = currentDayStory(dialog);
+    activeStoryEvents = story.events;
+    dialog.querySelectorAll("[data-story-index]").forEach((button, index) => {
+      button.querySelector("strong").textContent = story.events[index].title;
+    });
+    updateDayStoryPosition(dialog, activeStoryIndex);
+  }, { signal });
+
+  app.addEventListener("input", (event) => {
+    const seek = event.target.closest("[data-story-seek]");
+    if (seek) updateDayStoryPosition(seek.closest("#space-day-story-dialog"), Number(seek.value));
+  }, { signal });
+
+  app.addEventListener("keydown", (event) => {
+    const card = event.target.closest("[data-card-action]");
+    if (!card || event.target !== card || !["Enter", " "].includes(event.key)) return;
+    event.preventDefault();
+    card.click();
+  }, { signal });
+
   app.addEventListener("submit", async (event) => {
     const form = event.target.closest("[data-prayer-log-form]");
     if (!form) return;
@@ -1661,6 +2249,7 @@ export async function mountTodayView(isCurrent = () => true) {
   unsubscribe = subscribe((state, change) => {
     if (!change.storeName || storeNames.includes(change.storeName)) {
       records = Object.fromEntries(storeNames.map((name) => [name, state[name] ?? records[name]]));
+      if (document.querySelector("#space-sleep-dialog[open], #space-prayer-log-dialog[open], #space-period-recap-dialog[open], #space-day-story-dialog[open]")) return;
       render();
     }
   });
@@ -1668,6 +2257,9 @@ export async function mountTodayView(isCurrent = () => true) {
 
 export function unmountTodayView() {
   isMounted = false;
+  window.clearInterval(storyPlaybackInterval);
+  storyPlaybackInterval = undefined;
+  activeStoryEvents = [];
   unsubscribe?.();
   unsubscribe = undefined;
   eventController?.abort();
