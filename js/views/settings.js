@@ -315,6 +315,53 @@ export function bindSettingsActions() {
     });
   }
 
+  const sleepForm = document.querySelector("#sleep-settings-form");
+  if (sleepForm) {
+    getRecords("profile").then((profiles) => {
+      const profile = profiles.find((item) => item.id === "user") ?? profiles[0];
+      const sleepSettings = profile?.sleepSettings ?? {};
+      sleepForm.elements.bedtime.value = sleepSettings.bedtime ?? "00:00";
+      sleepForm.elements.napExpected.checked = Boolean(sleepSettings.napExpected);
+      sleepForm.elements.napTime.value = sleepSettings.napTime ?? "13:00";
+    }).catch((error) => {
+      console.error("تعذّر تحميل إعدادات النوم:", error);
+      setStatus(`تعذّر تحميل إعدادات النوم: ${error.message}`, true);
+    });
+    sleepForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const bedtime = sleepForm.elements.bedtime.value;
+      const napTime = sleepForm.elements.napTime.value;
+      if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(bedtime)
+        || (sleepForm.elements.napExpected.checked && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(napTime))) {
+        setStatus("أدخل وقت نوم وموعد قيلولة صحيحين.", true);
+        return;
+      }
+      try {
+        const profiles = await getRecords("profile");
+        const profile = profiles.find((item) => item.id === "user") ?? profiles[0];
+        const now = new Date().toISOString();
+        const updatedProfile = {
+          ...(profile ?? {}),
+          id: profile?.id ?? "user",
+          sleepSettings: {
+            ...(profile?.sleepSettings ?? {}),
+            bedtime,
+            napExpected: sleepForm.elements.napExpected.checked,
+            napTime: sleepForm.elements.napExpected.checked ? napTime : null,
+          },
+          createdAt: profile?.createdAt ?? now,
+          updatedAt: now,
+        };
+        if (profile) await update("profile", updatedProfile);
+        else await add("profile", updatedProfile);
+        setStatus("حُفظ موعد النوم والقيلولة المعتادان.");
+      } catch (error) {
+        console.error("تعذّر حفظ إعدادات النوم:", error);
+        setStatus(`تعذّر حفظ إعدادات النوم: ${error.message}`, true);
+      }
+    });
+  }
+
   document.querySelector("#export-data")?.addEventListener("click", async () => {
     try {
       await exportBackup();

@@ -672,6 +672,14 @@
     background: linear-gradient(125deg, color-mix(in srgb, #36bd7a 13%, var(--map-panel)), var(--map-panel));
   }
 
+  .space-node.is-outside-personal-day {
+    border-style: dashed;
+  }
+
+  .space-node.is-outside-personal-day .space-node-copy > .space-node-meta {
+    color: var(--map-muted);
+  }
+
   .space-node.is-pending,
   .space-node.is-partial,
   .space-node.is-done {
@@ -1335,6 +1343,114 @@
   --sidebar-muted: #a7b6ce;
 }
 
+:root[data-theme="lavender"] {
+  color-scheme: light;
+  --color-bg: #f4f0ff;
+  --color-surface: #fff;
+  --color-surface-muted: #ece5fb;
+  --color-text: #2f2941;
+  --color-muted: #665c7d;
+  --color-border: #ded4f1;
+  --color-primary: #7655b8;
+  --color-primary-hover: #60449a;
+  --color-primary-soft: #ebe2fb;
+  --color-accent: #529b9a;
+  --color-shadow: rgb(68 45 110 / 10%);
+  --sidebar-bg: #352b4c;
+  --sidebar-text: #fff;
+  --sidebar-muted: #d3c7e8;
+}
+
+:root[data-theme="blossom"] {
+  color-scheme: light;
+  --color-bg: #fff2f5;
+  --color-surface: #fff;
+  --color-surface-muted: #f8e6ec;
+  --color-text: #3d2932;
+  --color-muted: #735966;
+  --color-border: #efd5df;
+  --color-primary: #a94466;
+  --color-primary-hover: #873550;
+  --color-primary-soft: #f8e0e9;
+  --color-accent: #cb7659;
+  --color-shadow: rgb(103 38 66 / 9%);
+  --sidebar-bg: #482737;
+  --sidebar-text: #fff8fa;
+  --sidebar-muted: #e2c1cd;
+}
+
+:root[data-theme="lilac"] {
+  color-scheme: light;
+  --color-bg: #f5f0ff;
+  --color-surface: #fff;
+  --color-surface-muted: #ebe3fa;
+  --color-text: #302642;
+  --color-muted: #655876;
+  --color-border: #ded2f0;
+  --color-primary: #7549ad;
+  --color-primary-hover: #5e378f;
+  --color-primary-soft: #eae0fa;
+  --color-accent: #499d9b;
+  --color-shadow: rgb(69 45 104 / 9%);
+  --sidebar-bg: #342541;
+  --sidebar-text: #fff;
+  --sidebar-muted: #d0c0e0;
+}
+
+:root[data-theme="sunshine"] {
+  color-scheme: light;
+  --color-bg: #fff9e8;
+  --color-surface: #fffefa;
+  --color-surface-muted: #f8efd5;
+  --color-text: #352d20;
+  --color-muted: #655a45;
+  --color-border: #e9dcba;
+  --color-primary: #936312;
+  --color-primary-hover: #754d0c;
+  --color-primary-soft: #f7ebc7;
+  --color-accent: #368b78;
+  --color-shadow: rgb(91 70 27 / 9%);
+  --sidebar-bg: #493919;
+  --sidebar-text: #fffdf6;
+  --sidebar-muted: #e2d3ae;
+}
+
+:root[data-theme="forest"] {
+  color-scheme: light;
+  --color-bg: #edf4ef;
+  --color-surface: #fbfdfb;
+  --color-surface-muted: #e2ece5;
+  --color-text: #24352b;
+  --color-muted: #52685a;
+  --color-border: #ceddd2;
+  --color-primary: #37684e;
+  --color-primary-hover: #2a503c;
+  --color-primary-soft: #dcebe1;
+  --color-accent: #b87944;
+  --color-shadow: rgb(25 63 42 / 10%);
+  --sidebar-bg: #20392b;
+  --sidebar-text: #f7fbf8;
+  --sidebar-muted: #bfd0c3;
+}
+
+:root[data-theme="clarity"] {
+  color-scheme: light;
+  --color-bg: #f4f7fb;
+  --color-surface: #fff;
+  --color-surface-muted: #e8eef6;
+  --color-text: #101820;
+  --color-muted: #384b5c;
+  --color-border: #9cabb9;
+  --color-primary: #174ea6;
+  --color-primary-hover: #103c82;
+  --color-primary-soft: #dce9fb;
+  --color-accent: #087c69;
+  --color-shadow: rgb(16 34 52 / 12%);
+  --sidebar-bg: #10243b;
+  --sidebar-text: #fff;
+  --sidebar-muted: #c6d6e5;
+}
+
 html {
   scroll-behavior: smooth;
   scrollbar-color: color-mix(in srgb, var(--color-muted) 45%, transparent) transparent;
@@ -1638,8 +1754,9 @@ button:disabled {
 
 .theme-dialog {
   width: min(440px, calc(100vw - 28px));
+  max-height: min(86vh, 760px);
   padding: 0;
-  overflow: hidden;
+  overflow: auto;
   border: 1px solid var(--color-border);
   border-radius: 22px;
   color: var(--color-text);
@@ -1667,8 +1784,25 @@ button:disabled {
 
 .theme-options {
   display: grid;
+  gap: 16px;
+}
+
+.theme-category {
+  display: grid;
+  gap: 8px;
+}
+
+.theme-category h3 {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: .76rem;
+  font-weight: 800;
+}
+
+.theme-category-options {
+  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 9px;
+  gap: 8px;
 }
 
 .theme-option {
@@ -14662,7 +14796,7 @@ body.today-route .topbar > div:first-child {
 
 .cosmic-map {
   --map-ink: var(--color-text);
-  --map-muted: var(--color-muted);
+  --map-muted: color-mix(in srgb, var(--color-muted) 72%, var(--color-text));
   --map-panel: color-mix(in srgb, var(--color-surface) 92%, var(--color-primary-soft));
   --map-panel-strong: color-mix(in srgb, var(--color-surface) 78%, var(--color-primary-soft));
   --map-control: color-mix(in srgb, var(--color-surface) 90%, var(--color-bg));
@@ -15622,8 +15756,26 @@ body.today-route .topbar > div:first-child {
 }
 
 .space-map-stop.is-start .space-map-event {
-  width: auto;
-  justify-self: center;
+  width: min(100%, 480px);
+  justify-self: stretch;
+  padding-block-end: 0;
+}
+
+.space-map-stop.is-start .space-map-time {
+  display: block;
+  grid-column: 1 / -1;
+  text-align: center;
+}
+
+.space-map-stop.is-start .space-map-connector {
+  display: none;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-start {
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 5px;
 }
 
 .space-day-start {
@@ -15665,7 +15817,7 @@ body.today-route .topbar > div:first-child {
   .cosmic-map-route:not(.is-overview)::before {
     inset-block: 24px 35px;
     inset-inline-start: 50%;
-    transform: translateX(50%);
+    transform: translateX(-50%);
   }
 
   .cosmic-map-route:not(.is-overview) .space-map-stop,
@@ -15794,4 +15946,2376 @@ body.today-route .topbar > div:first-child {
   .space-node-priority > i > b::after {
     animation: none;
   }
+}
+
+.cosmic-map[data-map-mode="day"] {
+  min-height: 0;
+}
+
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) {
+  gap: 0;
+  padding-block: 15px 18px;
+}
+
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop {
+  min-height: 76px;
+}
+
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop.is-start {
+  min-height: 0;
+}
+
+.space-map-stop.is-start .space-map-event {
+  width: min(100%, 430px);
+}
+
+.space-day-start {
+  width: min(100%, 430px);
+  height: auto;
+  grid-template-columns: 27px minmax(0, 1fr);
+  justify-items: stretch;
+  gap: 8px;
+  padding: 9px 11px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 32%, var(--map-edge));
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--color-accent) 7%, var(--map-panel));
+  box-shadow: 0 7px 20px var(--color-shadow);
+  text-align: start;
+}
+
+.space-day-start .space-day-start-mark {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 50%, var(--map-edge));
+  border-radius: 50%;
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--map-panel));
+  font-size: .75rem;
+}
+
+.space-day-start-copy {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.space-day-sleep-pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 15px;
+}
+
+.space-day-sleep-pair > span {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.space-day-start .space-day-sleep-pair small {
+  color: var(--map-muted);
+  font-size: .64rem;
+}
+
+.space-day-start .space-day-sleep-pair strong {
+  color: var(--map-ink);
+  font-size: .75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.space-day-start .space-current-clock {
+  color: var(--map-muted);
+  font-size: .65rem;
+}
+
+.space-wake-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 6px;
+}
+
+.space-wake-control label,
+.space-sleep-fields label {
+  display: grid;
+  gap: 3px;
+  color: var(--map-muted);
+  font-size: .64rem;
+}
+
+.space-wake-control input,
+.space-sleep-fields input {
+  min-height: 32px;
+  padding: 4px 7px;
+  border: 1px solid var(--map-edge);
+  border-radius: 8px;
+  color: var(--map-ink);
+  background: var(--map-panel);
+  font: inherit;
+}
+
+.space-wake-control button,
+.space-sleep-fields button {
+  min-height: 32px;
+  padding: 5px 9px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 40%, var(--map-edge));
+  border-radius: 8px;
+  color: var(--map-ink);
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--map-panel));
+  cursor: pointer;
+  font: inherit;
+  font-size: .66rem;
+}
+
+.space-day-start .space-sleep-routine {
+  color: var(--map-muted);
+  font-size: .65rem;
+}
+
+.space-day-start .space-sleep-routine > summary {
+  width: fit-content;
+  cursor: pointer;
+}
+
+.space-day-start .space-sleep-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 7px;
+  margin-block-start: 8px;
+}
+
+.space-day-start .space-sleep-status,
+.space-day-start .space-sleep-pattern {
+  display: block;
+  margin-block-start: 6px;
+  color: var(--map-muted);
+  font-size: .62rem;
+  line-height: 1.5;
+}
+
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop.is-night {
+  min-height: 0;
+  padding-block: 8px 0;
+}
+
+.space-night-node {
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 10px;
+  border-radius: 16px;
+}
+
+.space-night-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.space-night-group {
+  min-width: 0;
+}
+
+.space-night-group > summary {
+  display: flex;
+  min-height: 37px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 7px 9px;
+  border: 1px solid rgb(208 182 255 / 27%);
+  border-radius: 11px;
+  color: #e3d8fa;
+  background: rgb(17 15 38 / 62%);
+  cursor: pointer;
+  font-size: .7rem;
+  list-style: none;
+}
+
+.space-night-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.space-night-group > summary::after {
+  color: #d3baff;
+  content: "＋";
+}
+
+.space-night-group[open] > summary::after {
+  content: "−";
+}
+
+.space-night-group > summary b {
+  color: #c9b8ef;
+  font-size: .62rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.space-night-group-items {
+  display: grid;
+  gap: 5px;
+  padding-block-start: 6px;
+}
+
+.space-night-group-empty {
+  padding: 7px;
+  color: #c0b3dd;
+  font-size: .65rem;
+  line-height: 1.5;
+}
+
+.space-night-group-empty a {
+  color: #d1bbff;
+}
+
+.space-night-prayer {
+  justify-content: flex-start;
+  min-height: 34px;
+  font-size: .65rem;
+  text-align: start;
+}
+
+.space-night-prayer > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.space-night-prayer > small {
+  margin-inline-start: auto;
+  color: var(--map-muted);
+  font-size: .6rem;
+  white-space: nowrap;
+}
+
+.space-night-recap {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 30%, var(--map-edge));
+  border-radius: 12px;
+  color: var(--map-ink);
+  background: color-mix(in srgb, var(--color-accent) 9%, var(--map-panel));
+  cursor: pointer;
+  text-align: start;
+}
+
+.space-night-recap .space-night-moon {
+  width: 30px;
+  height: 30px;
+  font-size: 1rem;
+}
+
+.space-night-recap .space-night-heading {
+  gap: 1px;
+}
+
+.space-night-recap .space-night-heading small {
+  font-size: .58rem;
+}
+
+.space-night-recap .space-night-heading strong {
+  color: var(--map-ink);
+  font-size: .72rem;
+}
+
+.space-night-recap-score {
+  color: var(--color-accent);
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.space-prayer-wisdom {
+  color: var(--map-muted);
+  font-size: .58rem;
+}
+
+.space-prayer-wisdom > summary {
+  width: fit-content;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.space-prayer-wisdom > span {
+  display: block;
+  margin-block-start: 3px;
+  line-height: 1.45;
+}
+
+.space-prayer-habit-link {
+  max-width: 100px;
+  color: var(--color-accent);
+  font-size: .58rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.space-prayer-log-dialog {
+  width: min(430px, calc(100vw - 28px));
+  max-height: min(82vh, 650px);
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 42%);
+}
+
+.space-prayer-log-dialog::backdrop {
+  background: rgb(5 4 14 / 72%);
+  backdrop-filter: blur(5px);
+}
+
+.space-prayer-log-dialog form {
+  display: grid;
+  gap: 14px;
+  padding: clamp(16px, 4vw, 23px);
+}
+
+.space-prayer-dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.space-prayer-dialog-heading small {
+  color: var(--color-muted);
+  font-size: .72rem;
+}
+
+.space-prayer-dialog-heading h2 {
+  margin: 3px 0 0;
+  font-size: 1.15rem;
+}
+
+.space-prayer-log-dialog form > p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: .84rem;
+  line-height: 1.6;
+}
+
+.space-prayer-dialog-items {
+  display: grid;
+  gap: 7px;
+}
+
+.space-prayer-dialog-items > label {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 22px;
+  align-items: center;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-primary) 5%, var(--color-surface));
+  cursor: pointer;
+}
+
+.space-prayer-dialog-items input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--color-primary);
+}
+
+.space-prayer-dialog-items > label > span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.space-prayer-dialog-items strong {
+  overflow-wrap: anywhere;
+  font-size: .83rem;
+}
+
+.space-prayer-dialog-items small {
+  color: var(--color-muted);
+  font-size: .7rem;
+}
+
+.space-prayer-dialog-items i {
+  color: var(--color-primary);
+  font-style: normal;
+  text-align: center;
+}
+
+.space-prayer-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) {
+    gap: 0;
+    padding-block: 13px 15px;
+  }
+
+  .cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop {
+    min-height: 80px;
+  }
+
+  .space-day-start {
+    width: min(100%, 390px);
+    grid-template-columns: 24px minmax(0, 1fr);
+    padding: 8px;
+  }
+
+  .space-day-start .space-day-start-mark {
+    width: 23px;
+    height: 23px;
+  }
+
+  .space-night-node {
+    gap: 7px;
+    padding: 8px;
+  }
+
+  .space-night-groups {
+    gap: 5px;
+  }
+
+  .space-night-group > summary {
+    min-height: 34px;
+    padding-inline: 7px;
+    font-size: .64rem;
+  }
+
+  .space-night-prayer {
+    min-height: 31px;
+    padding: 5px 7px;
+    font-size: .6rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .space-day-sleep-pair {
+    gap: 4px 10px;
+  }
+
+  .space-day-start .space-day-sleep-pair small {
+    font-size: .58rem;
+  }
+
+  .space-day-start .space-sleep-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.theme-dialog-content {
+  display: grid;
+  max-height: min(86vh, 760px);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.theme-options {
+  overflow: auto;
+  padding-inline-end: 3px;
+}
+
+.report-period-highlight {
+  display: grid;
+  gap: 14px;
+  padding: clamp(16px, 3vw, 24px);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
+  border-radius: 24px;
+  background:
+    radial-gradient(ellipse at 100% 0, color-mix(in srgb, var(--color-accent) 15%, transparent), transparent 58%),
+    linear-gradient(140deg, color-mix(in srgb, var(--color-primary) 8%, var(--color-surface)), var(--color-surface));
+  box-shadow: 0 12px 32px var(--color-shadow);
+}
+
+.report-period-highlight-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.report-period-highlight-heading h3 {
+  margin: 0;
+  font-size: clamp(1.05rem, 2.5vw, 1.35rem);
+}
+
+.report-period-highlight-heading > span {
+  color: var(--color-muted);
+  font-size: .75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-period-highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.report-period-highlight-card {
+  display: grid;
+  min-width: 0;
+  min-height: 104px;
+  align-content: start;
+  gap: 5px;
+  padding: 13px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 12%, var(--color-border));
+  border-radius: 17px;
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+}
+
+.report-period-highlight-card > span {
+  color: var(--color-muted);
+  font-size: .73rem;
+  font-weight: 700;
+}
+
+.report-period-highlight-card > strong {
+  overflow-wrap: anywhere;
+  color: var(--color-primary);
+  font-size: clamp(1.18rem, 3vw, 1.65rem);
+  line-height: 1.15;
+}
+
+.report-period-highlight-card > small {
+  color: var(--color-muted);
+  font-size: .68rem;
+}
+
+.report-period-highlight-card.is-progress > i {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--color-primary-soft);
+}
+
+.report-period-highlight-card.is-progress > i::after {
+  display: block;
+  width: var(--highlight-progress);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  content: "";
+}
+
+.report-period-highlight-card.is-time > strong {
+  color: var(--color-accent);
+}
+
+.report-period-highlight-foot {
+  display: grid;
+  gap: 8px;
+}
+
+.report-period-highlight-foot > strong {
+  font-size: .76rem;
+}
+
+.report-period-highlight-foot > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.report-period-highlight-foot > div > span {
+  padding: 5px 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 7%, var(--color-surface));
+  font-size: .7rem;
+}
+
+.report-period-pride {
+  display: flex;
+  align-items: start;
+  gap: 8px;
+  margin: 0;
+  padding-block-start: 12px;
+  border-block-start: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: .8rem;
+  line-height: 1.6;
+}
+
+.report-period-pride > span {
+  color: var(--color-accent);
+}
+
+.space-hour-ruler-wrap {
+  display: grid;
+  gap: 7px;
+  margin: 0 12px;
+  padding: 12px 10px 9px;
+  overflow-x: auto;
+  border: 1px solid rgb(174 158 224 / 17%);
+  border-radius: 15px;
+  background: rgb(17 16 37 / 42%);
+  scrollbar-color: #786bb0 transparent;
+}
+
+.space-hour-ruler {
+  display: grid;
+  min-width: 700px;
+  grid-template-columns: repeat(25, minmax(20px, 1fr));
+}
+
+.space-hour-ruler > span {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  color: #a49dbd;
+  font-size: .58rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.space-hour-ruler > span > i {
+  width: 1px;
+  height: 7px;
+  background: #766c9a;
+}
+
+.space-hour-ruler > span.is-endpoint {
+  color: #e6d9ff;
+  font-weight: 800;
+}
+
+.space-hour-ruler > span.is-endpoint > i {
+  height: 11px;
+  background: #d3baff;
+}
+
+.space-hour-ruler-labels {
+  display: flex;
+  justify-content: space-between;
+  color: #c0b9d8;
+  font-size: .62rem;
+}
+
+.space-prayer-wisdom {
+  color: #d7ceec !important;
+  font-size: .61rem !important;
+  line-height: 1.55;
+}
+
+.space-prayer-wisdom b {
+  color: #a89acb;
+  font-size: .54rem;
+  font-weight: 600;
+}
+
+.space-night-node {
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 12px;
+  padding: 10px 13px;
+  border-radius: 17px;
+}
+
+.space-night-recap {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  text-align: start;
+  cursor: pointer;
+}
+
+.space-night-recap .space-night-moon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  font-size: 1rem;
+}
+
+.space-night-heading {
+  text-align: start;
+}
+
+.space-night-heading strong {
+  font-size: .76rem;
+}
+
+.space-night-recap-score {
+  margin-inline-start: auto;
+  color: #eadbff;
+  font-size: .85rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.space-night-prayers {
+  justify-content: end;
+  gap: 5px;
+}
+
+.space-night-prayer {
+  min-height: 29px;
+  padding: 4px 7px;
+  font-size: .59rem;
+}
+
+.space-night-prayer i {
+  width: 16px;
+  height: 16px;
+}
+
+.space-night-empty {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: stretch;
+}
+
+.space-night-empty-label {
+  color: #d3c7e8;
+  font-size: .64rem;
+}
+
+.space-night-empty > a {
+  color: #e7d8ff;
+  font-size: .65rem;
+}
+
+.space-map-recap-action {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border: 1px solid rgb(190 159 255 / 28%);
+  border-radius: 12px;
+  color: #e5dcff;
+  background: rgb(17 16 37 / 60%);
+  cursor: pointer;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 750;
+}
+
+.space-map-recap-action:hover,
+.space-night-recap:hover .space-night-heading strong {
+  color: #fff;
+}
+
+.space-period-recap-dialog {
+  width: min(760px, calc(100vw - 24px));
+  max-width: 760px;
+  max-height: min(92dvh, 900px);
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  color: var(--color-text);
+  background: var(--color-bg);
+  box-shadow: 0 26px 90px rgb(0 0 0 / 35%);
+}
+
+.space-period-recap-dialog::backdrop {
+  background: rgb(6 7 15 / 72%);
+  backdrop-filter: blur(7px);
+}
+
+.space-recap-content {
+  display: grid;
+  gap: 15px;
+  padding: clamp(16px, 4vw, 26px);
+}
+
+.space-recap-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.space-recap-heading p,
+.space-recap-heading h2 {
+  margin: 0;
+}
+
+.space-recap-heading p {
+  color: var(--color-primary);
+  font-size: .74rem;
+  font-weight: 800;
+}
+
+.space-recap-heading h2 {
+  margin-block: 4px;
+  font-size: 1.25rem;
+}
+
+.space-recap-heading > div > span {
+  color: var(--color-muted);
+  font-size: .7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.space-recap-hero {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 15px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
+  border-radius: 20px;
+  background:
+    radial-gradient(ellipse at 100% 0, color-mix(in srgb, var(--color-accent) 15%, transparent), transparent 62%),
+    var(--color-surface);
+}
+
+.space-recap-progress {
+  display: grid;
+  width: 108px;
+  aspect-ratio: 1;
+  align-content: center;
+  justify-items: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--color-surface) 62%, transparent 64%),
+    conic-gradient(var(--color-accent) var(--recap-progress), var(--color-primary-soft) 0);
+}
+
+.space-recap-progress > strong {
+  color: var(--color-primary);
+  font-size: 1.55rem;
+}
+
+.space-recap-progress > strong small {
+  font-size: .72rem;
+}
+
+.space-recap-progress > span {
+  color: var(--color-muted);
+  font-size: .65rem;
+}
+
+.space-recap-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.space-recap-stats > article,
+.space-recap-time > article {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 4px;
+  padding: 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--color-surface) 86%, transparent);
+}
+
+.space-recap-stats span,
+.space-recap-time span {
+  color: var(--color-muted);
+  font-size: .66rem;
+}
+
+.space-recap-stats strong {
+  color: var(--color-primary);
+  font-size: 1.1rem;
+}
+
+.space-recap-stats small,
+.space-recap-time small {
+  color: var(--color-muted);
+  font-size: .58rem;
+}
+
+.space-recap-time {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.space-recap-time strong {
+  color: var(--color-accent);
+  font-size: 1rem;
+}
+
+.space-recap-section {
+  display: grid;
+  gap: 8px;
+}
+
+.space-recap-section h3 {
+  margin: 0;
+  font-size: .86rem;
+}
+
+.space-recap-list,
+.space-recap-area-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.space-recap-detail,
+.space-recap-area {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  padding: 9px 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.space-recap-detail strong,
+.space-recap-area strong {
+  overflow-wrap: anywhere;
+  font-size: .72rem;
+}
+
+.space-recap-detail span,
+.space-recap-area span {
+  color: var(--color-muted);
+  font-size: .63rem;
+}
+
+.space-recap-pride {
+  display: flex;
+  align-items: start;
+  gap: 9px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 30%, var(--color-border));
+  border-radius: 14px;
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+  font-size: .76rem;
+  line-height: 1.65;
+}
+
+.space-recap-pride > span {
+  color: var(--color-accent);
+}
+
+.space-recap-actions {
+  display: flex;
+  justify-content: end;
+}
+
+@media (max-width: 700px) {
+  .report-period-highlight-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .report-period-highlight-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .space-night-node {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .space-night-prayers {
+    justify-content: start;
+  }
+
+  .space-recap-hero {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .space-recap-stats {
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .space-recap-stats,
+  .space-recap-time {
+    grid-template-columns: 1fr;
+  }
+
+  .space-recap-list,
+  .space-recap-area-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cosmic-map {
+  overflow: clip;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-time,
+.cosmic-map-footer,
+.space-day-start-copy > small,
+.space-current-clock,
+.space-wake-control label,
+.space-wake-saved {
+  color: var(--map-muted);
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-time {
+  font-size: .78rem;
+  font-weight: 750;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.space-node-copy > strong,
+.space-node.is-pending .space-node-copy > strong,
+.space-node.is-partial .space-node-copy > strong,
+.space-node.is-done .space-node-copy > strong,
+.space-node.is-pending .space-node-copy > span,
+.space-node.is-partial .space-node-copy > span,
+.space-node.is-done .space-node-copy > span,
+.space-node-prayer .space-prayer-wisdom {
+  color: var(--map-ink) !important;
+}
+
+.space-node-copy > strong {
+  font-size: .95rem;
+  line-height: 1.5;
+}
+
+.space-node-copy > span.space-node-meta,
+.space-prayer-wisdom {
+  font-size: .78rem;
+  line-height: 1.6;
+}
+
+.space-prayer-wisdom b {
+  color: var(--map-muted);
+  font-size: .72rem;
+}
+
+.space-node-priority {
+  font-size: .7rem;
+}
+
+.space-node-priority > strong,
+.space-node-progress-row > strong,
+.cosmic-day-progress > strong {
+  color: var(--map-ink);
+  font-size: .76rem;
+}
+
+.space-hour-ruler-wrap {
+  position: relative;
+  border-color: var(--map-edge);
+  background: var(--map-control);
+}
+
+.space-hour-ruler {
+  position: relative;
+  min-height: 42px;
+}
+
+.space-hour-ruler > span {
+  font-size: .76rem;
+  font-weight: 650;
+}
+
+.space-hour-ruler-labels {
+  color: var(--map-ink);
+  font-size: .76rem;
+  font-weight: 700;
+}
+
+.space-live-marker,
+.space-wake-marker {
+  position: absolute;
+  z-index: 1;
+  inset-block: 0;
+  inset-inline-start: var(--current-time-progress, var(--wake-time-progress));
+  width: 2px;
+  background: #e65360;
+  pointer-events: none;
+}
+
+.space-wake-marker {
+  z-index: 0;
+  background: #159777;
+}
+
+.space-live-marker > i,
+.space-wake-marker > i {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 50%;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--map-panel);
+  border-radius: 50%;
+  background: #e65360;
+  transform: translateX(-50%);
+}
+
+.space-wake-marker > i {
+  background: #159777;
+}
+
+.space-live-marker > b,
+.space-wake-marker > b {
+  position: absolute;
+  inset-block-start: 12px;
+  inset-inline-start: 50%;
+  padding: 3px 6px;
+  border: 1px solid color-mix(in srgb, #e65360 42%, var(--map-edge));
+  border-radius: 7px;
+  color: var(--map-ink);
+  background: var(--map-panel);
+  font-size: .7rem;
+  font-weight: 800;
+  line-height: 1.4;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.space-wake-marker > b {
+  border-color: color-mix(in srgb, #159777 42%, var(--map-edge));
+}
+
+.space-day-start {
+  width: min(100%, 480px);
+  height: auto;
+  min-height: 0;
+  grid-column: auto;
+  grid-template-columns: 38px minmax(0, 1fr);
+  justify-content: stretch;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--map-edge);
+  border-radius: 16px;
+  color: var(--map-ink);
+  background: var(--map-panel);
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+
+.space-day-start > span {
+  width: 36px;
+  height: 36px;
+  align-self: start;
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--map-panel));
+}
+
+.space-day-start-copy {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.space-day-start-copy > small {
+  font-size: .78rem;
+}
+
+.space-day-start-copy > strong {
+  color: var(--map-ink);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.space-current-clock {
+  font-size: .82rem;
+  line-height: 1.5;
+}
+
+.space-current-clock > b {
+  color: var(--map-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.space-wake-control {
+  display: flex;
+  min-width: 0;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-block-start: 2px;
+}
+
+.space-wake-control label {
+  display: grid;
+  gap: 4px;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.space-wake-control input {
+  min-height: 38px;
+  padding: 5px 8px;
+  border: 1px solid var(--map-edge);
+  border-radius: 9px;
+  color: var(--map-ink);
+  background: var(--map-control);
+  color-scheme: light dark;
+  font: inherit;
+}
+
+.space-wake-control button {
+  min-height: 38px;
+  padding: 6px 11px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 45%, var(--map-edge));
+  border-radius: 9px;
+  color: var(--map-ink);
+  background: var(--map-control);
+  cursor: pointer;
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+.space-wake-saved {
+  flex: 1 1 100%;
+  font-size: .77rem;
+  line-height: 1.5;
+}
+
+.space-night-node {
+  border-color: var(--map-edge);
+  background:
+    radial-gradient(ellipse at 0% 50%, color-mix(in srgb, var(--color-primary) 13%, transparent), transparent 47%),
+    linear-gradient(130deg, var(--map-panel-strong), var(--map-panel));
+}
+
+.space-night-heading small,
+.space-night-empty-label,
+.space-night-empty > a {
+  color: var(--map-muted);
+}
+
+.space-night-heading strong,
+.space-night-recap-score {
+  color: var(--map-ink);
+}
+
+.space-night-prayer,
+.space-night-prayer.is-pending,
+.space-night-prayer.is-done {
+  border-color: var(--map-edge);
+  color: var(--map-ink);
+  background: var(--map-control);
+  font-size: .78rem;
+  line-height: 1.45;
+}
+
+.space-night-prayer.is-pending i {
+  border-color: #b73b49;
+  color: #b73b49;
+}
+
+.space-night-prayer.is-done i {
+  border-color: #258f5b;
+  color: #fff;
+  background: #258f5b;
+}
+
+.space-map-recap-action {
+  border-color: var(--map-edge);
+  color: var(--map-ink);
+  background: var(--map-control);
+  font-size: .82rem;
+}
+
+.space-map-recap-action:hover {
+  border-color: var(--color-primary);
+  color: var(--map-ink);
+}
+
+.space-night-empty {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: stretch;
+  gap: 10px;
+}
+
+.space-night-empty .space-night-recap,
+.space-night-empty-label,
+.space-night-empty > a {
+  grid-column: 1;
+}
+
+.space-night-empty .space-night-recap {
+  width: 100%;
+}
+
+.space-night-empty-label,
+.space-night-empty > a {
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
+.space-night-empty > a {
+  width: fit-content;
+  color: var(--map-ink);
+  text-underline-offset: 3px;
+}
+
+.space-night-heading small {
+  font-size: .78rem;
+}
+
+.space-night-heading strong {
+  font-size: .9rem;
+}
+
+.space-night-recap-score {
+  font-size: .95rem;
+}
+
+@media (max-width: 720px) {
+  .cosmic-map-route:not(.is-overview) {
+    gap: 12px;
+    padding: 22px 12px 18px;
+  }
+
+  .cosmic-map-route:not(.is-overview)::before {
+    inset-block: 28px 30px;
+    inset-inline-start: 18px;
+    transform: none;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-left {
+    min-height: 0;
+    grid-template-columns: 24px minmax(0, 1fr);
+    align-items: start;
+    gap: 5px 9px;
+    padding: 0;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-start {
+    grid-template-columns: 24px minmax(0, 1fr);
+    justify-items: stretch;
+    gap: 5px 9px;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-start .space-map-time {
+    grid-column: 2;
+    text-align: start;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-start .space-map-connector {
+    display: block;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-start .space-map-event {
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-time,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-left .space-map-time {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+    text-align: start;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-connector,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-left .space-map-connector {
+    position: relative;
+    inset: auto;
+    grid-column: 1;
+    grid-row: 1 / 3;
+    align-self: start;
+    margin-block-start: 5px;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-event,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-left .space-map-event,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-map-event {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: stretch;
+    align-self: start;
+    width: 100%;
+    padding: 0;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-night {
+    min-height: 0;
+    grid-template-columns: 24px minmax(0, 1fr);
+    justify-items: stretch;
+    gap: 5px 9px;
+    padding: 0;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-map-time {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-map-connector {
+    position: relative;
+    inset: auto;
+    grid-column: 1;
+    grid-row: 1 / 3;
+    margin-block-start: 5px;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-node-prayer {
+    min-height: 0;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 13px;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-node-prayer .space-node-orbit {
+    width: 26px;
+    height: 26px;
+    font-size: .85rem;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-node-prayer .space-node-copy > strong {
+    font-size: .9rem;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-node-prayer .space-node-meta {
+    font-size: .78rem;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-node-prayer .space-node-check {
+    width: 30px;
+    height: 30px;
+    font-size: .9rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .space-day-start {
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 8px;
+    padding: 11px;
+  }
+
+  .space-day-start > span {
+    width: 29px;
+    height: 29px;
+    font-size: .9rem;
+  }
+
+  .space-day-start-copy > strong {
+    font-size: .94rem;
+  }
+
+  .space-prayer-wisdom {
+    font-size: .76rem !important;
+  }
+}
+
+.cosmic-map-route:not(.is-overview) {
+  max-width: 780px;
+  gap: 16px;
+  padding: 28px clamp(8px, 3vw, 24px);
+}
+
+.cosmic-map-route:not(.is-overview)::before {
+  inset-block: 34px 38px;
+  inset-inline-start: 18px;
+  transform: none;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-left,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night {
+  min-height: 0;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: start;
+  justify-items: stretch;
+  gap: 5px 12px;
+  padding: 0;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-start {
+  grid-template-columns: 24px minmax(0, 1fr);
+  justify-items: stretch;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-time,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-left .space-map-time,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-map-time,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-start .space-map-time {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+  text-align: start;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-connector,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-left .space-map-connector,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-map-connector {
+  position: relative;
+  inset: auto;
+  grid-column: 1;
+  grid-row: 1 / 3;
+  align-self: start;
+  margin-block-start: 5px;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-start .space-map-connector {
+  display: block;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-event,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-left .space-map-event,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-map-event,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-start .space-map-event {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: stretch;
+  align-self: start;
+  width: 100%;
+  padding: 0;
+}
+
+.space-map-stop.is-night .space-night-node {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.space-map-stop.is-night .space-night-node.space-night-empty {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.space-bedtime-warning {
+  color: #a83b45 !important;
+  font-size: .78rem !important;
+  font-weight: 800;
+}
+
+.space-rest-window {
+  position: absolute;
+  z-index: 0;
+  inset-block: 0;
+  inset-inline-start: var(--rest-window-start);
+  width: var(--rest-window-width);
+  border-inline: 1px solid color-mix(in srgb, #c48532 48%, transparent);
+  background: color-mix(in srgb, #e0a344 17%, transparent);
+  pointer-events: none;
+}
+
+.space-bedtime-marker {
+  position: absolute;
+  z-index: 1;
+  inset-block: 0;
+  inset-inline-start: var(--bedtime-progress);
+  width: 2px;
+  background: #537c65;
+  pointer-events: none;
+}
+
+.space-bedtime-marker > i {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 50%;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--map-panel);
+  border-radius: 50%;
+  background: #537c65;
+  transform: translateX(-50%);
+}
+
+.space-bedtime-marker > b {
+  position: absolute;
+  inset-block-start: 12px;
+  inset-inline-start: 50%;
+  padding: 3px 6px;
+  border: 1px solid color-mix(in srgb, #537c65 48%, var(--map-edge));
+  border-radius: 7px;
+  color: var(--map-ink);
+  background: var(--map-panel);
+  font-size: .7rem;
+  font-weight: 800;
+  line-height: 1.4;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.space-sleep-routine {
+  display: grid;
+  min-width: 0;
+  gap: 9px;
+  margin-block-start: 3px;
+  padding-block-start: 8px;
+  border-block-start: 1px solid var(--map-edge);
+}
+
+.space-sleep-routine > summary {
+  width: fit-content;
+  color: var(--map-ink);
+  cursor: pointer;
+  font-size: .84rem;
+  font-weight: 800;
+}
+
+.space-sleep-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 9px;
+}
+
+.space-sleep-fields label,
+.sleep-settings-form label {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+  color: var(--map-muted);
+  font-size: .79rem;
+  font-weight: 750;
+}
+
+.space-sleep-fields input,
+.sleep-settings-form input[type="time"] {
+  width: 100%;
+  min-height: 40px;
+  padding: 5px 8px;
+  border: 1px solid var(--map-edge, var(--color-border));
+  border-radius: 9px;
+  color: var(--map-ink, var(--color-text));
+  background: var(--map-control, var(--color-surface));
+  color-scheme: light dark;
+  font: inherit;
+}
+
+.space-sleep-fields button,
+.sleep-settings-form button {
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid var(--map-edge, var(--color-border));
+  border-radius: 9px;
+  color: var(--map-ink, var(--color-text));
+  background: var(--map-control, var(--color-surface));
+  cursor: pointer;
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+.space-sleep-fields .space-nap-skip {
+  grid-column: 1 / -1;
+}
+
+.space-sleep-status,
+.space-sleep-pattern {
+  color: var(--map-muted);
+  font-size: .77rem;
+  line-height: 1.6;
+}
+
+.sleep-settings-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sleep-settings-form > button {
+  grid-column: 1 / -1;
+}
+
+.sleep-settings-form .sleep-nap-preference {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sleep-settings-form .sleep-nap-preference input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
+
+@media (max-width: 520px) {
+  .cosmic-map-route:not(.is-overview) {
+    gap: 14px;
+    padding: 22px 10px;
+  }
+
+  .cosmic-map-route:not(.is-overview)::before {
+    inset-inline-start: 15px;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-left,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-night {
+    grid-template-columns: 20px minmax(0, 1fr);
+    gap: 5px 8px;
+  }
+
+  .space-sleep-fields {
+    gap: 8px;
+  }
+
+  .space-sleep-fields button {
+    font-size: .76rem;
+  }
+}
+
+.tasks-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.tasks-heading-actions > .button {
+  min-height: 42px;
+}
+
+.task-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.task-card-actions > .icon-button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  color: var(--color-primary);
+  background: var(--color-surface);
+}
+
+.space-recap-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cosmic-map-route:not(.is-overview) {
+  max-width: 1120px;
+  gap: 12px;
+  padding: 28px clamp(8px, 3vw, 36px);
+}
+
+.cosmic-map-route:not(.is-overview)::before {
+  inset-block: 34px 38px;
+  inset-inline-start: 50%;
+  transform: translateX(50%);
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-left,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-right,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night {
+  min-height: 92px;
+  grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
+  align-items: center;
+  justify-items: stretch;
+  gap: 0;
+  padding: 0;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-time,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-right .space-map-time {
+  grid-column: 3;
+  grid-row: 1;
+  margin: 0;
+  text-align: center;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-left .space-map-time {
+  grid-column: 1;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-connector,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-left .space-map-connector,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-right .space-map-connector,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-map-connector {
+  position: relative;
+  inset: auto;
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+  margin: 0;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-event,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-right .space-map-event,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-night-node {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  align-self: center;
+  width: min(100%, 440px);
+  padding: 0;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-left .space-map-event,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-left .space-night-node {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-start {
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 5px;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-start .space-map-time {
+  display: block;
+  grid-column: 1;
+  grid-row: auto;
+  text-align: center;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-start .space-map-connector {
+  display: none;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-start .space-map-event {
+  grid-column: 1;
+  grid-row: auto;
+  justify-self: center;
+  width: min(100%, 560px);
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-map-time {
+  grid-column: 3;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night.is-left .space-map-time {
+  grid-column: 1;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-night-node {
+  grid-row: 1;
+  width: min(100%, 440px);
+}
+
+@media (max-width: 720px) {
+  .cosmic-map-route:not(.is-overview) {
+    gap: 8px;
+    padding: 22px 8px 18px;
+  }
+
+  .cosmic-map-route:not(.is-overview)::before {
+    inset-block: 26px 34px;
+    inset-inline-start: 50%;
+    transform: translateX(50%);
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-left,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-right,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-night {
+    min-height: 88px;
+    grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr);
+    align-items: center;
+    gap: 0;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-time,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-right .space-map-time {
+    grid-column: 3;
+    grid-row: 1;
+    font-size: .62rem;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-left .space-map-time {
+    grid-column: 1;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-connector,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-left .space-map-connector,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-right .space-map-connector,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-map-connector {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-event,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-right .space-map-event,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-night-node {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    width: 100%;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-left .space-map-event,
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-left .space-night-node {
+    grid-column: 3;
+    justify-self: end;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-start {
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-start .space-map-time {
+    grid-column: 1;
+    grid-row: auto;
+    text-align: center;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-start .space-map-event {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: center;
+    width: 100%;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-node {
+    min-height: 60px;
+    grid-template-columns: 24px minmax(0, 1fr) 25px;
+    gap: 5px;
+    padding: 8px;
+    border-radius: 13px;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-node-orbit {
+    width: 22px;
+    height: 22px;
+    font-size: .78rem;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-node-check {
+    width: 24px;
+    height: 24px;
+    font-size: .8rem;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-node-copy > strong {
+    font-size: .76rem;
+    line-height: 1.4;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-node-copy > span,
+  .cosmic-map-route:not(.is-overview) .space-node-priority,
+  .cosmic-map-route:not(.is-overview) .space-node-progress-row {
+    font-size: .59rem;
+  }
+
+  .cosmic-map-route:not(.is-overview) .space-night-node {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .space-recap-actions {
+    justify-content: stretch;
+  }
+
+  .space-recap-actions > button {
+    flex: 1 1 135px;
+  }
+}
+
+@media (max-width: 420px) {
+  .tasks-heading-actions {
+    gap: 6px;
+  }
+
+  .tasks-heading-actions > .button {
+    min-height: 38px;
+    padding-inline: 9px;
+    font-size: .76rem;
+  }
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-stop-pending .space-map-connector {
+  border-color: #e45c67;
+  background: color-mix(in srgb, #e45c67 22%, var(--map-panel));
+  box-shadow: 0 0 10px rgb(228 92 103 / 52%), 0 0 20px rgb(228 92 103 / 22%);
+  animation: route-stop-pulse 2.2s ease-in-out infinite;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-stop-partial .space-map-connector {
+  border-color: #e7ae4c;
+  background: color-mix(in srgb, #e7ae4c 30%, var(--map-panel));
+  box-shadow: 0 0 12px rgb(231 174 76 / 46%);
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-stop-done .space-map-connector {
+  border-color: #36bd7a;
+  background: #36bd7a;
+  box-shadow: 0 0 13px rgb(54 189 122 / 70%), 0 0 24px rgb(54 189 122 / 30%);
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-time-passed.is-stop-pending .space-map-connector {
+  border-color: #ff6a78;
+  background: #e45c67;
+  box-shadow: 0 0 14px rgb(255 106 120 / 74%), 0 0 30px rgb(255 106 120 / 43%);
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-time-passed.is-stop-pending .space-node {
+  border-color: color-mix(in srgb, #ff6a78 72%, var(--map-edge));
+  box-shadow: 0 0 22px rgb(255 106 120 / 25%), 0 9px 24px var(--color-shadow);
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-current-time .space-map-connector {
+  transform: scale(1.3);
+}
+
+@keyframes route-stop-pulse {
+  50% { box-shadow: 0 0 15px rgb(228 92 103 / 66%), 0 0 26px rgb(228 92 103 / 34%); }
+}
+
+.space-ritual-wisdom {
+  color: var(--map-muted);
+  font-size: .67rem;
+}
+
+.space-ritual-wisdom > summary {
+  width: fit-content;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.space-ritual-wisdom > span {
+  display: block;
+  margin-block-start: 3px;
+  color: var(--map-ink);
+  line-height: 1.45;
+}
+
+.space-ritual-wisdom b {
+  color: var(--map-muted);
+  font-size: .6rem;
+}
+
+.space-prayer-dialog-group {
+  display: grid;
+  gap: 7px;
+}
+
+.space-prayer-dialog-group > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.space-prayer-dialog-group > header > strong {
+  font-size: .86rem;
+}
+
+.space-prayer-dialog-group > header > span {
+  color: var(--color-muted);
+  font-size: .72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.space-prayer-dialog-group > header > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-inline-start: auto;
+}
+
+.space-prayer-dialog-group > header button {
+  min-height: 29px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  cursor: pointer;
+  font: inherit;
+  font-size: .68rem;
+}
+
+.space-prayer-log-dialog .space-prayer-dialog-items > label {
+  grid-template-columns: 19px minmax(0, 1fr) 18px;
+  padding: 8px 10px;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night {
+  grid-column: 1 / -1;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 5px;
+  padding-block: 12px 0;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-map-time {
+  grid-column: 1;
+  grid-row: 1;
+  text-align: center;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-map-connector {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: center;
+  margin: 0;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-night-node {
+  grid-column: 1;
+  grid-row: 3;
+  width: min(100%, 520px);
+  justify-self: center;
+}
+
+.cosmic-map[data-map-mode="day"] .space-night-groups {
+  width: min(100%, 410px);
+  justify-self: center;
+}
+
+.cosmic-map[data-map-mode="day"] .space-night-group > summary {
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.cosmic-map[data-map-mode="day"] .space-night-group > summary::after {
+  content: "＋";
+}
+
+.cosmic-map[data-map-mode="day"] .space-night-group[open] > summary::after {
+  content: "−";
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cosmic-map-route:not(.is-overview) .space-map-stop.is-stop-pending .space-map-connector {
+    animation: none;
+  }
+}
+
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) {
+  gap: 3px;
+  padding-block: 15px 17px;
+}
+
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop,
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop.is-night {
+  min-height: 76px;
+}
+
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop.is-start {
+  min-height: 0;
+}
+
+.cosmic-map[data-map-mode="day"] .space-map-stop.is-start .space-map-event {
+  width: min(100%, 430px);
+}
+
+.cosmic-map[data-map-mode="day"] .space-day-start {
+  width: min(100%, 430px);
+  min-height: 0;
+  height: auto;
+  grid-template-columns: 25px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  padding: 9px;
+}
+
+.cosmic-map[data-map-mode="day"] .space-day-start .space-day-start-mark {
+  width: 24px;
+  height: 24px;
+}
+
+.cosmic-map[data-map-mode="day"] .space-day-start .space-day-start-copy {
+  gap: 5px;
+}
+
+.cosmic-map[data-map-mode="day"] .space-day-start .space-day-sleep-pair {
+  gap: 4px 12px;
+}
+
+.cosmic-map[data-map-mode="day"] .space-day-start .space-day-sleep-pair strong {
+  font-size: .77rem;
+}
+
+.cosmic-map[data-map-mode="day"] .space-day-start .space-wake-control {
+  gap: 6px;
+}
+
+.cosmic-map[data-map-mode="day"] .space-day-start .space-wake-control input,
+.cosmic-map[data-map-mode="day"] .space-day-start .space-wake-control button {
+  min-height: 30px;
+}
+
+.cosmic-map[data-map-mode="day"] .space-night-node {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 9px;
+}
+
+.cosmic-map[data-map-mode="day"] .space-night-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.cosmic-map[data-map-mode="day"] .space-night-recap {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 30%, var(--map-edge));
+  border-radius: 12px;
+  color: var(--map-ink);
+  background: color-mix(in srgb, var(--color-accent) 9%, var(--map-panel));
+}
+
+.cosmic-map[data-map-mode="day"] .space-night-recap .space-night-moon {
+  width: 30px;
+  height: 30px;
+}
+
+.cosmic-map[data-map-mode="day"] .space-night-recap .space-night-heading strong {
+  color: var(--map-ink);
+}
+
+.cosmic-map[data-map-mode="day"] .space-night-recap-score {
+  margin-inline-start: 0;
+  color: var(--color-accent);
+}
+
+.cosmic-map[data-map-mode="day"] .space-node-prayer .space-prayer-habit-link {
+  grid-column: 2 / -1;
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+  padding: 3px 0;
+  text-align: start;
+}
+
+@media (max-width: 720px) {
+  .cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) {
+    gap: 3px;
+    padding-block: 13px 15px;
+  }
+
+  .cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop,
+  .cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop.is-night {
+    min-height: 75px;
+  }
+
+  .cosmic-map[data-map-mode="day"] .space-day-start {
+    width: 100%;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 6px;
+    padding: 7px;
+  }
+
+  .cosmic-map[data-map-mode="day"] .space-day-start .space-day-start-mark {
+    width: 21px;
+    height: 21px;
+  }
+
+  .cosmic-map[data-map-mode="day"] .space-night-node {
+    gap: 7px;
+    padding: 7px;
+  }
+}
+
+@media (max-width: 420px) {
+  .cosmic-map[data-map-mode="day"] .space-day-start .space-day-sleep-pair {
+    gap: 3px 8px;
+  }
+
+  .cosmic-map[data-map-mode="day"] .space-day-start .space-day-sleep-pair small {
+    font-size: .57rem;
+  }
+
+  .cosmic-map[data-map-mode="day"] .space-day-start .space-sleep-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 5px;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-map-time,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-map-connector,
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-night-node {
+  grid-column: 1;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-map-time {
+  grid-row: 1;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-map-connector {
+  grid-row: 2;
+}
+
+.cosmic-map-route:not(.is-overview) .space-map-stop.is-night .space-night-node {
+  grid-row: 3;
+  width: min(100%, 520px);
+  justify-self: center;
+}
+
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop.is-night-prayers,
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop.is-day-close {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 0;
+}
+
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop.is-night-prayers {
+  min-height: 0;
+  padding-block: 8px 4px;
+}
+
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop.is-night-prayers .space-map-connector {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  margin: 0;
+}
+
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop.is-night-prayers .space-night-node {
+  grid-column: 1;
+  grid-row: 2;
+  width: min(100%, 520px);
+  justify-self: center;
+}
+
+.cosmic-map[data-map-mode="day"] .space-night-groups {
+  width: 100%;
+}
+
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop.is-day-close {
+  min-height: 70px;
+  padding-block: 4px 8px;
+}
+
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop.is-day-close .space-map-connector,
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop.is-day-close .space-night-recap {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+}
+
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop.is-day-close .space-map-connector {
+  justify-self: center;
+  margin: 0;
+}
+
+.cosmic-map[data-map-mode="day"] .cosmic-map-route:not(.is-overview) .space-map-stop.is-day-close .space-night-recap {
+  position: relative;
+  z-index: 1;
+  justify-self: center;
+  width: min(100%, 360px);
+  min-height: 50px;
+  padding: 7px 10px;
+  border-radius: 15px;
+  background: var(--map-panel);
+  box-shadow: 0 7px 20px var(--color-shadow);
 }

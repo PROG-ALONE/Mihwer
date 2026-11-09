@@ -8,6 +8,7 @@ import { dayProgress } from "./habits.js";
 import { downloadCsv } from "../export/csv.js";
 import { downloadXlsx } from "../export/xlsx.js";
 import { printReport } from "../export/pdf.js";
+import { shareTextReport } from "../export/share.js";
 import { completedSubtaskCount, formatDuration, manualTaskMinutes, totalRecordedTaskMinutes } from "../utils/task-metrics.js";
 
 const DAY_MS = 86_400_000;
@@ -48,10 +49,35 @@ function escapeHtml(value = "") {
   })[char]);
 }
 
+function objectivesInPeriod(tasks, habits, start, end) {
+  const periodObjectiveIds = new Set([
+    ...tasks.map((task) => objectiveForTask(task)?.id),
+    ...habits.filter((habit) => habitConsistency(habit, start, end).scheduled > 0).map((habit) => habit.objectiveId),
+    ...records.keyResults.filter((result) => inRange(result.updatedAt, start, end)).map((result) => result.objectiveId),
+    ...records.objectives.filter((objective) => objective.status === "done" && inRange(objective.updatedAt, start, end)).map((objective) => objective.id),
+  ].filter(Boolean));
+  const firstYear = new Date(`${start}T12:00:00`).getFullYear();
+  const lastYear = new Date(`${end}T12:00:00`).getFullYear();
+  return records.objectives.filter((objective) =>
+    periodObjectiveIds.has(objective.id) &&
+    objective.status !== "archived" &&
+    (!objectiveId || objective.id === objectiveId) &&
+    Number(objective.year) >= firstYear &&
+    Number(objective.year) <= lastYear &&
+    (!lifeAreaId || objective.lifeAreaId === lifeAreaId) &&
+    (!projectId || records.projects.some((project) => project.id === projectId && project.objectiveId === objective.id)));
+}
+
 function dateRange() {
   if (range === "all") return { start: "0001-01-01", end: "9999-12-31" };
   if (range === "custom") return { start: customStart, end: customEnd };
   if (range === "year") return { start: `${new Date().getFullYear()}-01-01`, end: localDateString() };
+  if (range === "half-year") {
+    const endDate = new Date();
+    const startDate = new Date(endDate.getFullYear(), endDate.getMonth() - 6, 1);
+    startDate.setDate(Math.min(endDate.getDate(), new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate()));
+    return { start: localDateString(startDate), end: localDateString(endDate) };
+  }
   const end = new Date();
   const days = range === "plan" ? PLAN_RANGE_DAYS[plan.id] : DATE_RANGES[range];
   const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - (days ?? 30) + 1);
@@ -282,6 +308,8 @@ function scheduledDays(habit, start, end) {
 }
 
 function habitConsistency(habit, start, end) {
+  const createdDate = String(habit.createdAt ?? "").slice(0, 10);
+  const periodStart = /^\d{4}-\d{2}-\d{2}$/.test(createdDate) && createdDate > start ? createdDate : start;
   const schedule = habit.schedule;
   let weekdays;
   if (schedule === "weekdays") weekdays = new Set([1, 2, 3, 4, 5]);
@@ -290,12 +318,12 @@ function habitConsistency(habit, start, end) {
     const names = new Map(["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"].map((day, index) => [day, index]));
     weekdays = new Set(schedule.map((day) => Number.isInteger(Number(day)) ? Number(day) : names.get(String(day).toLowerCase())).filter((day) => Number.isInteger(day) && day >= 0 && day <= 6));
   } else weekdays = new Set([0, 1, 2, 3, 4, 5, 6]);
-  const startTime = Date.parse(`${start}T00:00:00Z`);
+  const startTime = Date.parse(`${periodStart}T00:00:00Z`);
   const endTime = Date.parse(`${end}T00:00:00Z`);
   const totalDays = Math.max(0, Math.floor((endTime - startTime) / DAY_MS) + 1);
   const fullWeeks = Math.floor(totalDays / 7);
   let scheduled = fullWeeks * weekdays.size;
-  const cursor = new Date(`${start}T00:00:00Z`);
+  const cursor = new Date(`${periodStart}T00:00:00Z`);
   for (let offset = 0; offset < totalDays % 7; offset += 1) {
     if (weekdays.has((cursor.getUTCDay() + offset) % 7)) scheduled += 1;
   }
@@ -349,13 +377,7 @@ function reportSummary(tasks, start, end) {
   const habitCompletion = habitScheduled
     ? Math.round(habitCompleted / habitScheduled * 100)
     : 0;
-  const objectives = records.objectives.filter((objective) =>
-    objective.status !== "archived" &&
-    (!objectiveId || objective.id === objectiveId) &&
-    Number(objective.year) >= new Date(`${start}T12:00:00`).getFullYear() &&
-    Number(objective.year) <= new Date(`${end}T12:00:00`).getFullYear() &&
-    (!lifeAreaId || objective.lifeAreaId === lifeAreaId) &&
-    (!projectId || records.projects.some((project) => project.id === projectId && project.objectiveId === objective.id)));
+  const objectives = objectivesInPeriod(tasks, habits, start, end);
   const objectiveProgress = objectives.map((objective) => {
     const results = records.keyResults.filter((result) => result.objectiveId === objective.id);
     return results.length
@@ -688,6 +710,7 @@ function render() {
           </select></label>
           <p class="report-export-title">اختر الصيغة المناسبة</p>
           <button class="report-export-option is-primary" type="button" data-export="pdf"><strong>تقرير PDF</strong><span>ملخص بصري وخريطة مجالاتك</span></button>
+          <button class="report-export-option" type="button" data-export="share"><strong>إرسال التقرير لشخص</strong><span>ملف مرتب جاهز للمشاركة</span></button>
           <button class="report-export-option" type="button" data-export="excel"><strong>Excel</strong><span>جداول ورسوم قابلة للتحليل</span></button>
           <button class="report-export-option" type="button" data-export="csv"><strong>CSV</strong><span>بيانات قابلة للفتح في أي جدول</span></button>
           <button class="report-export-option" type="button" data-export="json"><strong>JSON</strong><span>نسخة كاملة من بيانات التقرير</span></button>
@@ -695,7 +718,7 @@ function render() {
       </header>
       <section class="report-controls" aria-label="اختيار فترة التقرير ومجاله">
         <label>الفترة<select id="report-range">
-          <option value="week"${range === "week" ? " selected" : ""}>هذا الأسبوع</option><option value="month"${range === "month" ? " selected" : ""}>هذا الشهر</option><option value="year"${range === "year" ? " selected" : ""}>هذه السنة</option><option value="quarter"${range === "quarter" ? " selected" : ""}>آخر 3 أشهر</option><option value="day"${range === "day" ? " selected" : ""}>اليوم</option><option value="plan"${range === "plan" ? " selected" : ""}>فترة التخطيط (${plan.columns.length} فترات)</option><option value="custom"${range === "custom" ? " selected" : ""}>فترة مخصصة</option><option value="all"${range === "all" ? " selected" : ""}>كامل السجل</option>
+          <option value="week"${range === "week" ? " selected" : ""}>هذا الأسبوع</option><option value="month"${range === "month" ? " selected" : ""}>هذا الشهر</option><option value="half-year"${range === "half-year" ? " selected" : ""}>آخر ٦ أشهر</option><option value="year"${range === "year" ? " selected" : ""}>هذه السنة</option><option value="quarter"${range === "quarter" ? " selected" : ""}>آخر 3 أشهر</option><option value="day"${range === "day" ? " selected" : ""}>اليوم</option><option value="plan"${range === "plan" ? " selected" : ""}>فترة التخطيط (${plan.columns.length} فترات)</option><option value="custom"${range === "custom" ? " selected" : ""}>فترة مخصصة</option><option value="all"${range === "all" ? " selected" : ""}>كامل السجل</option>
         </select></label>
         ${range === "custom" ? `<label>من<input id="report-start" type="date" value="${start}"></label><label>إلى<input id="report-end" type="date" value="${end}"></label>` : ""}
         <label>المجال<select id="report-area"><option value="">كل المجالات</option>${records.lifeAreas.filter((area) => !area.archived).map((area) => `<option value="${escapeHtml(area.id)}"${lifeAreaId === area.id ? " selected" : ""}>${escapeHtml(area.name)}</option>`).join("")}</select></label>
@@ -705,6 +728,7 @@ function render() {
         </div></details>
       </section>
       <p class="report-period-label">${range === "all" ? "كامل السجل · خريطة النشاط تعرض آخر 12 شهراً" : `<bdi dir="ltr">${escapeHtml(start)} — ${escapeHtml(end)}</bdi>`} · ${completedTasks} مهام منجزة</p>
+      ${renderPeriodHighlights(tasks, start, end)}
       ${renderReportCharts(tasks)}
       <details class="report-table-details">
         <summary>سجل المهام بالتفصيل <span>${tasks.length} مهمة</span></summary>
@@ -901,6 +925,71 @@ function buildExportSheets(tasks) {
 function exportFilename(extension) {
   const period = range === "all" ? "full" : dateRange().start;
   return `mihwar-report-${exportScope}-${period}.${extension}`;
+}
+
+function renderPeriodHighlights(tasks, start, end) {
+  const summary = reportSummary(tasks, start, end);
+  const habits = records.habits.filter((habit) => !habit.archived && matchesHabitFilters(habit));
+  const completionStats = completionStatistics(tasks, habits, start, end);
+  const habitStats = habits.map((habit) => habitConsistency(habit, start, end));
+  const scheduledHabitDays = habitStats.reduce((total, item) => total + item.scheduled, 0);
+  const completedHabitDays = habitStats.reduce((total, item) => total + item.completed, 0);
+  const totalItems = tasks.length + scheduledHabitDays;
+  const completedItems = summary.completedTasks + completedHabitDays;
+  const overallProgress = totalItems ? Math.round(completedItems / totalItems * 100) : 0;
+  const focusMinutes = reportSessions(start, end).reduce((total, session) =>
+    total + Math.max(0, Number(session.durationMin) || 0), 0);
+  const objectives = objectivesInPeriod(tasks, habits, start, end);
+  const areasInPeriod = new Set([
+    ...tasks.map(taskLifeAreaId),
+    ...habits.filter((habit, index) => habitStats[index].scheduled).map(habitLifeAreaId),
+    ...objectives.map((objective) => objective.lifeAreaId),
+  ].filter(Boolean));
+  const areaNames = records.lifeAreas
+    .filter((area) => areasInPeriod.has(area.id))
+    .map((area) => area.name);
+  const completedObjectives = objectives.filter((objective) => objective.status === "done").length;
+  const prideMessage = summary.completedTasks || completedHabitDays
+    ? `أنجزت ${summary.completedTasks} مهمة، وحافظت على عاداتك في ${completedHabitDays} يومًا. هذا تقدّم حقيقي يستحق الفخر.`
+    : "كل بداية تُحسب. اختر خطوة صغيرة واجعلها إنجازك القادم.";
+  return `<section class="report-period-highlight" aria-label="حصاد الفترة">
+    <header class="report-period-highlight-heading">
+      <div><p class="goals-kicker">حصادك يستحق أن تراه</p><h3>إنجازات هذه الفترة</h3></div>
+      <span><bdi dir="ltr">${escapeHtml(start)} — ${escapeHtml(end)}</bdi></span>
+    </header>
+    <div class="report-period-highlight-grid">
+      <article class="report-period-highlight-card is-progress">
+        <span>التقدّم الكلي</span><strong>${overallProgress}٪</strong>
+        <small>${completedItems} من ${totalItems} مهمة ويوم عادة</small>
+        <i role="img" aria-label="التقدم ${overallProgress} بالمئة" style="--highlight-progress:${overallProgress}%"></i>
+      </article>
+      <article class="report-period-highlight-card">
+        <span>مهام أنجزتها</span><strong>${summary.completedTasks}</strong>
+        <small>من أصل ${tasks.length} مهمة في الفترة</small>
+      </article>
+      <article class="report-period-highlight-card">
+        <span>ثبات العادات</span><strong>${summary.habitCompletion}٪</strong>
+        <small>${completedHabitDays} يومًا من ${scheduledHabitDays} يومًا مجدولًا</small>
+      </article>
+      <article class="report-period-highlight-card">
+        <span>أهداف ضمن الفترة</span><strong>${objectives.length}</strong>
+        <small>${completedObjectives} مكتملة · متوسط التقدم ${summary.objectiveProgress}٪</small>
+      </article>
+      <article class="report-period-highlight-card is-time">
+        <span>وقت الإنجاز المسجّل</span><strong>${formatDuration(completionStats.totalDuration)}</strong>
+        <small>${completionStats.durations.length} إنجازات بمدة مسجّلة</small>
+      </article>
+      <article class="report-period-highlight-card is-time">
+        <span>جلسات تركيز</span><strong>${formatDuration(focusMinutes)}</strong>
+        <small>${reportSessions(start, end).length} جلسة مكتملة</small>
+      </article>
+    </div>
+    <div class="report-period-highlight-foot">
+      <strong>مجالات عشت فيها هذه الفترة</strong>
+      <div>${areaNames.length ? areaNames.map((name) => `<span>${escapeHtml(name)}</span>`).join("") : "<span>أضف مجالًا لمهامك أو أهدافك ليظهر هنا</span>"}</div>
+    </div>
+    <p class="report-period-pride"><span aria-hidden="true">✦</span>${escapeHtml(prideMessage)}</p>
+  </section>`;
 }
 
 function buildExportAnalytics(tasks) {
@@ -1668,6 +1757,23 @@ function scopeExportAnalytics(analytics) {
   };
 }
 
+function reportShareSections(sheets) {
+  return sheets.map((sheet) => {
+    const headers = sheet.rows[0] ?? [];
+    const titleIndex = headers.findIndex((header) => /العنوان|العادة|الهدف|المشروع|المهمة|التاريخ/.test(String(header)));
+    const items = sheet.rows.slice(1).filter((row) => row.some((value) => String(value ?? "").trim())).map((row, index) => {
+      const title = titleIndex >= 0 ? row[titleIndex] : `${sheet.name} · ${index + 1}`;
+      const details = headers
+        .map((label, column) => ({ label: String(label), value: row[column] }))
+        .filter(({ label, value }, column) => column !== titleIndex && value !== undefined && value !== null
+          && String(value).trim() && !/^(?:المعرّف|المعرّف .+|معرّف .+)$/u.test(label))
+        .map(({ label, value }) => `${label}: ${value}`);
+      return { title: String(title || `${sheet.name} · ${index + 1}`), details };
+    });
+    return { title: sheet.name, items };
+  });
+}
+
 function bindEvents(app) {
   eventController?.abort();
   eventController = new AbortController();
@@ -1708,21 +1814,36 @@ function bindEvents(app) {
     lifeAreaId = event.currentTarget.value;
     render();
   }, { signal });
-  app.addEventListener("click", (event) => {
+  app.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-export]");
     if (!button) return;
     try {
       const tasks = filteredTasks();
       const sheets = buildExportSheets(tasks);
       const analytics = scopeExportAnalytics(buildExportAnalytics(tasks));
+      const period = range === "all" ? "كامل الفترة" : `${dateRange().start} — ${dateRange().end}`;
       if (button.dataset.export === "pdf") {
         printReport(
           sheets,
           EXPORT_SCOPE_LABELS[exportScope],
-          range === "all" ? "كامل الفترة" : `${dateRange().start} — ${dateRange().end}`,
+          period,
           analytics,
         );
         setReportStatus("اختر «حفظ كـ PDF» من نافذة الطباعة؛ سيحتوي على الإحصائيات والرسوم والتفاصيل المحددة.");
+        return;
+      }
+      if (button.dataset.export === "share") {
+        const recordCount = sheets.reduce((total, sheet) => total + Math.max(0, sheet.rows.length - 1), 0);
+        await shareTextReport({
+          title: EXPORT_SCOPE_LABELS[exportScope],
+          period,
+          summary: [
+            `نطاق التقرير: ${EXPORT_SCOPE_LABELS[exportScope]}`,
+            `عدد السجلات: ${recordCount}`,
+            `المجالات: ${lifeAreaId ? records.lifeAreas.find((area) => area.id === lifeAreaId)?.name ?? "محدد" : "كل المجالات"}`,
+          ],
+          sections: reportShareSections(sheets),
+        });
         return;
       }
       if (button.dataset.export === "csv") exportCsv(sheets, analytics);

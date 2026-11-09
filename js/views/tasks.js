@@ -6,6 +6,8 @@ import { showToast } from "../utils/notifications.js";
 import { formatDuration, totalRecordedTaskMinutes } from "../utils/task-metrics.js";
 import { ensureDefaultLifeAreas } from "../utils/life-areas.js";
 import { requestCompletionDetails } from "../utils/completion-dialog.js";
+import { shareTextReport } from "../export/share.js";
+import { printStructuredReport } from "../export/pdf.js";
 
 const PRIORITY_LABELS = ["مهم وعاجل", "مهم وغير عاجل", "عاجل وغير مهم", "غير عاجل وغير مهم"];
 const PRIORITY_GUIDANCE = ["ابدأ بها الآن", "حدّد لها وقتاً", "أنجزها بسرعة", "أجّلها أو استبعدها"];
@@ -165,7 +167,11 @@ function taskCard(task) {
           <span class="task-title">${escapeHtml(task.title)}</span>
           ${taskDate || lifeArea ? `<span class="task-card-meta">${taskDate ? escapeHtml(formatDate(taskDate)) : ""}${task.dueTime ? ` · ${escapeHtml(task.dueTime)}` : ""}${lifeArea ? ` · ${escapeHtml(lifeArea.name)}` : ""}</span>` : ""}
         </button>
-        <button class="icon-button task-card-edit" type="button" data-action="edit" aria-label="تعديل ${escapeHtml(task.title)}">✎</button>
+        <div class="task-card-actions">
+          <button class="icon-button" type="button" data-action="share-task" aria-label="مشاركة تقرير ${escapeHtml(task.title)}">↗</button>
+          <button class="icon-button" type="button" data-action="print-task" aria-label="حفظ تقرير ${escapeHtml(task.title)} بصيغة PDF">▤</button>
+          <button class="icon-button task-card-edit" type="button" data-action="edit" aria-label="تعديل ${escapeHtml(task.title)}">✎</button>
+        </div>
       </div>
       <div class="task-card-details${detailsOpen ? " is-open" : ""}"${detailsOpen ? "" : " hidden"}>
         <div class="task-focus-strip">
@@ -188,6 +194,59 @@ function renderList(tasks) {
     return `<div class="tasks-empty">${emptyMessage}</div>`;
   }
   return `<div class="task-list">${tasks.map(taskCard).join("")}</div>`;
+}
+
+function taskReport(task) {
+  const checklist = normalizedChecklist(task);
+  const done = task.status === "done";
+  const dueDate = task.due || task.scheduled;
+  const lifeArea = records.lifeAreas.find((area) => area.id === taskLifeAreaId(task));
+  const details = [
+    { label: "الحالة", value: done ? "مكتملة" : "قيد الإنجاز" },
+    { label: "الأولوية", value: PRIORITY_LABELS[priorityIndex(task)] },
+    ...(dueDate ? [{ label: "الموعد", value: `${formatDate(dueDate)}${task.dueTime ? ` · ${task.dueTime}` : ""}` }] : []),
+    ...(lifeArea ? [{ label: "المجال", value: lifeArea.name }] : []),
+    ...(task.notes ? [{ label: "ملاحظات", value: task.notes }] : []),
+    ...(checklist.length ? [{ label: "التقدم الفرعي", value: `${checklist.filter((item) => item.done).length} من ${checklist.length}` }] : []),
+  ];
+  const summary = checklist.length
+    ? [{ label: "المهام الفرعية", value: `${checklist.filter((item) => item.done).length}/${checklist.length}`, detail: task.title }]
+    : [{ label: "حالة المهمة", value: done ? "مكتملة" : "قيد الإنجاز", detail: task.title }];
+  const sections = [{
+    title: "بيانات المهمة",
+    items: [{ title: task.title, detail: task.notes || "", details }],
+  }, ...(checklist.length ? [{
+    title: "المهام الفرعية",
+    items: checklist.map((item) => ({ title: item.text, detail: item.done ? "مكتملة" : "غير مكتملة" })),
+  }] : [])];
+  return { title: `مهمة: ${task.title}`, period: dueDate ? formatDate(dueDate) : "دون موعد محدد", summary, sections };
+}
+
+function visibleTasksReport(tasks, date) {
+  const title = date ? "مهام اليوم" : statusFilter === "done" ? "المهام المنجزة" : "المهام قيد الإنجاز";
+  const period = date ? formatDate(date) : "القائمة الحالية";
+  const completed = tasks.filter((task) => task.status === "done").length;
+  return {
+    title,
+    period,
+    summary: [
+      { label: "عدد المهام", value: arabicDigits(tasks.length) },
+      { label: "المكتملة", value: arabicDigits(completed) },
+      { label: "قيد الإنجاز", value: arabicDigits(tasks.length - completed) },
+    ],
+    sections: [{
+      title,
+      items: tasks.map((task) => {
+        const checklist = normalizedChecklist(task);
+        const dueDate = task.due || task.scheduled;
+        return {
+          title: task.title,
+          detail: `${task.status === "done" ? "مكتملة" : "قيد الإنجاز"}${dueDate ? ` · ${formatDate(dueDate)}` : ""}${task.dueTime ? ` · ${task.dueTime}` : ""}`,
+          details: checklist.map((item) => ({ label: item.done ? "✓" : "○", value: item.text })),
+        };
+      }),
+    }],
+  };
 }
 
 function toggleTaskDetails(card) {
@@ -268,7 +327,10 @@ function render() {
     <section class="tasks-page" aria-label="إدارة المهام">
       <header class="tasks-heading">
         <div><p class="goals-kicker">${date ? `يوم ${escapeHtml(formatDate(date))}` : "مساحة الإنجاز"}</p><h2>${date ? "مهام اليوم" : "المهام"}</h2><p class="tasks-heading-note"><span class="task-count" data-count="${visibleTotal}">٠</span> مهمة في القائمة</p></div>
-        <button class="tasks-heading-add" type="button" data-action="new-task" aria-label="إضافة مهمة"><span aria-hidden="true">＋</span></button>
+        <div class="tasks-heading-actions">
+          <button class="button button-secondary" type="button" data-action="share-task-list">مشاركة القائمة</button>
+          <button class="tasks-heading-add" type="button" data-action="new-task" aria-label="إضافة مهمة"><span aria-hidden="true">＋</span></button>
+        </div>
       </header>
       ${date ? `<a class="day-filter-back-link" href="#/today?date=${encodeURIComponent(date)}">↗ العودة إلى خارطة اليوم</a>` : ""}
       <nav class="task-status-tabs" aria-label="حالة المهام">
@@ -617,6 +679,19 @@ function bindEvents(app) {
     }
     if (button.dataset.action === "toggle-task-details") {
       toggleTaskDetails(button.closest(".task-card"));
+      return;
+    }
+    if (button.dataset.action === "share-task-list") {
+      const tasks = currentTasks().filter((task) => !priorityModeEnabled || selectedPriority === null || priorityIndex(task) === selectedPriority);
+      await shareTextReport(visibleTasksReport(tasks, selectedDateFilter()));
+      return;
+    }
+    if (button.dataset.action === "share-task" || button.dataset.action === "print-task") {
+      const task = records.tasks.find((item) => item.id === card?.dataset.taskId);
+      if (!task) return;
+      const report = taskReport(task);
+      if (button.dataset.action === "share-task") await shareTextReport(report);
+      else printStructuredReport(report.title, report.period, report.summary, report.sections);
       return;
     }
     if (button.dataset.action === "new-task") {

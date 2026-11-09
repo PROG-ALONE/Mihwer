@@ -59,6 +59,19 @@ export function dayProgress(habit, date) {
   if (mode === "items") {
     const logged = new Set(habit.itemLog?.[date] ?? []);
     const items = habit.items;
+    const requiredPrayerItems = /صلاة|الصلوات/.test(habit.title ?? "")
+      ? items.filter((item) => item.category === "فرض")
+      : [];
+    if (requiredPrayerItems.length) {
+      const done = requiredPrayerItems.filter((item) => logged.has(item.id)).length;
+      return {
+        mode, logged, done, loggedCount: logged.size, total: requiredPrayerItems.length,
+        target: requiredPrayerItems.length, itemsTotal: items.length,
+        complete: done >= requiredPrayerItems.length,
+        amountDetails: [],
+        percent: Math.min(100, Math.round((done / requiredPrayerItems.length) * 100)),
+      };
+    }
     const done = items.filter((item) => logged.has(item.id));
     const target = requiresAllItems(habit)
       ? items.length
@@ -122,10 +135,18 @@ export function setDayComplete(habit, date, complete) {
     if (mode === "count") {
       next.progress = { ...(habit.progress ?? {}), [date]: complete ? Math.max(1, Number(habit.targetPerDay) || 1) : 0 };
     } else if (mode === "items") {
+      const requiredPrayerItems = /صلاة|الصلوات/.test(habit.title ?? "")
+        ? habit.items.filter((item) => item.category === "فرض")
+        : [];
+      const targetItems = requiredPrayerItems.length
+        ? requiredPrayerItems
+        : habit.items.slice(0, requiresAllItems(habit)
+          ? habit.items.length
+          : Math.max(1, Number(habit.targetItemsPerDay) || habit.items.length));
       next.itemLog = {
         ...(habit.itemLog ?? {}),
         [date]: complete
-          ? habit.items.slice(0, requiresAllItems(habit) ? habit.items.length : Math.max(1, Number(habit.targetItemsPerDay) || habit.items.length)).map((item) => item.id)
+          ? targetItems.map((item) => item.id)
           : [],
       };
     } else if (complete) next.history[date] = true;
@@ -167,6 +188,75 @@ const PRAYER_PRESET = [
   "نافلة | صلاة الشفع | 2 | ركعة",
   "نافلة | الوتر | 1 | ركعة",
 ].join("\n");
+
+export async function ensureDailyRitualHabits() {
+  const habits = await getRecords("habits");
+  const defaults = [
+    {
+      id: "mihwar-default-prayer-habit",
+      title: "الصلاة بتفاصيلها",
+      mode: "items",
+      targetItemsPerDay: 5,
+      items: parseItems(PRAYER_PRESET, "ركعة"),
+      unit: "ركعة",
+    },
+    { id: "mihwar-default-dhuha-habit", title: "صلاة الضحى", mode: "check" },
+    { id: "mihwar-default-morning-adhkar-habit", title: "أذكار الصباح", mode: "check" },
+    { id: "mihwar-default-evening-adhkar-habit", title: "أذكار المساء", mode: "check" },
+  ];
+  const matches = (habit, item) => !habit.archived && (item.title.includes("الصلاة")
+    ? /صلاة|الصلوات/.test(habit.title ?? "") && habit.mode === "items"
+    : habit.title === item.title);
+  for (const item of defaults) {
+    if (habits.some((habit) => matches(habit, item))) continue;
+    const now = new Date().toISOString();
+    const habit = {
+      id: habits.some((existing) => existing.id === item.id) ? crypto.randomUUID() : item.id,
+      title: item.title,
+      kind: "build",
+      schedule: "daily",
+      priority: 3,
+      dailyTime: null,
+      mode: item.mode,
+      targetPerDay: 1,
+      targetItemsPerDay: item.targetItemsPerDay ?? 1,
+      requireAllItems: false,
+      unit: item.unit ?? "",
+      items: item.items ?? [],
+      progress: {},
+      itemLog: {},
+      history: {},
+      completionLog: {},
+      focusSpentMin: 0,
+      archived: false,
+      order: habits.length,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await add("habits", habit);
+    habits.push(habit);
+  }
+}
+
+function applyPrayerPreset(form) {
+  form.elements.items.value = PRAYER_PRESET;
+  form.elements.unit.value = "ركعة";
+  form.elements.mode.value = "items";
+  form.elements.requireAllItems.checked = false;
+  form.elements.targetItemsPerDay.value = "5";
+  if (!form.elements.title.value) form.elements.title.value = "الصلاة بتفاصيلها";
+  form.elements.lifeAreaId.value = "mihwar-area-religion";
+  syncModeFields(form);
+}
+
+function openPrayerPreset(app) {
+  const form = app.querySelector("#habit-form");
+  form.reset();
+  form.elements.id.value = "";
+  applyPrayerPreset(form);
+  app.querySelector("#habit-dialog-title").textContent = "إضافة عادة الصلاة";
+  app.querySelector("#habit-dialog").showModal();
+}
 
 function habitItemsMarkup(items, logged) {
   const categories = ["فرض", "سنة", "نافلة", "عام"];
@@ -401,15 +491,7 @@ function bindEvents(app) {
       return;
     }
     if (action === "prayer-preset") {
-      const form = app.querySelector("#habit-form");
-      form.elements.items.value = PRAYER_PRESET;
-      form.elements.unit.value = "ركعة";
-      form.elements.mode.value = "items";
-      form.elements.requireAllItems.checked = false;
-      form.elements.targetItemsPerDay.value = String(Math.min(10, PRAYER_PRESET.split("\n").length));
-      if (!form.elements.title.value) form.elements.title.value = "الصلاة بتفاصيلها";
-      form.elements.lifeAreaId.value = "mihwar-area-religion";
-      syncModeFields(form);
+      applyPrayerPreset(app.querySelector("#habit-form"));
       return;
     }
     if (action === "close") {
@@ -578,6 +660,14 @@ export async function mountHabitsView(isCurrent = () => true) {
   if (!isCurrent()) return;
   document.querySelector("#page-title").textContent = "العادات";
   render();
+  const params = new URLSearchParams(window.location.hash.split("?")[1] ?? "");
+  if (params.get("preset") === "prayer") {
+    const app = document.querySelector("#app");
+    if (app) openPrayerPreset(app);
+    const date = params.get("date");
+    const cleanUrl = `${window.location.pathname}${window.location.search}#/habits${date ? `?date=${encodeURIComponent(date)}` : ""}`;
+    window.history.replaceState(window.history.state, "", cleanUrl);
+  }
   unsubscribe = subscribe(async (_state, change) => {
     if (!change.storeName || ["habits", "objectives", "lifeAreas"].includes(change.storeName)) {
       try {

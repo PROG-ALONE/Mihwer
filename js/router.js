@@ -77,8 +77,20 @@ export function renderRoute(route, app, title) {
       <section class="settings-grid" aria-label="إعدادات البيانات">
         <header class="settings-page-heading">
           <div><p class="goals-kicker">تحكّم بتجربتك وبياناتك</p><h2>إعدادات مِحوَر</h2></div>
-          <p>خيارات التخطيط والتركيز والنسخ الاحتياطي والمزامنة، كلها في مكان واحد.</p>
+          <p>خيارات التخطيط والنوم والتركيز والنسخ الاحتياطي والمزامنة، كلها في مكان واحد.</p>
         </header>
+        <article class="settings-card sleep-settings-card">
+          <span class="settings-icon" aria-hidden="true">☾</span>
+          <h2>إيقاع النوم والراحة</h2>
+          <p>حدّد موعد النوم المعتاد وموعد القيلولة الاختياري. يتعلّم مِحوَر متوسطك الفعلي من السجل اليومي، ويخفف المهام عالية الأولوية في الساعات الثلاث السابقة للنوم.</p>
+          <form id="sleep-settings-form" class="sleep-settings-form">
+            <label>النوم المعتاد<input name="bedtime" type="time" value="00:00" required></label>
+            <label class="sleep-nap-preference"><input name="napExpected" type="checkbox"> أتوقع قيلولة يومية</label>
+            <label>موعد القيلولة المعتاد<input name="napTime" type="time" value="13:00"></label>
+            <button class="button button-secondary" type="submit">حفظ إيقاعي المعتاد</button>
+          </form>
+          <span class="settings-plan-info">سجّل نومك واستيقاظك وقيلولتك في خارطة اليوم لرؤية متوسطاتك وإيقاعك المتعلّم.</span>
+        </article>
         <article class="settings-card plan-settings-card">
           <span class="settings-icon" aria-hidden="true">▦</span>
           <h2>إيقاع التخطيط</h2>

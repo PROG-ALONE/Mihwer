@@ -8,6 +8,35 @@ function escapeHtml(value) {
   })[character]);
 }
 
+export function printStructuredReport(title, period, summary = [], sections = []) {
+  const printView = document.createElement("section");
+  printView.className = "print-data-report";
+  printView.innerHTML = `
+    <header class="export-cover">
+      <div><p>مِحوَر · تقرير منظّم</p><h1>${escapeHtml(title)}</h1><span><bdi dir="ltr">${escapeHtml(period)}</bdi></span></div>
+      <strong aria-hidden="true">م</strong>
+      <small>أُعدّ في ${escapeHtml(new Date().toLocaleString("ar"))}</small>
+    </header>
+    ${summary.length ? `<section class="export-summary"><h2>ملخص التقرير</h2><div class="export-stat-grid">${summary.map((item) => `<article><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)}</strong>${item.detail ? `<small>${escapeHtml(item.detail)}</small>` : ""}</article>`).join("")}</div></section>` : ""}
+    ${sections.map((section) => `<section class="export-structured-section">
+      <h2>${escapeHtml(section.title)}</h2>
+      ${section.items.length ? `<div class="export-record-grid">${section.items.map((item) => `<article class="export-record-card">
+        <h3>${escapeHtml(item.title)}</h3>
+        ${item.detail ? `<p>${escapeHtml(item.detail)}</p>` : ""}
+        ${item.details?.length ? `<div class="export-record-fields">${item.details.map((detail) => typeof detail === "string"
+          ? `<div><strong>${escapeHtml(detail)}</strong></div>`
+          : `<div><span>${escapeHtml(detail.label)}</span><strong>${escapeHtml(detail.value)}</strong></div>`).join("")}</div>` : ""}
+      </article>`).join("")}</div>` : "<p>لا توجد سجلات ضمن هذا التقرير.</p>"}
+    </section>`).join("")}`;
+  document.body.append(printView);
+  document.body.classList.add("printing-data-report");
+  window.addEventListener("afterprint", () => {
+    printView.remove();
+    document.body.classList.remove("printing-data-report");
+  }, { once: true });
+  window.print();
+}
+
 export function printReport(sheets, title, period, analytics) {
   const metricNumber = (value) => {
     if (typeof value === "number" && Number.isFinite(value)) return Math.max(0, value);
