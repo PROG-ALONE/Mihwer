@@ -310,6 +310,60 @@
   }
 }
 
+.subtask-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.subtask-item-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+
+.subtask-edit-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.subtask-edit-form input {
+  min-width: 0;
+  min-height: 36px;
+  padding: 6px 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  font: inherit;
+}
+
+.subtask-edit-form .button {
+  min-height: 34px;
+  padding: 5px 9px;
+  font-size: .75rem;
+}
+
+@media (max-width: 420px) {
+  .subtask-row {
+    align-items: flex-start;
+  }
+
+  .subtask-edit-form {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 4px;
+  }
+
+  .subtask-edit-form .button {
+    padding-inline: 7px;
+  }
+}
+
 .period-detail-card {
   --detail-accent: var(--color-primary);
   display: grid;
@@ -19132,4 +19186,66 @@ body.today-route .topbar > div:first-child {
     overflow-wrap: break-word;
     word-break: normal;
   }
+}
+
+.tasks-heading h2,
+.goals-heading h2,
+.habits-heading h2,
+.reports-heading h2,
+.journal-heading h2,
+.settings-page-heading h2,
+.cosmic-day-heading h2,
+.focus-page h2 {
+  font-size: var(--font-size-page-title);
+}
+
+#app :is(p, label, summary, a, button:not(.icon-button):not(.task-check)),
+#period-dashboard :is(p, label, summary, a, button:not(.icon-button):not(.task-check)),
+.more-navigation .nav-link {
+  font-size: var(--font-size-label);
+}
+
+#app small,
+#period-dashboard small {
+  font-size: var(--font-size-caption);
+}
+
+#app :is(
+  .task-count,
+  .task-card-meta,
+  .swipe-delete-hint,
+  .habit-heatmap-label,
+  .habit-title-group > span,
+  .habit-focus-strip > span,
+  .habit-item-name,
+  .habit-item-amount,
+  .report-export-option > span,
+  .space-map-time,
+  .cosmic-map-footer > span,
+  .space-sleep-card strong,
+  .space-night-group-empty,
+  .space-night-heading strong,
+  .today-overview-stats span,
+  .today-overview-stats strong,
+  .goal-overview-stat > span,
+  .journal-day-summary span,
+  .report-period-highlight-card > span,
+  .report-period-highlight-foot > span,
+  .report-period-highlight-foot strong,
+  .report-stat-top span,
+  .report-domain-heading,
+  .report-heatmap-legend span,
+  .report-export-option > strong,
+  .settings-plan-info,
+  h4 > span,
+  bdi,
+  b
+),
+#app svg text {
+  font-size: var(--font-size-caption);
+}
+
+#app :is(input, select, textarea),
+#period-dashboard :is(input, select, textarea) {
+  font-size: var(--font-size-body);
 }

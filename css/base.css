@@ -15,8 +15,8 @@ body {
   color: var(--color-text);
   background: var(--color-bg);
   font-family: var(--font-family);
+  font-size: var(--font-size-body);
   line-height: 1.6;
-  text-rendering: optimizeLegibility;
 }
 
 button,

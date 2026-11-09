@@ -6,7 +6,7 @@ import { mountHabitsView, unmountHabitsView } from "./views/habits.js";
 import { mountFocusView, unmountFocusView } from "./views/focus.js";
 import { mountJournalView, unmountJournalView } from "./views/journal.js";
 import { mountReportsView, unmountReportsView } from "./views/reports.js";
-import { mountTasksView, unmountTasksView } from "./views/tasks.js?v=111";
+import { mountTasksView, unmountTasksView } from "./views/tasks.js?v=112";
 import { bindSettingsActions, checkBackupReminder } from "./views/settings.js";
 import { showToast } from "./utils/notifications.js";
 import { mountPeriodDashboard } from "./views/dashboard.js?v=112";
@@ -40,14 +40,14 @@ const legacyThemes = {
 let renderSequence = 0;
 let mountedRoute;
 const animatedCountSelector = "[data-count]";
-const LATEST_UPDATE_ID = "shared-period-task-reports-path-v132";
+const LATEST_UPDATE_ID = "shared-period-task-reports-path-v133";
 
 function showLatestUpdates() {
   const previousUpdateId = localStorage.getItem("mihwar-seen-update");
   if (previousUpdateId === LATEST_UPDATE_ID) return;
   localStorage.setItem("mihwar-seen-update", LATEST_UPDATE_ID);
   if (!previousUpdateId) return;
-  showToast("آخر التحديثات:\n• شارك تقرير أي مهمة أو قائمة مهام\n• شارك مسارات الأسبوع والشهر والسنة كقصص GIF متحركة ومفصلة\n• أداء أسرع وعرض أوضح للبطاقات على الهاتف", { duration: 8000 });
+  showToast("آخر التحديثات:\n• شارك تقرير أي مهمة أو قائمة مهام\n• شارك مسارات الأسبوع والشهر والسنة كقصص GIF متحركة ومفصلة\n• أحجام خط موحّدة ومريحة مع أداء أسرع", { duration: 8000 });
 }
 
 function arabicDigits(value) {
@@ -57,7 +57,8 @@ function arabicDigits(value) {
 function animateCardCount(counter) {
   const target = Number(counter.dataset.count);
   if (!Number.isFinite(target) || target < 0) return;
-  if (counter._countAnimation) cancelAnimationFrame(counter._countAnimation);
+  if (counter._countAnimation || counter.dataset.countAnimated === "true") return;
+  counter.dataset.countAnimated = "true";
   const startedAt = performance.now();
   const duration = 520;
   const tick = (now) => {

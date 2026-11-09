@@ -44,7 +44,11 @@ export function getState() {
 
 export async function getRecords(storeName) {
   await initializeStore();
-  return getAllRecords(storeName);
+  const records = state[storeName];
+  if (!Array.isArray(records) || typeof structuredClone !== "function") {
+    return getAllRecords(storeName);
+  }
+  return structuredClone(records);
 }
 
 export async function add(storeName, record) {

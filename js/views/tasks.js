@@ -112,6 +112,17 @@ function normalizedChecklist(task) {
     : { ...item, completionLog: Array.isArray(item.completionLog) ? item.completionLog : [] });
 }
 
+function subtaskItemContent(item, index) {
+  return `
+    <div class="subtask-row">
+      <label><input type="checkbox" data-action="toggle-subtask" data-index="${index}" ${item.done ? "checked" : ""}> <span>${escapeHtml(item.text)}</span></label>
+      <div class="subtask-item-actions">
+        <button class="icon-button" type="button" data-action="edit-subtask" data-index="${index}" aria-label="تعديل المهمة الفرعية">✎</button>
+        <button class="icon-button" type="button" data-action="delete-subtask" data-index="${index}" aria-label="حذف المهمة الفرعية">×</button>
+      </div>
+    </div>`;
+}
+
 function subtasksBlock(task) {
   const items = normalizedChecklist(task);
   const doneCount = items.filter((item) => item.done).length;
@@ -129,8 +140,7 @@ function subtasksBlock(task) {
       <ul class="subtask-list">
         ${items.map((item, index) => `
           <li class="${item.done ? "is-done" : ""}">
-            <label><input type="checkbox" data-action="toggle-subtask" data-index="${index}" ${item.done ? "checked" : ""}> <span>${escapeHtml(item.text)}</span></label>
-            <button class="icon-button" type="button" data-action="delete-subtask" data-index="${index}" aria-label="حذف المهمة الفرعية">×</button>
+            ${subtaskItemContent(item, index)}
           </li>`).join("")}
       </ul>
     </details>`;
@@ -769,12 +779,43 @@ function bindEvents(app) {
       }
       return;
     }
+    if (button.dataset.action === "edit-subtask") {
+      const taskId = button.closest("[data-task-id]")?.dataset.taskId
+        ?? button.closest("#task-editor-subtasks")?.dataset.taskId;
+      const task = records.tasks.find((item) => item.id === taskId);
+      const index = Number(button.dataset.index);
+      const item = task && normalizedChecklist(task)[index];
+      const row = button.closest("li");
+      if (!item || !row) return;
+      row.innerHTML = `<form class="subtask-edit-form" data-subtask-edit-form data-index="${index}">
+        <input type="text" name="text" value="${escapeHtml(item.text)}" maxlength="200" required aria-label="نص المهمة الفرعية">
+        <button class="button button-primary" type="submit">حفظ</button>
+        <button class="button button-secondary" type="button" data-action="cancel-subtask-edit" data-index="${index}">إلغاء</button>
+      </form>`;
+      const input = row.querySelector('input[name="text"]');
+      input?.focus();
+      input?.select();
+      return;
+    }
+    if (button.dataset.action === "cancel-subtask-edit") {
+      const taskId = button.closest("[data-task-id]")?.dataset.taskId
+        ?? button.closest("#task-editor-subtasks")?.dataset.taskId;
+      const task = records.tasks.find((item) => item.id === taskId);
+      const index = Number(button.dataset.index);
+      const item = task && normalizedChecklist(task)[index];
+      const row = button.closest("li");
+      if (item && row) row.innerHTML = subtaskItemContent(item, index);
+      return;
+    }
     if (button.dataset.action === "delete-subtask") {
-      const task = records.tasks.find((item) => item.id === button.closest("[data-task-id]")?.dataset.taskId);
+      const taskId = button.closest("[data-task-id]")?.dataset.taskId
+        ?? button.closest("#task-editor-subtasks")?.dataset.taskId;
+      const task = records.tasks.find((item) => item.id === taskId);
       if (!task) return;
       try {
         await saveChecklist(task, normalizedChecklist(task).filter((_, index) => index !== Number(button.dataset.index)));
       } catch (error) {
+        console.error("تعذّر حذف المهمة الفرعية:", error);
         setStatus(error.message, true);
       }
       return;
@@ -816,6 +857,34 @@ function bindEvents(app) {
   }, { signal });
 
   app.addEventListener("submit", async (event) => {
+    const subtaskEditForm = event.target.closest("[data-subtask-edit-form]");
+    if (subtaskEditForm) {
+      event.preventDefault();
+      const taskId = subtaskEditForm.closest("[data-task-id]")?.dataset.taskId
+        ?? subtaskEditForm.closest("#task-editor-subtasks")?.dataset.taskId;
+      const task = records.tasks.find((item) => item.id === taskId);
+      const index = Number(subtaskEditForm.dataset.index);
+      const text = subtaskEditForm.elements.text.value.trim();
+      if (!task || !Number.isInteger(index) || !text) {
+        setStatus("أدخل نص المهمة الفرعية.", true);
+        return;
+      }
+      const checklist = normalizedChecklist(task);
+      if (!checklist[index]) {
+        setStatus("لم تعد المهمة الفرعية موجودة. حدّث القائمة وحاول مجدداً.", true);
+        return;
+      }
+      try {
+        subtaskEditForm.querySelector('button[type="submit"]').disabled = true;
+        checklist[index].text = text;
+        await saveChecklist(task, checklist);
+        setStatus("حُفظ تعديل المهمة الفرعية.");
+      } catch (error) {
+        console.error("تعذّر حفظ تعديل المهمة الفرعية:", error);
+        setStatus(error.message, true);
+      }
+      return;
+    }
     const subtaskForm = event.target.closest("[data-subtask-form]");
     if (subtaskForm) {
       event.preventDefault();
