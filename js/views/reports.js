@@ -10,6 +10,7 @@ import { downloadXlsx } from "../export/xlsx.js";
 import { printReport } from "../export/pdf.js";
 import { shareTextReport } from "../export/share.js";
 import { completedSubtaskCount, formatDuration, manualTaskMinutes, totalRecordedTaskMinutes } from "../utils/task-metrics.js";
+import { isTaskScheduledOn } from "../utils/task-schedule.js";
 
 const DAY_MS = 86_400_000;
 const DATE_RANGES = {
@@ -186,11 +187,7 @@ function completionStatistics(tasks, habits, start, end) {
     const dayTaskEvents = taskEvents.filter((event) => event.date === date);
     const completedTaskIds = new Set(dayTaskEvents.map((event) => event.id));
     const plannedTasks = tasks.filter((task) => {
-      const dates = [task.scheduled, task.due].filter(Boolean).map((value) =>
-        /^\d{4}-\d{2}-\d{2}$/.test(value)
-          ? value
-          : Number.isNaN(new Date(value).getTime()) ? "" : localDateString(new Date(value)));
-      return dates.includes(date) || completedTaskIds.has(task.id);
+      return isTaskScheduledOn(task, date, true) || completedTaskIds.has(task.id);
     });
     const plannedHabits = habits.filter((habit) =>
       scheduledDays(habit, date, date).length > 0);

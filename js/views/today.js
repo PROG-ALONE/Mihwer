@@ -11,6 +11,7 @@ import { dayProgress, ensureDailyRitualHabits, setCompletionDetails, setDayCompl
 import { showToast } from "../utils/notifications.js";
 import { requestCompletionDetails } from "../utils/completion-dialog.js";
 import { formatDuration } from "../utils/task-metrics.js";
+import { isTaskScheduledInRange, isTaskScheduledOn } from "../utils/task-schedule.js";
 import { shareTextReport } from "../export/share.js";
 import { printStructuredReport } from "../export/pdf.js";
 import { animatedDayStoryFile, shareOrDownloadStoryFile } from "../export/day-story.js";
@@ -163,7 +164,8 @@ function isTaskForDate(task, date) {
   if (task.status === "done") {
     return task.completedAt ? datePart(task.completedAt) === date : dates.includes(date);
   }
-  return dates.includes(date) || (date === localDateString() && dates.some((taskDate) => taskDate < date));
+  return isTaskScheduledOn(task, date, true) ||
+    (date === localDateString() && dates.some((taskDate) => taskDate < date));
 }
 
 function dayTasks(date) {
@@ -798,7 +800,8 @@ function periodMetrics(start, end) {
         ? dates.has(datePart(task.completedAt))
         : taskDates(task).some((date) => dates.has(date));
     }
-    return taskDates(task).some((date) => dates.has(date));
+    return isTaskScheduledInRange(task, start, end, true) ||
+      taskDates(task).some((date) => dates.has(date));
   });
   const completedTasks = tasks.filter((task) => task.status === "done").length;
   const taskProgress = tasks.reduce((total, task) => total + taskCompletion(task), 0);
@@ -937,7 +940,8 @@ function taskDatesInRange(task, start, end) {
     typeof item === "string" ? [] : (item.completionLog ?? []).filter((entry) => entry?.completed).map((entry) => entry.date));
   const completionDates = (task.completionLog ?? []).map((entry) => entry?.completedAt);
   const loggedTimeDates = (task.timeLog ?? []).map((entry) => entry?.date);
-  return [task.scheduled, task.due, task.createdAt, task.completedAt, ...completionDates, ...subtaskDates, ...loggedTimeDates]
+  return isTaskScheduledInRange(task, start, end, true) ||
+    [task.createdAt, task.completedAt, ...completionDates, ...subtaskDates, ...loggedTimeDates]
     .some((value) => {
       const date = datePart(value);
       return date && date >= start && date <= end;

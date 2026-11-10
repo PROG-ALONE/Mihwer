@@ -5,6 +5,7 @@ import { dayProgress, setCompletionDetails, setDayComplete } from "./habits.js";
 import { showToast } from "../utils/notifications.js";
 import { completedSubtaskCount, completedSubtasksOn, formatDuration, manualTaskMinutes } from "../utils/task-metrics.js";
 import { requestCompletionDetails } from "../utils/completion-dialog.js";
+import { isTaskScheduledInRange, isTaskScheduledOn } from "../utils/task-schedule.js";
 
 const WEEKDAY_SHORT_NAMES = ["أحد", "اثن", "ثلا", "أرب", "خمي", "جمع", "سبت"];
 const MONTH_NAMES = Array.from({ length: 12 }, (_, month) =>
@@ -83,7 +84,7 @@ function taskDateMatches(value, date) {
 }
 
 function isTaskPlannedOn(task, date) {
-  return task.status !== "done" && (taskDateMatches(task.scheduled, date) || taskDateMatches(task.due, date));
+  return task.status !== "done" && isTaskScheduledOn(task, date, true);
 }
 
 function isTaskCompletedOn(task, date) {
@@ -93,7 +94,7 @@ function isTaskCompletedOn(task, date) {
 }
 
 function taskIsPlannedInRange(task, start, end) {
-  return task.status !== "done" && (dateWithin(task.scheduled, start, end) || dateWithin(task.due, start, end));
+  return task.status !== "done" && isTaskScheduledInRange(task, start, end, true);
 }
 
 function taskIsCompletedInRange(task, start, end) {

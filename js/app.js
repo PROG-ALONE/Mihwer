@@ -6,7 +6,7 @@ import { mountHabitsView, unmountHabitsView } from "./views/habits.js";
 import { mountFocusView, unmountFocusView } from "./views/focus.js";
 import { mountJournalView, unmountJournalView } from "./views/journal.js";
 import { mountReportsView, unmountReportsView } from "./views/reports.js";
-import { mountTasksView, unmountTasksView } from "./views/tasks.js?v=117";
+import { mountTasksView, unmountTasksView } from "./views/tasks.js?v=118";
 import { bindSettingsActions, checkBackupReminder } from "./views/settings.js";
 import { showToast } from "./utils/notifications.js";
 import { mountPeriodDashboard } from "./views/dashboard.js?v=112";

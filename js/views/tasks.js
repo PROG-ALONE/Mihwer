@@ -4,6 +4,7 @@ import { nextOccurrence, RECURRENCE_OPTIONS } from "../utils/recurrence.js";
 import { parseQuickAdd } from "../utils/quickadd.js";
 import { showToast } from "../utils/notifications.js";
 import { formatDuration, totalRecordedTaskMinutes } from "../utils/task-metrics.js";
+import { isTaskScheduledOn } from "../utils/task-schedule.js";
 import { ensureDefaultLifeAreas } from "../utils/life-areas.js";
 import { requestCompletionDetails } from "../utils/completion-dialog.js";
 import { printStructuredReport } from "../export/pdf.js";
@@ -86,6 +87,7 @@ function selectedDateFilter() {
 
 function isTaskOnDate(task, date) {
   if (task.status === "done") return Boolean(task.completedAt) && localDateString(new Date(task.completedAt)) === date;
+  if (isTaskScheduledOn(task, date, true)) return true;
   const start = task.scheduled || task.due;
   if (!start) return false;
   const firstDate = /^\d{4}-\d{2}-\d{2}$/.test(start) ? start : localDateString(new Date(start));
@@ -195,7 +197,10 @@ function taskCard(task) {
         </div>
         <div class="task-details-facts">
           <span><small>الأولوية</small><strong>${PRIORITY_LABELS[priority]}</strong></span>
-          ${taskDate ? `<span><small>الموعد</small><strong>${escapeHtml(formatDate(taskDate))}${task.dueTime ? ` · ${escapeHtml(task.dueTime)}` : ""}</strong></span>` : ""}
+          ${task.spreadAcrossPeriod && task.scheduled && task.due
+            ? `<span><small>الفترة</small><strong>${escapeHtml(formatDate(task.scheduled))} – ${escapeHtml(formatDate(task.due))}</strong></span>`
+            : taskDate ? `<span><small>الموعد</small><strong>${escapeHtml(formatDate(taskDate))}${task.dueTime ? ` · ${escapeHtml(task.dueTime)}` : ""}</strong></span>` : ""}
+          ${task.spreadAcrossPeriod ? `<span><small>نوع المهمة</small><strong>ممتدة على فترة</strong></span>` : ""}
           ${lifeArea ? `<span><small>المجال</small><strong>${escapeHtml(lifeArea.name)}</strong></span>` : ""}
           ${task.estimateMin ? `<span><small>الوقت المتوقع</small><strong>${formatDuration(task.estimateMin)}</strong></span>` : ""}
           ${trackedMinutes ? `<span><small>الوقت المسجّل</small><strong>${formatDuration(trackedMinutes)}</strong></span>` : ""}
@@ -388,6 +393,10 @@ function render() {
             <label>الأولوية<select name="priority">${PRIORITY_LABELS.map((label, index) => `<option value="${index}">${label}</option>`).join("")}</select></label>
             <label>المجال<select name="lifeAreaId"><option value="">من الهدف أو دون مجال</option>${records.lifeAreas.filter((area) => !area.archived).map((area) => `<option value="${escapeHtml(area.id)}">${escapeHtml(area.name)}</option>`).join("")}</select></label>
           </div>
+          <label class="task-span-period-toggle">
+            <input name="spreadAcrossPeriod" type="checkbox">
+            <span><strong>مهمة ممتدة على فترة</strong><small>تُحتسب كل يوم بين تاريخ الجدولة والاستحقاق، وتُسجّل إنجازاتك الفرعية في أيامها.</small></span>
+          </label>
           <details class="task-editor-extra">
             <summary>تفاصيل إضافية</summary>
             <label>ملاحظات<textarea name="notes" rows="3"></textarea></label>
@@ -450,6 +459,7 @@ async function createTask(input, priorityOverride = null, dueDate = "", dueTime 
     estimateMin: focusDurationMin,
     tags: parsed.tags,
     checklist: [],
+    spreadAcrossPeriod: false,
     timeLog: [],
     recurrence: parsed.recurrence,
     status: "open",
@@ -835,6 +845,7 @@ function bindEvents(app) {
       form.elements.notes.value = task.notes ?? "";
       form.elements.scheduled.value = task.scheduled ?? "";
       form.elements.due.value = task.due ?? "";
+      form.elements.spreadAcrossPeriod.checked = Boolean(task.spreadAcrossPeriod);
       form.elements.dueTime.value = task.dueTime ?? "";
       form.elements.priority.value = String(priorityIndex(task));
       form.elements.estimateMin.value = task.estimateMin ?? "";
@@ -937,7 +948,12 @@ function bindEvents(app) {
     }
     const scheduledInput = form.elements.scheduled.value || null;
     const dueInput = form.elements.due.value || null;
-    const datesWereLinked = Boolean(task.scheduled && task.scheduled === task.due);
+    const spreadAcrossPeriod = form.elements.spreadAcrossPeriod.checked;
+    if (spreadAcrossPeriod && (!scheduledInput || !dueInput)) {
+      setStatus("حدّد تاريخ الجدولة والاستحقاق لتفعيل المهمة الممتدة على فترة.", true);
+      return;
+    }
+    const datesWereLinked = !spreadAcrossPeriod && Boolean(task.scheduled && task.scheduled === task.due);
     const scheduledChanged = scheduledInput !== (task.scheduled || null);
     const dueChanged = dueInput !== (task.due || null);
     let scheduled = scheduledInput;
@@ -957,6 +973,7 @@ function bindEvents(app) {
         notes: form.elements.notes.value.trim(),
         scheduled,
         due,
+        spreadAcrossPeriod,
         dueTime: form.elements.dueTime.value || null,
         important: priority === 0 || priority === 1,
         urgent: priority === 0 || priority === 2,
