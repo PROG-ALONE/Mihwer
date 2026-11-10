@@ -35,3 +35,19 @@ export function isTaskScheduledInRange(task, start, end, includePeriod = false) 
   }
   return [scheduled, due].some((date) => date && date >= start && date <= end);
 }
+
+export function isTaskCountedOn(task, date) {
+  if (task.spreadAcrossPeriod) {
+    const range = taskDateRange(task);
+    if (range) return range.end === date;
+  }
+  return isTaskScheduledOn(task, date);
+}
+
+export function isTaskCountedInRange(task, start, end) {
+  if (task.spreadAcrossPeriod) {
+    const range = taskDateRange(task);
+    if (range) return range.end >= start && range.end <= end;
+  }
+  return isTaskScheduledInRange(task, start, end);
+}

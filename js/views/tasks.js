@@ -395,7 +395,7 @@ function render() {
           </div>
           <label class="task-span-period-toggle">
             <input name="spreadAcrossPeriod" type="checkbox">
-            <span><strong>مهمة ممتدة على فترة</strong><small>تُحتسب كل يوم بين تاريخ الجدولة والاستحقاق، وتُسجّل إنجازاتك الفرعية في أيامها.</small></span>
+            <span><strong>مهمة ممتدة على فترة</strong><small>تظهر خلال المدة، ويُحتسب وزنها في يوم الاستحقاق فقط، بينما تُسجّل إنجازاتك الفرعية في أيامها.</small></span>
           </label>
           <details class="task-editor-extra">
             <summary>تفاصيل إضافية</summary>

@@ -7703,6 +7703,184 @@ details.objective-card > .objective-details-content {
   gap: 13px;
 }
 
+.daily-rhythm-analysis {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+  padding: clamp(16px, 2.4vw, 24px);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse at 100% 0, color-mix(in srgb, var(--color-primary) 8%, transparent), transparent 58%),
+    var(--color-surface);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 6%);
+}
+
+.daily-rhythm-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.daily-rhythm-heading h3,
+.daily-rhythm-heading p,
+.daily-rhythm-distribution h4,
+.daily-rhythm-history h4 {
+  margin: 0;
+}
+
+.daily-rhythm-heading h3 {
+  font-size: 1.12rem;
+}
+
+.daily-rhythm-heading > span {
+  color: var(--color-muted);
+  font-size: .76rem;
+}
+
+.daily-rhythm-decision {
+  --rhythm-tone: var(--color-primary);
+  display: grid;
+  gap: 7px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--rhythm-tone) 30%, var(--color-border));
+  border-inline-start: 4px solid var(--rhythm-tone);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--rhythm-tone) 7%, var(--color-surface));
+}
+
+.daily-rhythm-decision.is-gentle { --rhythm-tone: #d29a48; }
+.daily-rhythm-decision.is-steady { --rhythm-tone: #5caa7b; }
+.daily-rhythm-decision > span,
+.daily-rhythm-decision > small {
+  color: var(--color-muted);
+  font-size: .78rem;
+}
+
+.daily-rhythm-decision > strong {
+  color: var(--color-text);
+  font-size: .95rem;
+  line-height: 1.8;
+}
+
+.daily-rhythm-decision > small {
+  line-height: 1.7;
+}
+
+.daily-rhythm-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.daily-rhythm-stats > article,
+.daily-rhythm-window,
+.daily-rhythm-day {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--color-surface) 92%, var(--color-primary));
+}
+
+.daily-rhythm-stats > article > span,
+.daily-rhythm-stats > article > small,
+.daily-rhythm-day > span,
+.daily-rhythm-day > small {
+  color: var(--color-muted);
+  font-size: .74rem;
+  line-height: 1.65;
+}
+
+.daily-rhythm-stats > article > strong {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-rhythm-distribution,
+.daily-rhythm-history {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.daily-rhythm-distribution h4,
+.daily-rhythm-history h4 {
+  font-size: .9rem;
+}
+
+.daily-rhythm-distribution > div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.daily-rhythm-window {
+  --window-share: 0%;
+}
+
+.daily-rhythm-window > span,
+.daily-rhythm-window > small {
+  color: var(--color-muted);
+  font-size: .75rem;
+}
+
+.daily-rhythm-window > strong {
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-rhythm-window > i {
+  display: block;
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-border));
+}
+
+.daily-rhythm-window > i::after {
+  display: block;
+  width: var(--window-share);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+  content: "";
+}
+
+.daily-rhythm-notes {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-inline-start: 20px;
+  color: var(--color-muted);
+  font-size: .82rem;
+  line-height: 1.8;
+}
+
+.daily-rhythm-history > div {
+  display: grid;
+  grid-auto-columns: minmax(220px, 1fr);
+  grid-auto-flow: column;
+  gap: 9px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding-block: 2px 8px;
+  scrollbar-width: thin;
+}
+
+.daily-rhythm-day > strong {
+  font-size: .82rem;
+}
+
+.daily-rhythm-analysis > .report-empty {
+  margin: 0;
+}
+
 .report-overview > h3 {
   margin: 0;
   font-size: 1.05rem;
@@ -9385,7 +9563,7 @@ body {
 }
 
 body {
-  touch-action: pan-y;
+  touch-action: auto;
 }
 
 .app-shell {
@@ -9403,7 +9581,6 @@ body {
 }
 
 .sidebar::-webkit-scrollbar,
-.page-scroll-container::-webkit-scrollbar,
 .more-dialog-content::-webkit-scrollbar {
   display: none;
 }
@@ -9425,8 +9602,24 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: none;
+  scrollbar-color: color-mix(in srgb, var(--color-muted) 46%, transparent) transparent;
+  scrollbar-width: thin;
   -webkit-overflow-scrolling: touch;
+}
+
+.page-scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.page-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.page-scroll-container::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--color-muted) 46%, transparent);
+  background-clip: padding-box;
 }
 
 .page-content {
@@ -13511,8 +13704,15 @@ body.today-route .topbar > div:first-child {
 
 .report-domain-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(260px, 37%);
   gap: 12px;
+  overflow-x: auto;
+  padding-block-end: 5px;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: inline proximity;
+  scrollbar-width: thin;
+  touch-action: pan-x pan-y;
 }
 
 .report-domain-card {
@@ -13523,6 +13723,7 @@ body.today-route .topbar > div:first-child {
   border: 1px solid color-mix(in srgb, var(--area-color) 25%, var(--color-border));
   border-radius: 18px;
   background: color-mix(in srgb, var(--area-color) 5%, var(--color-surface));
+  scroll-snap-align: start;
 }
 
 .report-domain-card > header {
@@ -13650,13 +13851,28 @@ body.today-route .topbar > div:first-child {
 
 @media (max-width: 640px) {
   .report-domain-grid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-auto-columns: minmax(245px, 78%);
   }
+
 }
 
 @media (max-width: 480px) {
   .report-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .daily-rhythm-stats,
+  .daily-rhythm-distribution > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .daily-rhythm-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .daily-rhythm-history > div {
+    grid-auto-columns: minmax(210px, 82%);
   }
 
   .report-controls {
@@ -16951,6 +17167,447 @@ body.today-route .topbar > div:first-child {
   font-size: .7rem;
 }
 
+.report-period-days {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+}
+
+.report-period-days > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.report-period-days > header > div {
+  display: grid;
+  gap: 3px;
+}
+
+.report-period-days h4 {
+  margin: 0;
+  font-size: .9rem;
+}
+
+.report-period-days > header span,
+.report-period-days > header > b {
+  color: var(--color-muted);
+  font-size: .72rem;
+}
+
+.report-period-days-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.report-period-days-controls > b {
+  margin-inline-end: 3px;
+  color: var(--color-muted);
+  font-size: .68rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.report-period-days-controls > button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.report-period-days-controls > button:hover,
+.report-period-days-controls > button:focus-visible {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+}
+
+.report-period-days-track {
+  display: grid;
+  grid-auto-columns: minmax(180px, 20%);
+  grid-auto-flow: column;
+  gap: 7px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding: 2px 1px 8px;
+  scroll-snap-type: inline proximity;
+  scrollbar-color: var(--color-primary) color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+  scrollbar-width: auto;
+  touch-action: pan-x pan-y;
+}
+
+.report-period-days-track::-webkit-scrollbar {
+  height: 9px;
+}
+
+.report-period-days-track::-webkit-scrollbar-track {
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+}
+
+.report-period-days-track::-webkit-scrollbar-thumb {
+  min-width: 44px;
+  border: 2px solid transparent;
+  border-radius: 99px;
+  background: var(--color-primary);
+  background-clip: padding-box;
+}
+
+.report-period-day-card {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 15%, var(--color-border));
+  border-radius: 16px;
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-primary) var(--day-tint, 6%), var(--color-surface));
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: border-color 150ms ease, background-color 150ms ease, transform 150ms ease;
+}
+
+.report-period-day-card.is-today {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+}
+
+.report-period-day-card.is-selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 22%, transparent);
+}
+
+.report-period-day-card:hover {
+  transform: translateY(-2px);
+}
+
+.report-period-day-card > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.report-period-day-card > header > strong {
+  overflow: hidden;
+  font-size: .76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-period-day-card > header > time {
+  margin-inline-start: auto;
+  color: var(--color-muted);
+  font-size: .68rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-period-day-card > header > span {
+  padding: 3px 7px;
+  border-radius: 99px;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+  font-size: .66rem;
+}
+
+.report-period-day-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.report-period-day-stats > div {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 1px;
+  padding: 4px 5px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 82%, transparent);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--color-surface) 85%, var(--color-primary));
+}
+
+.report-period-day-stats > div > span {
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: .63rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-period-day-stats > div > strong {
+  color: var(--color-text);
+  font-size: .81rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-period-day-stats > div > strong > small {
+  margin-inline-start: 2px;
+  color: var(--color-muted);
+  font-size: .66rem;
+  font-weight: 500;
+}
+
+.report-period-day-stats > div > i {
+  height: 3px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--color-primary) 15%, var(--color-border));
+}
+
+.report-period-day-stats > div > i::after {
+  display: block;
+  width: var(--day-progress);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+  content: "";
+}
+
+.report-period-day-stats > div.is-habits > i::after {
+  background: var(--color-accent);
+}
+
+.report-period-day-stats > div:not(.is-tasks, .is-habits) {
+  display: flex;
+  min-height: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px;
+  padding-block: 4px;
+}
+
+.report-period-day-score {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 1px 5px;
+}
+
+.report-period-day-score > strong {
+  color: var(--color-primary);
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-period-day-score > span {
+  color: var(--color-muted);
+  font-size: .62rem;
+}
+
+.report-period-day-score > i {
+  grid-column: 1 / -1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--color-primary) 16%, var(--color-border));
+}
+
+.report-period-day-score > i::after {
+  display: block;
+  width: var(--day-color-progress);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+  content: "";
+}
+
+.report-period-day-detail-container {
+  min-width: 0;
+}
+
+.report-period-day-detail {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--color-surface) 96%, var(--color-primary));
+}
+
+.report-period-day-detail > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.report-period-day-detail > header > div {
+  display: grid;
+  gap: 2px;
+}
+
+.report-period-day-detail h5 {
+  margin: 0;
+  font-size: .8rem;
+}
+
+.report-period-day-detail > header span {
+  color: var(--color-muted);
+  font-size: .64rem;
+}
+
+.report-period-detail-percent {
+  color: var(--color-primary);
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-period-detail-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.report-period-detail-summary > article {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  padding: 5px 7px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-surface);
+}
+
+.report-period-detail-summary > article > span {
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: .59rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-period-detail-summary > article > strong {
+  font-size: .76rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-period-detail-summary > article > strong > small {
+  margin-inline-start: 2px;
+  color: var(--color-muted);
+  font-size: .61rem;
+  font-weight: 500;
+}
+
+.report-period-day-details-track {
+  display: grid;
+  grid-auto-columns: minmax(190px, 24%);
+  grid-auto-flow: column;
+  gap: 6px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding: 1px 1px 7px;
+  scroll-snap-type: inline proximity;
+  scrollbar-color: var(--color-accent) color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+  scrollbar-width: auto;
+  touch-action: pan-x pan-y;
+}
+
+.report-period-day-details-track::-webkit-scrollbar {
+  height: 8px;
+}
+
+.report-period-day-details-track::-webkit-scrollbar-track {
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+}
+
+.report-period-day-details-track::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 99px;
+  background: var(--color-accent);
+  background-clip: padding-box;
+}
+
+.report-period-detail-card {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-surface);
+  scroll-snap-align: start;
+}
+
+.report-period-detail-card > span {
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: .61rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-period-detail-card > strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: .72rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.report-period-detail-card > small {
+  color: var(--color-muted);
+  font-size: .61rem;
+}
+
+.report-period-detail-card > i {
+  height: 3px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--color-accent) 15%, var(--color-border));
+}
+
+.report-period-detail-card > i::after {
+  display: block;
+  width: var(--day-progress);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-accent);
+  content: "";
+}
+
+.report-period-detail-card.is-task {
+  border-block-start: 2px solid var(--color-primary);
+}
+
+.report-period-detail-card.is-habit.is-complete {
+  border-block-start: 2px solid var(--color-accent);
+}
+
+.report-period-detail-card.is-subtask {
+  border-block-start: 2px solid #d5a448;
+}
+
+.report-period-detail-card.is-focus {
+  border-block-start: 2px solid #72a6e8;
+}
+
+.report-period-detail-card.is-empty {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .report-period-day-details-track {
+    grid-auto-columns: minmax(170px, 58%);
+  }
+}
+
 .report-period-pride {
   display: flex;
   align-items: start;
@@ -17220,7 +17877,7 @@ body.today-route .topbar > div:first-child {
 
 .space-recap-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 7px;
 }
 
@@ -17302,6 +17959,230 @@ body.today-route .topbar > div:first-child {
 .space-recap-area span {
   color: var(--color-muted);
   font-size: .63rem;
+}
+
+.space-recap-detail > small {
+  color: var(--color-muted);
+  font-size: .62rem;
+  line-height: 1.6;
+}
+
+.space-recap-subtask-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-block-start: 3px;
+}
+
+.space-recap-subtask-list > span {
+  padding: 3px 7px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 24%, var(--color-border));
+  border-radius: 999px;
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+  font-size: .6rem;
+}
+
+.space-recap-range-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 1px 5px;
+  scrollbar-width: thin;
+}
+
+.space-recap-range-tabs button {
+  flex: 0 0 auto;
+  padding: 7px 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-muted);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: .7rem;
+  cursor: pointer;
+}
+
+.space-recap-range-tabs button[aria-pressed="true"] {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+  font-weight: 800;
+}
+
+.space-recap-rhythm > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.space-recap-rhythm > header > span {
+  color: var(--color-muted);
+  font-size: .62rem;
+}
+
+.space-recap-day-track {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 3px 1px 8px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.space-recap-day {
+  position: relative;
+  display: grid;
+  flex: 0 0 108px;
+  min-width: 0;
+  min-height: 110px;
+  gap: 4px;
+  padding: 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-accent) var(--recap-day-tint), var(--color-surface));
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+
+.space-recap-day.is-selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.space-recap-day.is-today::after {
+  position: absolute;
+  inset-block-start: 7px;
+  inset-inline-end: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  content: "";
+}
+
+.space-recap-day strong {
+  font-size: .68rem;
+}
+
+.space-recap-day time,
+.space-recap-day span {
+  color: var(--color-muted);
+  font-size: .59rem;
+  line-height: 1.5;
+}
+
+.space-recap-day > b {
+  color: var(--color-primary);
+  font-size: .95rem;
+}
+
+.space-recap-day > i {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--color-border);
+}
+
+.space-recap-day > i::after {
+  display: block;
+  width: var(--recap-day-progress);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+  content: "";
+}
+
+.space-recap-selected-day {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+
+.space-recap-selected-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.space-recap-selected-heading h4,
+.space-recap-selected-heading span {
+  margin: 0;
+}
+
+.space-recap-selected-heading h4 {
+  font-size: .82rem;
+}
+
+.space-recap-selected-heading > div:first-child > span {
+  color: var(--color-primary);
+  font-size: .65rem;
+}
+
+.space-recap-selected-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 4px;
+}
+
+.space-recap-selected-stats span {
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: var(--color-muted);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg));
+  font-size: .59rem;
+  white-space: nowrap;
+}
+
+.space-recap-day-detail-grid {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-block-end: 5px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.space-recap-day-detail-grid > section {
+  display: grid;
+  flex: 0 0 min(78vw, 260px);
+  align-content: start;
+  gap: 6px;
+  scroll-snap-align: start;
+}
+
+.space-recap-day-detail-grid h5 {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: .65rem;
+}
+
+.space-recap-day-detail-grid .space-recap-list {
+  display: flex;
+  overflow-x: auto;
+  gap: 6px;
+}
+
+.space-recap-day-detail-grid .space-recap-detail {
+  flex: 0 0 220px;
+  align-content: center;
+}
+
+.space-recap-empty-day {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: .7rem;
 }
 
 .space-recap-pride {
@@ -17433,11 +18314,18 @@ body.today-route .topbar > div:first-child {
 
   .space-recap-stats {
     width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .space-recap-selected-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .space-recap-selected-stats { justify-content: start; }
 }
 
 @media (max-width: 420px) {
-  .space-recap-stats,
   .space-recap-time {
     grid-template-columns: 1fr;
   }
@@ -19041,7 +19929,7 @@ body.today-route .topbar > div:first-child {
 .space-map-summary-actions {
   display: grid;
   grid-column: 1 / -1;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
 }
 
@@ -19146,6 +20034,8 @@ body.today-route .topbar > div:first-child {
 
 .cosmic-map[data-map-mode="day"] .space-node-prayer.is-done {
   --space-status-color: #36a978;
+  border-color: #36a978;
+  background: color-mix(in srgb, #28835b 16%, var(--map-panel));
 }
 
 .cosmic-map[data-map-mode="day"] .space-node-prayer .space-node-copy {
@@ -19946,6 +20836,91 @@ body.today-route .topbar > div:first-child {
   border-inline-start: 2px solid color-mix(in srgb, var(--color-accent) 70%, transparent);
   border-radius: 8px;
   background: color-mix(in srgb, var(--color-accent) 8%, var(--map-panel));
+}
+
+.space-map-recap-control {
+  display: flex;
+  justify-content: center;
+}
+
+.space-map-recap-control .space-map-recap-action {
+  min-width: min(220px, 100%);
+  border-color: var(--map-edge);
+  color: var(--map-ink);
+  background: var(--map-control);
+}
+
+.reports-page :is(
+  .report-summary-grid,
+  .report-period-highlight-grid,
+  .report-section-stat-grid,
+  .report-entity-grid,
+  .reports-grid,
+  .daily-rhythm-stats,
+  .daily-rhythm-distribution > div,
+  .daily-rhythm-history > div
+) {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 9px;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding: 3px 1px 10px;
+  scroll-snap-type: inline proximity;
+  scrollbar-color: var(--color-primary) color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+  scrollbar-width: auto;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.reports-page :is(
+  .report-summary-grid,
+  .report-period-highlight-grid,
+  .report-section-stat-grid,
+  .report-entity-grid,
+  .reports-grid,
+  .daily-rhythm-stats,
+  .daily-rhythm-distribution > div,
+  .daily-rhythm-history > div
+)::-webkit-scrollbar {
+  height: 8px;
+}
+
+.reports-page :is(
+  .report-summary-grid,
+  .report-period-highlight-grid,
+  .report-section-stat-grid,
+  .report-entity-grid,
+  .reports-grid,
+  .daily-rhythm-stats,
+  .daily-rhythm-distribution > div,
+  .daily-rhythm-history > div
+)::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 99px;
+  background: var(--color-primary);
+  background-clip: padding-box;
+}
+
+.reports-page .report-summary-grid > *,
+.reports-page .report-period-highlight-grid > *,
+.reports-page .report-section-stat-grid > *,
+.reports-page .daily-rhythm-stats > article,
+.reports-page .daily-rhythm-distribution > div > *,
+.reports-page .daily-rhythm-history > div > * {
+  flex: 0 0 clamp(190px, 24vw, 260px);
+  scroll-snap-align: start;
+}
+
+.reports-page .report-entity-grid > * {
+  flex: 0 0 clamp(240px, 31vw, 320px);
+  scroll-snap-align: start;
+}
+
+.reports-page .reports-grid > * {
+  flex: 0 0 min(420px, 86vw);
+  scroll-snap-align: start;
 }
 
 .space-prayer-wisdom > strong,

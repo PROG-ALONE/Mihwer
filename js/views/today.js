@@ -10,8 +10,8 @@ import {
 import { dayProgress, ensureDailyRitualHabits, setCompletionDetails, setDayComplete, setItemsLogged } from "./habits.js";
 import { showToast } from "../utils/notifications.js";
 import { requestCompletionDetails } from "../utils/completion-dialog.js";
-import { formatDuration } from "../utils/task-metrics.js";
-import { isTaskScheduledInRange, isTaskScheduledOn } from "../utils/task-schedule.js";
+import { completedSubtaskCount, completedSubtasksOn, formatDuration, manualTaskMinutes } from "../utils/task-metrics.js";
+import { isTaskCountedInRange, isTaskCountedOn, isTaskScheduledInRange, isTaskScheduledOn } from "../utils/task-schedule.js";
 import { shareTextReport } from "../export/share.js";
 import { printStructuredReport } from "../export/pdf.js";
 import { animatedDayStoryFile, shareOrDownloadStoryFile } from "../export/day-story.js";
@@ -51,6 +51,12 @@ let storyPlaybackInterval;
 let isMounted = false;
 let activeStoryEvents = [];
 let records = { tasks: [], habits: [], objectives: [], keyResults: [], lifeAreas: [], sessions: [], device: [], profile: [] };
+let recapMode = "day";
+let recapAnchorDate = localDateString();
+let recapSelectedDate = "";
+let recapStart = "";
+let recapEnd = "";
+let recapLabel = "";
 let mapMode = MAP_MODES.includes(localStorage.getItem("mihwar-map-mode"))
   ? localStorage.getItem("mihwar-map-mode")
   : "day";
@@ -582,7 +588,7 @@ function renderSleepDialog(date) {
       <button class="button button-secondary" type="button" data-action="close-sleep-dialog">إغلاق</button>
     </div>
   </div>`;
-  dialog.showModal();
+  if (!dialog.open) dialog.showModal();
 }
 
 function renderDayStart() {
@@ -617,7 +623,7 @@ function renderTaskNode(task) {
       ${checklist.length || task.notes ? `<details class="space-node-details" data-map-task-details="${escapeHtml(task.id)}"${detailsOpen ? " open" : ""}>
         <summary>التفاصيل${checklist.length ? ` · ${formatArabicNumber(checklistDone)}/${formatArabicNumber(checklist.length)}` : ""}</summary>
         ${task.notes ? `<p>${escapeHtml(task.notes)}</p>` : ""}
-        ${checklist.length ? `<ul>${checklist.map((item, index) => `<li><label><input type="checkbox" data-action="toggle-subtask" data-task-id="${escapeHtml(task.id)}" data-index="${index}"${item.done ? " checked" : ""}><span>${escapeHtml(item.text)}</span></label></li>`).join("")}</ul>` : ""}
+        ${checklist.length ? `<ul>${checklist.map((item, index) => `<li><label><input type="checkbox" data-action="toggle-subtask" data-task-id="${escapeHtml(task.id)}" data-index="${index}" data-date="${escapeHtml(mapDate)}"${item.done ? " checked" : ""}><span>${escapeHtml(item.text)}</span></label></li>`).join("")}</ul>` : ""}
         <a href="#/tasks?date=${encodeURIComponent(mapDate)}">فتح المهام</a>
       </details>` : ""}
     </div>
@@ -731,16 +737,7 @@ function renderNightNode(event, index) {
 
 function renderEvent(event, index) {
   if (event.type === "night-prayers") {
-    const progress = buildScore(dayTasks(event.today), dayHabits(event.today), event.today);
-    return `${renderNightNode(event, index)}
-      <div class="space-map-stop is-day-close" data-event-kind="day-close" style="--node-index:${index};animation-delay:760ms">
-        <span class="space-map-connector" aria-hidden="true"></span>
-        <button class="space-night-recap" type="button" data-action="period-recap" data-start="${event.today}" data-end="${event.today}" data-label="حصاد اليوم">
-          <span class="space-night-moon" aria-hidden="true">☾</span>
-          <span class="space-night-heading"><small>ختام اليوم</small><strong>اطّلع على حصادك</strong></span>
-          <span class="space-night-recap-score">${formatArabicNumber(progress.percent)}٪</span>
-        </button>
-      </div>`;
+    return renderNightNode(event, index);
   }
 
   const time = event.type === "prayer"
@@ -778,14 +775,16 @@ function renderEvent(event, index) {
 }
 
 function buildScore(tasks, habits, today) {
-  const countedTasks = tasks.filter((task) => isWithinPersonalDay(today, task.dueTime));
+  const countedTasks = tasks.filter((task) =>
+    isWithinPersonalDay(today, task.dueTime) && (task.status === "done" || isTaskCountedOn(task, today)));
   const countedHabits = habits.filter((habit) => isWithinPersonalDay(today, habit.dailyTime));
+  const completedSubtasks = completedSubtasksOn(records.tasks, today).length;
   const taskDone = countedTasks.filter((task) => task.status === "done").length;
   const taskProgress = countedTasks.reduce((total, task) => total + taskCompletion(task), 0);
   const habitProgress = countedHabits.reduce((total, habit) => total + dayProgress(habit, today).percent / 100, 0);
-  const total = countedTasks.length + countedHabits.length;
+  const total = countedTasks.length + countedHabits.length + completedSubtasks;
   return {
-    percent: total ? Math.round((taskProgress + habitProgress) / total * 100) : 0,
+    percent: total ? Math.round((taskProgress + habitProgress + completedSubtasks) / total * 100) : 0,
     hasItems: total > 0,
     tasksDone: taskDone,
     habitsPercent: countedHabits.length ? Math.round(habitProgress / countedHabits.length * 100) : 0,
@@ -800,8 +799,7 @@ function periodMetrics(start, end) {
         ? dates.has(datePart(task.completedAt))
         : taskDates(task).some((date) => dates.has(date));
     }
-    return isTaskScheduledInRange(task, start, end, true) ||
-      taskDates(task).some((date) => dates.has(date));
+    return isTaskCountedInRange(task, start, end);
   });
   const completedTasks = tasks.filter((task) => task.status === "done").length;
   const taskProgress = tasks.reduce((total, task) => total + taskCompletion(task), 0);
@@ -826,14 +824,16 @@ function periodMetrics(start, end) {
     completedHabits += dailyMetrics.completed;
     habitProgress += dailyMetrics.progress;
   }
-  const total = tasks.length + scheduledHabits;
+  const completedSubtasks = completedSubtaskCount(records.tasks, start, end);
+  const total = tasks.length + scheduledHabits + completedSubtasks;
   return {
     completedTasks,
     plannedTasks: tasks.length - completedTasks,
+    completedSubtasks,
     scheduledHabits,
     completedHabits,
     habitPercent: scheduledHabits ? Math.round((habitProgress / scheduledHabits) * 100) : 0,
-    percent: total ? Math.round(((taskProgress + habitProgress) / total) * 100) : 0,
+    percent: total ? Math.round(((taskProgress + habitProgress + completedSubtasks) / total) * 100) : 0,
     hasItems: total > 0,
   };
 }
@@ -911,7 +911,6 @@ function renderPeriodStop(stop, index) {
 
 function renderPeriodSummary(metrics) {
   const taskTotal = metrics.completedTasks + metrics.plannedTasks;
-  const { start, end } = mapBounds();
   return `<section class="space-map-summary" aria-label="ملخص ${MAP_MODE_LABELS[mapMode]}">
     <div class="space-map-summary-score" role="img" aria-label="الإنجاز الكلي ${formatArabicNumber(metrics.percent)} بالمئة" style="--period-progress:${metrics.percent}%">
       <strong>${formatArabicNumber(metrics.percent)}<small>٪</small></strong><span>الإنجاز</span>
@@ -923,13 +922,13 @@ function renderPeriodSummary(metrics) {
       <div class="space-map-summary-item is-habit" aria-label="العادات: ${formatArabicNumber(metrics.completedHabits)} من ${formatArabicNumber(metrics.scheduledHabits)}">
         <span aria-hidden="true">✦</span><strong>العادات</strong><small>${formatArabicNumber(metrics.completedHabits)} / ${formatArabicNumber(metrics.scheduledHabits)}</small>
       </div>
+      <div class="space-map-summary-item" aria-label="المهام الفرعية المنجزة: ${formatArabicNumber(metrics.completedSubtasks)}">
+        <span aria-hidden="true">↳</span><strong>فرعية</strong><small>${formatArabicNumber(metrics.completedSubtasks)} منجزة</small>
+      </div>
     </div>
     <div class="space-map-summary-actions">
       <button class="space-map-recap-action is-share" type="button" data-action="share-period-path" aria-label="مشاركة مسار ${MAP_MODE_LABELS[mapMode]} مع رسوم بيانية وإحصاءات مفصلة">
         <span aria-hidden="true">↗</span> مشاركة المسار والرسوم
-      </button>
-      <button class="space-map-recap-action" type="button" data-action="period-recap" data-start="${start}" data-end="${end}" data-label="حصاد ${MAP_MODE_LABELS[mapMode]}">
-        <span aria-hidden="true">✦</span> افتح حصاد الفترة وتفاصيلها
       </button>
     </div>
   </section>`;
@@ -948,8 +947,70 @@ function taskDatesInRange(task, start, end) {
     });
 }
 
+function recapPeriodBounds(mode, anchorDate) {
+  const bounds = mapBounds(mode, new Date(`${anchorDate}T12:00:00`));
+  const today = localDateString();
+  const end = bounds.end > today ? today : bounds.end;
+  return { start: bounds.start, end: end < bounds.start ? bounds.start : end };
+}
+
+function renderRecapRangeTabs() {
+  return `<nav class="space-recap-range-tabs" aria-label="اختيار إيقاع الحصاد">
+    ${MAP_MODES.map((mode) => `<button type="button" data-recap-range="${mode}" aria-pressed="${recapMode === mode}">${MAP_MODE_LABELS[mode]}</button>`).join("")}
+  </nav>`;
+}
+
+function renderRecapDayDetails(date) {
+  const metrics = periodMetrics(date, date);
+  const dayTasks = records.tasks.filter((task) => taskDatesInRange(task, date, date));
+  const taskCards = dayTasks.flatMap((task) => {
+    const logs = (task.completionLog ?? []).filter((entry) => datePart(entry.completedAt) === date);
+    if (logs.length) {
+      return logs.map((entry) => `<article class="space-recap-detail"><strong>${escapeHtml(task.title)}</strong><span>مهمة مكتملة${storyTime(entry.completedAt) ? ` · ${escapeHtml(storyTime(entry.completedAt))}` : ""}${Number(entry.durationMin) > 0 ? ` · ${formatDuration(entry.durationMin)}` : ""}</span></article>`);
+    }
+    return task.status === "done" && datePart(task.completedAt) === date
+      ? [`<article class="space-recap-detail"><strong>${escapeHtml(task.title)}</strong><span>مهمة مكتملة</span></article>`]
+      : [];
+  }).join("");
+  const subtasks = completedSubtasksOn(records.tasks, date);
+  const subtaskCards = subtasks.map(({ task, item }) =>
+    `<article class="space-recap-detail"><strong>${escapeHtml(item.text)}</strong><span>مهمة فرعية · ${escapeHtml(task.title)}</span></article>`).join("");
+  const completedHabits = records.habits.filter((habit) =>
+    !habit.archived && (!datePart(habit.createdAt) || datePart(habit.createdAt) <= date)
+    && scheduledHabit(habit, date) && dayProgress(habit, date).complete);
+  const habitCards = completedHabits.map((habit) =>
+    `<article class="space-recap-detail"><strong>${escapeHtml(habit.title)}</strong><span>عادة مكتملة</span></article>`).join("");
+  const sessions = records.sessions.filter((session) =>
+    session.status === "completed" && session.type !== "break" && datePart(session.start) === date);
+  const sessionMinutes = sessions.reduce((total, session) => total + Math.max(0, Number(session.durationMin) || 0), 0);
+  const sessionCards = sessions.map((session) =>
+    `<article class="space-recap-detail"><strong>${escapeHtml(session.taskTitle || session.habitTitle || "جلسة تركيز")}</strong><span>${formatDuration(session.durationMin)}${storyTime(session.start) ? ` · ${escapeHtml(storyTime(session.start))}` : ""}</span></article>`).join("");
+  const prayerHabit = linkedPrayerHabit();
+  const prayerCards = prayerHabit ? Object.keys(PRAYER_ITEM_NAMES).flatMap((prayerName) => {
+    const items = prayerItemsFor(prayerHabit, prayerName);
+    const doneItems = items.filter((item) => prayerStatus(item, prayerHabit, date));
+    if (!doneItems.length) return [];
+    const times = doneItems.map((item) => storyTime(prayerHabit.itemLogTimes?.[date]?.[item.id])).filter(Boolean);
+    return [`<article class="space-recap-detail"><strong>صلاة ${escapeHtml(prayerName)}</strong><span>${formatArabicNumber(doneItems.length)} بنود مسجلة${times.length ? ` · ${times.map(escapeHtml).join("، ")}` : ""}</span></article>`];
+  }).join("") : "";
+  const previousSleep = sleepLogFor(dateOffset(date, -1)) ?? {};
+  const daySleep = sleepLogFor(date) ?? {};
+  const dateLabel = new Intl.DateTimeFormat("ar", { weekday: "long", day: "numeric", month: "long" }).format(new Date(`${date}T12:00:00`));
+  const sections = [
+    ["المهام المكتملة", taskCards],
+    ["المهام الفرعية المنجزة", subtaskCards],
+    ["العادات المكتملة", habitCards],
+    ["الصلوات وأوقاتها", prayerCards],
+    ["جلسات التركيز", sessionCards],
+  ].filter(([, cards]) => cards);
+  return `<header class="space-recap-selected-heading"><div><h4>${escapeHtml(dateLabel)}</h4><span>${formatArabicNumber(metrics.percent)}٪ إنجاز</span></div><div class="space-recap-selected-stats"><span>${formatArabicNumber(metrics.completedTasks)} مهام</span><span>${formatArabicNumber(subtasks.length)} فرعية</span><span>${formatArabicNumber(completedHabits.length)} عادات</span><span>${formatDuration(sessionMinutes)} تركيز</span></div></header>
+    <div class="space-recap-day-detail-grid">${sections.length ? sections.map(([title, cards]) => `<section><h5>${title}</h5><div class="space-recap-list">${cards}</div></section>`).join("") : `<p class="space-recap-empty-day">لا توجد إنجازات مسجلة في هذا اليوم.</p>`}
+      <section><h5>النوم والراحة</h5><div class="space-recap-list"><article class="space-recap-detail"><strong>النوم الليلي</strong><span>${previousSleep.bedTime ? timeLabel(previousSleep.bedTime) : "—"} · استيقاظ ${daySleep.wakeTime ? timeLabel(daySleep.wakeTime) : "—"}</span></article><article class="space-recap-detail"><strong>القيلولة</strong><span>${Number(daySleep.napDurationMin) > 0 ? `${daySleep.napStart ? `${timeLabel(daySleep.napStart)} · ` : ""}${formatSleepDuration(Number(daySleep.napDurationMin))}` : "—"}</span></article></div></section>
+    </div>`;
+}
+
 function renderPeriodRecap(start, end, label) {
-  if (label === "حصاد اليوم" && start === end) {
+  if (recapMode === "day" && start === end) {
     return renderDayRecap(start, label);
   }
 
@@ -963,6 +1024,9 @@ function renderPeriodRecap(start, end, label) {
       : [];
   });
   const completedTasks = taskEvents.length;
+  const completedSubtasks = completedSubtaskCount(tasks, start, end);
+  const countableOpenTasks = tasks.filter((task) =>
+    task.status !== "done" && isTaskCountedInRange(task, start, end)).length;
   const habitRows = habits.map((habit) => {
     const created = datePart(habit.createdAt);
     const scheduledDates = dates.filter((date) => (!created || date >= created) && scheduledHabit(habit, date));
@@ -971,8 +1035,9 @@ function renderPeriodRecap(start, end, label) {
   }).filter((row) => row.scheduledDates.length);
   const scheduledHabitDays = habitRows.reduce((total, row) => total + row.scheduledDates.length, 0);
   const completedHabitDays = habitRows.reduce((total, row) => total + row.completedDates.length, 0);
-  const totalItems = tasks.length + scheduledHabitDays;
-  const progress = totalItems ? Math.round((completedTasks + completedHabitDays) / totalItems * 100) : 0;
+  const taskTotal = completedTasks + countableOpenTasks;
+  const totalItems = taskTotal + scheduledHabitDays + completedSubtasks;
+  const progress = totalItems ? Math.round((completedTasks + completedHabitDays + completedSubtasks) / totalItems * 100) : 0;
   const focusSessions = records.sessions.filter((session) =>
     session.status === "completed" && session.type !== "break" && datePart(session.start) >= start && datePart(session.start) <= end);
   const focusMinutes = focusSessions.reduce((total, session) => total + Math.max(0, Number(session.durationMin) || 0), 0);
@@ -1036,11 +1101,66 @@ function renderPeriodRecap(start, end, label) {
     const checklist = (task.checklist ?? []).filter((item) => item && typeof item === "object");
     const checklistDone = checklist.filter((item) => item.done).length;
     const taskProgress = task.status === "done" ? 100 : checklist.length ? Math.round(checklistDone / checklist.length * 100) : 0;
-    return `<article class="space-recap-detail"><strong>${escapeHtml(task.title)}</strong><span>${done ? "مكتملة" : taskProgress ? `${formatArabicNumber(taskProgress)}٪ تقدم` : "مفتوحة"}${checklist.length ? ` · ${formatArabicNumber(checklistDone)}/${formatArabicNumber(checklist.length)} فرعية` : ""}</span></article>`;
+    const subtaskDetails = checklist.flatMap((item) => {
+      const entries = (item.completionLog ?? []).filter((entry) =>
+        entry?.completed && entry.date >= start && entry.date <= end);
+      return entries.map((entry) => {
+        const time = storyTime(entry.completedAt);
+        return `<span>${escapeHtml(item.text)} · ${escapeHtml(formatDate(entry.date))}${time ? ` · ${escapeHtml(time)}` : ""}</span>`;
+      });
+    });
+    const completionDetails = logs.map((entry) => {
+      const time = storyTime(entry.completedAt);
+      const duration = Number(entry.durationMin) > 0 ? ` · ${formatDuration(entry.durationMin)}` : "";
+      return `${formatDate(datePart(entry.completedAt))}${time ? ` · ${time}` : ""}${duration}`;
+    });
+    return `<article class="space-recap-detail"><strong>${escapeHtml(task.title)}</strong><span>${done ? "مكتملة" : taskProgress ? `${formatArabicNumber(taskProgress)}٪ تقدم` : "مفتوحة"}${checklist.length ? ` · ${formatArabicNumber(checklistDone)}/${formatArabicNumber(checklist.length)} فرعية` : ""}${completionDetails.length ? ` · ${completionDetails.map(escapeHtml).join("، ")}` : ""}</span>${subtaskDetails.length ? `<div class="space-recap-subtask-list" aria-label="المهام الفرعية المنجزة">${subtaskDetails.join("")}</div>` : ""}</article>`;
   }).join("");
   const habitCards = habitRows.map(({ habit, scheduledDates, completedDates }) => {
     const percent = Math.round(completedDates.length / scheduledDates.length * 100);
-    return `<article class="space-recap-detail"><strong>${escapeHtml(habit.title)}</strong><span>${formatArabicNumber(completedDates.length)} من ${formatArabicNumber(scheduledDates.length)} يومًا · ${formatArabicNumber(percent)}٪</span></article>`;
+    const times = completedDates.slice(-7).map((date) => {
+      const completedAt = habit.completionLog?.[date]?.completedAt;
+      const time = storyTime(completedAt);
+      return `${formatDate(date)}${time ? ` · ${time}` : ""}`;
+    });
+    return `<article class="space-recap-detail"><strong>${escapeHtml(habit.title)}</strong><span>${formatArabicNumber(completedDates.length)} من ${formatArabicNumber(scheduledDates.length)} يومًا · ${formatArabicNumber(percent)}٪${times.length ? ` · ${times.map(escapeHtml).join("، ")}` : ""}</span></article>`;
+  }).join("");
+  const prayerHabit = linkedPrayerHabit();
+  const prayerCards = prayerHabit ? Object.keys(PRAYER_ITEM_NAMES).map((prayerName) => {
+    const items = prayerItemsFor(prayerHabit, prayerName);
+    if (!items.length) return "";
+    const fardItems = items.filter((item) => item.category === "فرض");
+    const sunnahItems = items.filter((item) => item.category === "سنة");
+    const created = datePart(prayerHabit.createdAt);
+    const prayerDates = dates.filter((date) => !created || date >= created);
+    const fardDays = prayerDates.filter((date) =>
+      fardItems.length > 0 && fardItems.every((item) => prayerStatus(item, prayerHabit, date))).length;
+    const sunnahCount = prayerDates.reduce((total, date) =>
+      total + sunnahItems.filter((item) => prayerStatus(item, prayerHabit, date)).length, 0);
+    const timeEntries = prayerDates.flatMap((date) => items.flatMap((item) => {
+      if (!prayerStatus(item, prayerHabit, date)) return [];
+      const time = storyTime(prayerHabit.itemLogTimes?.[date]?.[item.id]);
+      return time ? [{ date, time }] : [];
+    })).slice(-7);
+    const timeDetails = timeEntries.map(({ date, time }) =>
+      `${new Intl.DateTimeFormat("ar", { weekday: "short" }).format(new Date(`${date}T12:00:00`))} ${time}`);
+    return `<article class="space-recap-detail"><strong>صلاة ${escapeHtml(prayerName)}</strong><span>الفرض ${formatArabicNumber(fardDays)} من ${formatArabicNumber(prayerDates.length)} يومًا · ${formatArabicNumber(sunnahCount)} سنن مسجلة</span>${timeDetails.length ? `<small>الأوقات: ${timeDetails.map(escapeHtml).join(" · ")}</small>` : ""}</article>`;
+  }).filter(Boolean).join("") : "";
+  const recapEnd = end < localDateString() ? end : localDateString();
+  const visibleDates = eachDate(start, recapEnd);
+  if (!visibleDates.length && start > localDateString()) visibleDates.push(start);
+  if (!visibleDates.includes(recapSelectedDate)) recapSelectedDate = visibleDates.at(-1) ?? end;
+  const dailyCards = visibleDates.map((date) => {
+    const metrics = periodMetrics(date, date);
+    const percent = metrics.percent;
+    const day = new Date(`${date}T12:00:00`);
+    return `<button type="button" class="space-recap-day${date === recapSelectedDate ? " is-selected" : ""}${date === localDateString() ? " is-today" : ""}" data-recap-day="${date}" aria-pressed="${date === recapSelectedDate}" style="--recap-day-progress:${percent}%;--recap-day-tint:${Math.round(5 + percent * 0.13)}%">
+      <strong>${escapeHtml(new Intl.DateTimeFormat("ar", { weekday: "short" }).format(day))}</strong>
+      <time datetime="${date}">${escapeHtml(new Intl.DateTimeFormat("ar", { day: "numeric", month: "short" }).format(day))}</time>
+      <b>${formatArabicNumber(percent)}٪</b>
+      <span>${formatArabicNumber(metrics.completedTasks)}/${formatArabicNumber(metrics.completedTasks + metrics.plannedTasks)} مهام</span>
+      <i aria-hidden="true"></i>
+    </button>`;
   }).join("");
   const personalWin = completedTasks || completedHabitDays
     ? `أنجزت ${formatArabicNumber(completedTasks)} مهمة وحافظت على ${formatArabicNumber(completedHabitDays)} يومًا من العادات. كل خطوة ساهمت في وصولك.`
@@ -1050,14 +1170,17 @@ function renderPeriodRecap(start, end, label) {
       <div><p>محطتك تستحق الاحتفاء</p><h2>${escapeHtml(label)}</h2><span><bdi dir="ltr">${escapeHtml(start)} — ${escapeHtml(end)}</bdi></span></div>
       <button class="icon-button" type="button" data-action="close-recap" aria-label="إغلاق">×</button>
     </header>
+    ${renderRecapRangeTabs()}
     <section class="space-recap-hero">
       <div class="space-recap-progress" style="--recap-progress:${progress}%"><strong>${formatArabicNumber(progress)}<small>٪</small></strong><span>إنجاز الفترة</span></div>
       <div class="space-recap-stats">
-        <article><span>مهام مكتملة</span><strong>${formatArabicNumber(completedTasks)}</strong><small>من ${formatArabicNumber(tasks.length)} مهمة</small></article>
+        <article><span>مهام مكتملة</span><strong>${formatArabicNumber(completedTasks)}</strong><small>من ${formatArabicNumber(taskTotal)} مهمة محسوبة في الفترة</small></article>
         <article><span>أيام عادات مكتملة</span><strong>${formatArabicNumber(completedHabitDays)}</strong><small>من ${formatArabicNumber(scheduledHabitDays)} يومًا مجدولًا</small></article>
+        <article><span>مهام فرعية منجزة</span><strong>${formatArabicNumber(completedSubtasks)}</strong><small>تُحسب في يوم إنجازها</small></article>
         <article><span>أهداف ضمن رحلتك</span><strong>${formatArabicNumber(objectives.length)}</strong><small>${formatArabicNumber(objectives.filter((objective) => objective.status === "done").length)} مكتملة</small></article>
       </div>
     </section>
+    ${dailyCards ? `<section class="space-recap-section space-recap-rhythm"><header><h3>إيقاع الأيام</h3><span>${formatArabicNumber(visibleDates.length)} يومًا · اختر يومًا لعرض إنجازاته</span></header><div class="space-recap-day-track">${dailyCards}</div><div class="space-recap-selected-day">${renderRecapDayDetails(recapSelectedDate)}</div></section>` : ""}
     <section class="space-recap-time">
       <article><span>مدد الإنجاز المسجّلة</span><strong>${formatDuration(completionMinutes)}</strong></article>
       <article><span>جلسات التركيز</span><strong>${formatDuration(focusMinutes)}</strong><small>${formatArabicNumber(focusSessions.length)} جلسة</small></article>
@@ -1065,6 +1188,7 @@ function renderPeriodRecap(start, end, label) {
     </section>
     ${areaCards ? `<section class="space-recap-section"><h3>مجالات شاركت فيها</h3><div class="space-recap-area-grid">${areaCards}</div></section>` : ""}
     ${objectiveCards ? `<section class="space-recap-section"><h3>أهدافك ونتائجك</h3><div class="space-recap-list">${objectiveCards}</div></section>` : ""}
+    ${prayerCards ? `<section class="space-recap-section"><h3>الصلوات وأوقاتها</h3><div class="space-recap-list">${prayerCards}</div></section>` : ""}
     ${taskCards ? `<section class="space-recap-section"><h3>المهام</h3><div class="space-recap-list">${taskCards}</div></section>` : ""}
     ${habitCards ? `<section class="space-recap-section"><h3>العادات</h3><div class="space-recap-list">${habitCards}</div></section>` : ""}
     <p class="space-recap-pride"><span aria-hidden="true">✦</span>${escapeHtml(personalWin)}</p>
@@ -1092,9 +1216,11 @@ function renderDayRecap(date, label) {
       <div><p>ختام يومك</p><h2>${escapeHtml(label)}</h2><span>${escapeHtml(formatDate(date))}</span></div>
       <button class="icon-button" type="button" data-action="close-recap" aria-label="إغلاق">×</button>
     </header>
+    ${renderRecapRangeTabs()}
     <section class="space-day-recap-grid" aria-label="إحصائيات اليوم والنوم">
       <article class="is-highlight"><span>الإنجاز</span><strong><bdi dir="ltr">${formatArabicNumber(metrics.percent)}٪</bdi></strong></article>
       <article><span>المهام</span><strong><bdi dir="ltr">${formatArabicNumber(metrics.completedTasks)} / ${formatArabicNumber(taskTotal)}</bdi></strong></article>
+      <article><span>المهام الفرعية</span><strong><bdi dir="ltr">${formatArabicNumber(metrics.completedSubtasks)}</bdi></strong></article>
       <article><span>العادات</span><strong><bdi dir="ltr">${formatArabicNumber(metrics.completedHabits)} / ${formatArabicNumber(metrics.scheduledHabits)}</bdi></strong></article>
       <article><span>النوم</span><strong><bdi dir="ltr">${bedtime}</bdi></strong></article>
       <article><span>الاستيقاظ</span><strong><bdi dir="ltr">${wakeTime}</bdi></strong></article>
@@ -1155,11 +1281,25 @@ function periodReport(start, end, label) {
   return { title: label, period: rangeLabel, summary, sections };
 }
 
-function openPeriodRecap(start, end, label) {
+function openPeriodRecap(start, end, label, mode = null, anchorDate = null) {
   const dialog = document.querySelector("#space-period-recap-dialog");
   if (!dialog) return;
+  const inferredMode = start === end || label.includes("اليوم") ? "day"
+    : label.includes("أسبوع") ? "week"
+      : label.includes("شهر") ? "month"
+        : label.includes("سنة") || label.includes("عام") ? "year"
+          : eachDate(start, end).length <= 7 ? "week"
+            : eachDate(start, end).length <= 31 ? "month" : "year";
+  recapMode = MAP_MODES.includes(mode) ? mode : inferredMode;
+  recapAnchorDate = anchorDate || (mapDate >= start && mapDate <= end
+    ? mapDate
+    : end < localDateString() ? end : localDateString());
+  recapSelectedDate = recapAnchorDate;
+  recapStart = start;
+  recapEnd = end;
+  recapLabel = label;
   dialog.innerHTML = renderPeriodRecap(start, end, label);
-  dialog.showModal();
+  if (!dialog.open) dialog.showModal();
 }
 
 function storyDisplayName() {
@@ -1647,7 +1787,13 @@ function currentDayStory(dialog) {
 }
 
 function renderMapControls() {
+  const { start, end } = mapBounds();
   return `<div class="space-map-controls">
+    <div class="space-map-recap-control">
+      <button class="space-map-recap-action" type="button" data-action="period-recap" data-start="${start}" data-end="${end}" data-label="حصاد ${MAP_MODE_LABELS[mapMode]}">
+        <span aria-hidden="true">✦</span> الحصاد
+      </button>
+    </div>
     <nav class="space-map-modes" aria-label="مدى خارطة اليوم">
       ${MAP_MODES.map((mode) => `<button type="button" data-action="map-mode" data-mode="${mode}" aria-pressed="${mapMode === mode}">${MAP_MODE_LABELS[mode]}</button>`).join("")}
     </nav>
@@ -1773,6 +1919,9 @@ async function saveSleepLog(date, changes) {
   };
   if (existing) await update("device", next);
   else await add("device", { ...next, createdAt: now });
+  records.device = existing
+    ? records.device.map((entry) => entry.id === next.id ? next : entry)
+    : [...records.device, { ...next, createdAt: now }];
 }
 
 async function saveSleepLogWithFeedback(date, changes, message) {
@@ -1785,6 +1934,25 @@ async function saveSleepLogWithFeedback(date, changes, message) {
     showToast(`تعذّر حفظ سجل النوم: ${error.message}`, { isError: true });
     return false;
   }
+}
+
+function sleepEntriesComplete(date) {
+  const wakeTime = sleepLogFor(date)?.wakeTime;
+  const bedtime = sleepLogFor(dateOffset(date, -1))?.bedTime;
+  const nap = sleepLogFor(date) ?? {};
+  const napRecorded = clockMinutes(nap.napStart) !== null && Number(nap.napDurationMin) > 0;
+  return clockMinutes(wakeTime) !== null && clockMinutes(bedtime) !== null
+    && (napRecorded || nap.napSkipped === true);
+}
+
+function finishSleepEntrySave(date, nodeSelector) {
+  if (!sleepEntriesComplete(date)) {
+    showToast("حُفظ الوقت. أكمل تسجيل الاستيقاظ والنوم والقيلولة أو اختر «لم آخذ قيلولة».");
+    return;
+  }
+  document.querySelector("#space-sleep-dialog")?.close();
+  render();
+  animateMapCompletion(nodeSelector);
 }
 
 async function locateDevice() {
@@ -1909,6 +2077,22 @@ function bindEvents(app) {
     const storyDialog = app.querySelector("#space-day-story-dialog");
     if (event.target === storyDialog) {
       storyDialog.close();
+      return;
+    }
+    const recapRangeButton = event.target.closest("[data-recap-range]");
+    if (recapRangeButton) {
+      const mode = recapRangeButton.dataset.recapRange;
+      if (!MAP_MODES.includes(mode)) return;
+      const anchorDate = recapSelectedDate || recapAnchorDate;
+      const bounds = recapPeriodBounds(mode, anchorDate);
+      openPeriodRecap(bounds.start, bounds.end, `حصاد ${MAP_MODE_LABELS[mode]}`, mode, anchorDate);
+      return;
+    }
+    const recapDayButton = event.target.closest("[data-recap-day]");
+    if (recapDayButton) {
+      recapSelectedDate = recapDayButton.dataset.recapDay;
+      const dialog = app.querySelector("#space-period-recap-dialog");
+      if (dialog) dialog.innerHTML = renderPeriodRecap(recapStart, recapEnd, recapLabel);
       return;
     }
     const storyStop = event.target.closest("[data-story-index]");
@@ -2062,8 +2246,7 @@ function bindEvents(app) {
       }
       if (await saveSleepLogWithFeedback(mapDate, { wakeTime: time }, `سُجّل استيقاظك عند ${timeLabel(time)} وبدأ يومك الشخصي من ذلك الوقت.`)) {
         button.textContent = "تحديث وقت الاستيقاظ";
-        sleepDialog?.close();
-        animateMapCompletion(".space-sleep-card");
+        finishSleepEntrySave(mapDate, ".space-sleep-card");
       }
       return;
     }
@@ -2076,8 +2259,7 @@ function bindEvents(app) {
       const previousDate = dateOffset(mapDate, -1);
       if (await saveSleepLogWithFeedback(previousDate, { bedTime: time }, `سُجّل نوم الليلة السابقة عند ${timeLabel(time)}.`)) {
         button.textContent = "تحديث وقت النوم";
-        sleepDialog?.close();
-        animateMapCompletion(".space-sleep-card");
+        finishSleepEntrySave(mapDate, ".space-sleep-card");
       }
       return;
     }
@@ -2088,17 +2270,15 @@ function bindEvents(app) {
         showToast("أدخل وقت بداية القيلولة ومدتها بين دقيقة و٢٤٠ دقيقة.", { isError: true });
         return;
       }
-      if (await saveSleepLogWithFeedback(mapDate, { napStart: start, napDurationMin: duration }, `سُجّلت قيلولتك: ${formatSleepDuration(duration)}.`)) {
+      if (await saveSleepLogWithFeedback(mapDate, { napStart: start, napDurationMin: duration, napSkipped: false }, `سُجّلت قيلولتك: ${formatSleepDuration(duration)}.`)) {
         button.textContent = "تحديث القيلولة";
-        sleepDialog?.close();
-        animateMapCompletion(".space-sleep-card");
+        finishSleepEntrySave(mapDate, ".space-sleep-card");
       }
       return;
     }
     if (button.dataset.action === "skip-nap") {
-      if (await saveSleepLogWithFeedback(mapDate, { napStart: null, napDurationMin: 0 }, "سُجّل أنك لم تأخذ قيلولة اليوم.")) {
-        sleepDialog?.close();
-        animateMapCompletion(".space-sleep-card");
+      if (await saveSleepLogWithFeedback(mapDate, { napStart: null, napDurationMin: 0, napSkipped: true }, "سُجّل أنك لم تأخذ قيلولة اليوم.")) {
+        finishSleepEntrySave(mapDate, ".space-sleep-card");
       }
       return;
     }
@@ -2278,8 +2458,10 @@ function bindEvents(app) {
       const wasComplete = prayerItems.length > 0 && prayerItems.every((item) => (habit.itemLog?.[date] ?? []).includes(item.id));
       const isComplete = prayerItems.length > 0 && prayerItems.every((item) => logged.has(item.id));
       await update("habits", next);
+      records.habits = records.habits.map((item) => item.id === next.id ? next : item);
       showToast(`حُفظ تسجيل صلاة ${form.dataset.prayer}.`);
       form.closest("dialog")?.close();
+      render();
       if (!wasComplete && isComplete) {
         animateMapCompletion(mapNodeSelector(".space-node-prayer", "data-prayer", form.dataset.prayer));
       }
@@ -2308,6 +2490,13 @@ function bindEvents(app) {
       const item = checklist[Number(subtask.dataset.index)];
       if (!item) return;
       item.done = subtask.checked;
+      const date = subtask.dataset.date || mapDate;
+      const completionLog = Array.isArray(item.completionLog) ? item.completionLog : [];
+      item.completionLog = [
+        ...completionLog.filter((entry) => entry?.date !== date),
+        { date, completed: subtask.checked },
+      ];
+      item.completedAt = subtask.checked && date === localDateString() ? new Date().toISOString() : null;
       update("tasks", { ...task, checklist, updatedAt: new Date().toISOString() })
         .catch((error) => {
           console.error("تعذّر تحديث المهمة الفرعية من الخارطة:", error);

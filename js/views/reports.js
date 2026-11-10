@@ -10,7 +10,7 @@ import { downloadXlsx } from "../export/xlsx.js";
 import { printReport } from "../export/pdf.js";
 import { shareTextReport } from "../export/share.js";
 import { completedSubtaskCount, formatDuration, manualTaskMinutes, totalRecordedTaskMinutes } from "../utils/task-metrics.js";
-import { isTaskScheduledOn } from "../utils/task-schedule.js";
+import { isTaskCountedInRange, isTaskCountedOn } from "../utils/task-schedule.js";
 
 const DAY_MS = 86_400_000;
 const DATE_RANGES = {
@@ -34,7 +34,7 @@ const EXPORT_SCOPE_LABELS = {
 
 let unsubscribe;
 let eventController;
-let records = { tasks: [], projects: [], objectives: [], keyResults: [], lifeAreas: [], habits: [], sessions: [], journal: [], reviews: [], profile: [] };
+let records = { tasks: [], projects: [], objectives: [], keyResults: [], lifeAreas: [], habits: [], sessions: [], journal: [], reviews: [], profile: [], device: [] };
 let range = "month";
 let customStart = localDateString(new Date(Date.now() - 29 * DAY_MS));
 let customEnd = localDateString();
@@ -187,7 +187,7 @@ function completionStatistics(tasks, habits, start, end) {
     const dayTaskEvents = taskEvents.filter((event) => event.date === date);
     const completedTaskIds = new Set(dayTaskEvents.map((event) => event.id));
     const plannedTasks = tasks.filter((task) => {
-      return isTaskScheduledOn(task, date, true) || completedTaskIds.has(task.id);
+      return isTaskCountedOn(task, date) || completedTaskIds.has(task.id);
     });
     const plannedHabits = habits.filter((habit) =>
       scheduledDays(habit, date, date).length > 0);
@@ -361,6 +361,9 @@ function rangeForCharts() {
 
 function reportSummary(tasks, start, end) {
   const completedTasks = tasks.filter((task) => task.status === "done" && inRange(task.completedAt, start, end)).length;
+  const taskCount = tasks.filter((task) => task.status === "done"
+    ? inRange(task.completedAt, start, end) || (!task.completedAt && isTaskCountedInRange(task, start, end))
+    : isTaskCountedInRange(task, start, end)).length;
   const sessions = reportSessions(start, end);
   const focusMinutes = sessions.reduce((sum, session) => sum + Math.max(0, Number(session.durationMin) || 0), 0);
   const habits = records.habits.filter((habit) => !habit.archived && matchesHabitFilters(habit));
@@ -387,9 +390,9 @@ function reportSummary(tasks, start, end) {
     ? (moodEntries.reduce((sum, entry) => sum + Number(entry.mood), 0) / moodEntries.length).toFixed(1)
     : "—";
   return {
-    taskCount: tasks.length,
+    taskCount,
     completedTasks,
-    completionRate: tasks.length ? Math.round(completedTasks / tasks.length * 100) : 0,
+    completionRate: taskCount ? Math.round(completedTasks / taskCount * 100) : 0,
     focusMinutes,
     sessionCount: sessions.length,
     habitCompletion,
@@ -726,6 +729,7 @@ function render() {
       </section>
       <p class="report-period-label">${range === "all" ? "كامل السجل · خريطة النشاط تعرض آخر 12 شهراً" : `<bdi dir="ltr">${escapeHtml(start)} — ${escapeHtml(end)}</bdi>`} · ${completedTasks} مهام منجزة</p>
       ${renderPeriodHighlights(tasks, start, end)}
+      ${renderDailyRhythmAnalysis(tasks, start, end)}
       ${renderReportCharts(tasks)}
       <details class="report-table-details">
         <summary>سجل المهام بالتفصيل <span>${tasks.length} مهمة</span></summary>
@@ -931,9 +935,10 @@ function renderPeriodHighlights(tasks, start, end) {
   const habitStats = habits.map((habit) => habitConsistency(habit, start, end));
   const scheduledHabitDays = habitStats.reduce((total, item) => total + item.scheduled, 0);
   const completedHabitDays = habitStats.reduce((total, item) => total + item.completed, 0);
-  const totalItems = tasks.length + scheduledHabitDays;
-  const completedItems = summary.completedTasks + completedHabitDays;
-  const overallProgress = totalItems ? Math.round(completedItems / totalItems * 100) : 0;
+  const completedSubtasks = completedSubtaskCount(tasks, start, end);
+  const totalCountedItems = summary.taskCount + scheduledHabitDays + completedSubtasks;
+  const completedItems = summary.completedTasks + completedHabitDays + completedSubtasks;
+  const overallProgress = totalCountedItems ? Math.round(completedItems / totalCountedItems * 100) : 0;
   const focusMinutes = reportSessions(start, end).reduce((total, session) =>
     total + Math.max(0, Number(session.durationMin) || 0), 0);
   const objectives = objectivesInPeriod(tasks, habits, start, end);
@@ -957,12 +962,12 @@ function renderPeriodHighlights(tasks, start, end) {
     <div class="report-period-highlight-grid">
       <article class="report-period-highlight-card is-progress">
         <span>التقدّم الكلي</span><strong>${overallProgress}٪</strong>
-        <small>${completedItems} من ${totalItems} مهمة ويوم عادة</small>
+        <small>${completedItems} من ${totalCountedItems} مهمة وبند ويوم عادة</small>
         <i role="img" aria-label="التقدم ${overallProgress} بالمئة" style="--highlight-progress:${overallProgress}%"></i>
       </article>
       <article class="report-period-highlight-card">
         <span>مهام أنجزتها</span><strong>${summary.completedTasks}</strong>
-        <small>من أصل ${tasks.length} مهمة في الفترة</small>
+        <small>من أصل ${summary.taskCount} مهمة محسوبة في الفترة</small>
       </article>
       <article class="report-period-highlight-card">
         <span>ثبات العادات</span><strong>${summary.habitCompletion}٪</strong>
@@ -989,6 +994,250 @@ function renderPeriodHighlights(tasks, start, end) {
   </section>`;
 }
 
+function dateOffset(date, offset) {
+  const value = new Date(`${date}T12:00:00`);
+  value.setDate(value.getDate() + offset);
+  return localDateString(value);
+}
+
+function clockMinutes(value) {
+  const match = String(value ?? "").match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+  return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+}
+
+function timeWindow(value) {
+  if (!Number.isFinite(value)) return null;
+  const hour = new Date(value).getHours();
+  if (hour >= 5 && hour < 12) return "الصباح";
+  if (hour >= 12 && hour < 17) return "الظهر";
+  if (hour >= 17 && hour < 22) return "المساء";
+  return "الليل";
+}
+
+function dailyRhythmAnalysis(tasks, start, end) {
+  const today = localDateString();
+  const boundedEnd = end < today ? end : today;
+  const historyStart = dateOffset(today, -89);
+  const boundedStart = start > boundedEnd
+    ? boundedEnd
+    : start < dateOffset(boundedEnd, -89) ? dateOffset(boundedEnd, -89) : start;
+  const dates = [];
+  if (start <= boundedEnd) {
+    const cursor = new Date(`${boundedStart}T12:00:00`);
+    const last = new Date(`${boundedEnd}T12:00:00`);
+    while (cursor <= last && dates.length < 90) {
+      dates.push(localDateString(cursor));
+      cursor.setDate(cursor.getDate() + 1);
+    }
+  }
+  const historyDates = [];
+  const historyCursor = new Date(`${historyStart}T12:00:00`);
+  const historyLast = new Date(`${today}T12:00:00`);
+  while (historyCursor <= historyLast && historyDates.length < 90) {
+    historyDates.push(localDateString(historyCursor));
+    historyCursor.setDate(historyCursor.getDate() + 1);
+  }
+  const sleepForDate = (date) => {
+    const log = records.device.find((entry) => entry.id === `sleep-log:${date}`) ?? {};
+    const previousLog = records.device.find((entry) => entry.id === `sleep-log:${dateOffset(date, -1)}`) ?? {};
+    const bedtime = clockMinutes(previousLog.bedTime);
+    const wakeTime = clockMinutes(log.wakeTime);
+    const sleepMinutes = bedtime !== null && wakeTime !== null
+      ? (wakeTime - bedtime + 1440) % 1440
+      : null;
+    return {
+      sleepMinutes: sleepMinutes > 0 && sleepMinutes <= 18 * 60 ? sleepMinutes : null,
+      bedtime: bedtime === null ? "" : previousLog.bedTime,
+      wakeTime: wakeTime === null ? "" : log.wakeTime,
+      napMinutes: Number(log.napDurationMin) > 0 ? Number(log.napDurationMin) : null,
+      napStart: clockMinutes(log.napStart) === null ? "" : log.napStart,
+    };
+  };
+  const habits = records.habits.filter((habit) => !habit.archived && matchesHabitFilters(habit));
+  const sessions = reportSessions(boundedStart, boundedEnd);
+  const taskEvents = taskCompletionEvents(tasks, boundedStart, boundedEnd);
+  const learningTaskEvents = taskCompletionEvents(
+    records.tasks.filter(matchesTaskFilters),
+    historyStart,
+    today,
+  );
+  const completedTasksByDate = new Map();
+  for (const event of taskEvents) {
+    const entries = completedTasksByDate.get(event.date) ?? [];
+    entries.push(event);
+    completedTasksByDate.set(event.date, entries);
+  }
+  const taskSessionMinutes = new Map();
+  for (const session of sessions) {
+    if (!session.taskId) continue;
+    const date = String(session.start ?? "").slice(0, 10);
+    taskSessionMinutes.set(date, (taskSessionMinutes.get(date) ?? 0) + Math.max(0, Number(session.durationMin) || 0));
+  }
+  const days = dates.map((date) => {
+    const log = records.device.find((entry) => entry.id === `sleep-log:${date}`) ?? {};
+    const sleep = sleepForDate(date);
+    const scheduledHabits = habits.filter((habit) => {
+      const created = String(habit.createdAt ?? "").slice(0, 10);
+      return (!/^\d{4}-\d{2}-\d{2}$/.test(created) || date >= created)
+        && scheduledDays(habit, date, date).length > 0;
+    });
+    const completedHabits = scheduledHabits.filter((habit) => dayProgress(habit, date).complete).length;
+    const completedTaskEvents = completedTasksByDate.get(date) ?? [];
+    const completedTaskIds = new Set(completedTaskEvents.map((event) => event.id));
+    const plannedTasks = tasks.filter((task) =>
+      isTaskCountedOn(task, date) || completedTaskIds.has(task.id));
+    const manualMinutes = manualTaskMinutes(tasks, date, date);
+    const hasData = sleep.sleepMinutes !== null || sleep.napMinutes !== null || scheduledHabits.length > 0
+      || plannedTasks.length > 0 || completedTaskEvents.length > 0 || sessions.some((session) => String(session.start ?? "").slice(0, 10) === date);
+    return {
+      date,
+      ...sleep,
+      completedTasks: completedTaskEvents.length,
+      plannedTasks: plannedTasks.length,
+      taskMinutes: manualMinutes + (taskSessionMinutes.get(date) ?? 0) || null,
+      scheduledHabits: scheduledHabits.length,
+      completedHabits,
+      habitPercent: scheduledHabits.length ? Math.round(completedHabits / scheduledHabits.length * 100) : null,
+      hasData,
+    };
+  });
+  const learningDays = historyDates.map((date) => ({ date, ...sleepForDate(date) }));
+  const sleepDays = learningDays.filter((day) => day.sleepMinutes !== null);
+  const napDays = learningDays.filter((day) => day.napMinutes !== null);
+  const windows = { "الصباح": 0, "الظهر": 0, "المساء": 0, "الليل": 0 };
+  for (const event of learningTaskEvents) {
+    const window = timeWindow(new Date(event.completedAt).getTime());
+    if (window) windows[window] += 1;
+  }
+  const taskWindows = Object.entries(windows).map(([label, count]) => ({ label, count }));
+  const average = (values) => values.length
+    ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
+    : null;
+  const averageClock = (values) => {
+    const minutes = values.filter(Number.isFinite);
+    if (!minutes.length) return null;
+    const angles = minutes.map((value) => value / 1440 * Math.PI * 2);
+    const sin = angles.reduce((sum, value) => sum + Math.sin(value), 0);
+    const cos = angles.reduce((sum, value) => sum + Math.cos(value), 0);
+    return Math.round((Math.atan2(sin, cos) / (Math.PI * 2) * 1440 + 1440) % 1440);
+  };
+  const averageSleepMinutes = average(sleepDays.map((day) => day.sleepMinutes));
+  const averageWake = averageClock(sleepDays.map((day) => clockMinutes(day.wakeTime)));
+  const averageBedtime = averageClock(sleepDays.map((day) => clockMinutes(day.bedtime)));
+  const averageNapMinutes = average(napDays.map((day) => day.napMinutes));
+  const averageNapStart = averageClock(napDays.map((day) => clockMinutes(day.napStart)));
+  const bestTaskWindow = taskWindows.reduce((best, item) => item.count > (best?.count ?? 0) ? item : best, null);
+  const todayLog = records.device.find((entry) => entry.id === `sleep-log:${today}`) ?? {};
+  const previousTodayLog = records.device.find((entry) => entry.id === `sleep-log:${dateOffset(today, -1)}`) ?? {};
+  const todayBedtime = clockMinutes(previousTodayLog.bedTime);
+  const todayWake = clockMinutes(todayLog.wakeTime);
+  const todaySleepDuration = todayBedtime !== null && todayWake !== null
+    ? (todayWake - todayBedtime + 1440) % 1440
+    : null;
+  const todaySleepMinutes = todaySleepDuration > 0 && todaySleepDuration <= 18 * 60 ? todaySleepDuration : null;
+  const todayTasks = records.tasks.filter(matchesTaskFilters);
+  const todayTaskEvents = taskCompletionEvents(todayTasks, today, today);
+  const completedToday = todayTaskEvents.length;
+  const completedTodayIds = new Set(todayTaskEvents.map((event) => event.id));
+  const plannedToday = todayTasks.filter((task) =>
+    isTaskCountedOn(task, today) || completedTodayIds.has(task.id));
+  const openTodayTasks = plannedToday.filter((task) => task.status !== "done");
+  const priorityToday = openTodayTasks.filter((task) =>
+    task.priority <= 1 || task.important || task.urgent).length;
+  const todayHabits = records.habits.filter((habit) =>
+    !habit.archived && matchesHabitFilters(habit) && scheduledDays(habit, today, today).length > 0);
+  const completedHabitsToday = todayHabits.filter((habit) => dayProgress(habit, today).complete).length;
+  const enoughSleepHistory = sleepDays.length >= 7;
+  let decision;
+  let decisionTone;
+  if (!enoughSleepHistory) {
+    decisionTone = "learning";
+    decision = `التحليل يتعلّم إيقاعك؛ سُجّلت ${sleepDays.length} من ٧ ليالٍ مكتملة. سجّل وقت النوم والاستيقاظ بانتظام للحصول على قرار شخصي.`;
+  } else if (!todaySleepMinutes) {
+    decisionTone = "learning";
+    decision = `ابدأ قرب متوسط استيقاظك (${averageWake === null ? "غير متاح" : formatClock(new Date(2000, 0, 1, Math.floor(averageWake / 60), averageWake % 60))})، واجعل أولويتك ${priorityToday ? "مهمة أساسية واحدة" : "مهمة اليوم الأهم"}. لا يمكن مقارنة نوم اليوم لأن تسجيل النوم أو الاستيقاظ غير مكتمل.`;
+  } else if (averageSleepMinutes !== null && todaySleepMinutes < averageSleepMinutes - 45) {
+    decisionTone = "gentle";
+    decision = `سجّلت ${formatDuration(todaySleepMinutes)} نومًا، أقل من متوسطك (${formatDuration(averageSleepMinutes)}). ابدأ بهدوء، وأنجز ${priorityToday ? "مهمة أولوية واحدة" : "أهم مهمة"} أولًا، ثم أعد توزيع بقية اليوم.`;
+  } else {
+    decisionTone = "steady";
+    decision = `ابدأ قرب متوسط استيقاظك (${averageWake === null ? "غير متاح" : formatClock(new Date(2000, 0, 1, Math.floor(averageWake / 60), averageWake % 60))})، وضع المهام الأهم في ${bestTaskWindow?.count ? `فترة إنجازك الأكثر تسجيلًا: ${bestTaskWindow.label}` : "الفترة التي تشعر فيها بتركيز أفضل"}.`;
+  }
+  const recommendations = [];
+  if (enoughSleepHistory && averageWake !== null) {
+    recommendations.push(`بداية اليوم الأقرب لسجلك: ${formatClock(new Date(2000, 0, 1, Math.floor(averageWake / 60), averageWake % 60))}، ومتوسط النوم المسجّل ${formatDuration(averageSleepMinutes)}.`);
+  }
+  if (averageBedtime !== null) {
+    recommendations.push(`موعد النوم الأكثر شيوعًا في سجلك قريب من ${formatClock(new Date(2000, 0, 1, Math.floor(averageBedtime / 60), averageBedtime % 60))}.`);
+  }
+  if (averageNapMinutes !== null && averageNapStart !== null && napDays.length >= 3) {
+    recommendations.push(`في الأيام التي سجلت فيها قيلولة، كان متوسط بدايتها ${formatClock(new Date(2000, 0, 1, Math.floor(averageNapStart / 60), averageNapStart % 60))} ومدتها ${formatDuration(averageNapMinutes)}؛ هذا وصف لسجلك وليس موعدًا إلزاميًا.`);
+  }
+  if (bestTaskWindow?.count && learningTaskEvents.length >= 5) {
+    recommendations.push(`سُجّل أكبر عدد من إنجازات المهام في ${bestTaskWindow.label} (${bestTaskWindow.count} إنجازات)؛ جرّب وضع المهام الأعلى أولوية هناك.`);
+  }
+  if (learningTaskEvents.length < 5) {
+    recommendations.push(`توزيع المهام قيد التعلّم: ${learningTaskEvents.length} من ٥ إنجازات مطلوبة لرصد الفترة الأكثر نشاطًا.`);
+  }
+  if (!recommendations.length) {
+    recommendations.push("واصل تسجيل النوم والقيلولة والعادات وإنجاز المهام؛ ستظهر الملاحظات الشخصية بعد اكتمال عينة كافية.");
+  }
+  return {
+    days: days.filter((day) => day.hasData).slice(-14),
+    sleepDays,
+    napDays,
+    averageSleepMinutes,
+    averageWake,
+    averageBedtime,
+    averageNapMinutes,
+    averageNapStart,
+    taskEvents: learningTaskEvents,
+    taskWindows,
+    bestTaskWindow,
+    completedToday,
+    plannedToday: plannedToday.length,
+    completedHabitsToday,
+    scheduledHabitsToday: todayHabits.length,
+    todaySleepMinutes,
+    todayNapMinutes: Number(todayLog.napDurationMin) > 0 ? Number(todayLog.napDurationMin) : null,
+    todayNapSkipped: todayLog.napSkipped === true,
+    decision,
+    decisionTone,
+    recommendations,
+  };
+}
+
+function renderDailyRhythmAnalysis(tasks, start, end) {
+  const analysis = dailyRhythmAnalysis(tasks, start, end);
+  const windowTotal = analysis.taskWindows.reduce((sum, item) => sum + item.count, 0);
+  const timeLabel = (minutes) => minutes === null
+    ? "—"
+    : formatClock(new Date(2000, 0, 1, Math.floor(minutes / 60), minutes % 60));
+  const distribution = analysis.taskWindows.map((item) => {
+    const percent = windowTotal ? Math.round(item.count / windowTotal * 100) : 0;
+    return `<article class="daily-rhythm-window"><span>${item.label}</span><strong>${item.count}</strong><i style="--window-share:${percent}%"></i><small>${percent}٪</small></article>`;
+  }).join("");
+  const days = analysis.days.map((day) => `<article class="daily-rhythm-day">
+    <strong>${escapeHtml(new Intl.DateTimeFormat("ar", { weekday: "short", day: "numeric", month: "short" }).format(new Date(`${day.date}T12:00:00`)))}</strong>
+    <span>النوم ${day.sleepMinutes === null ? "—" : formatDuration(day.sleepMinutes)}${day.wakeTime ? ` · الاستيقاظ ${escapeHtml(formatClock(new Date(2000, 0, 1, ...day.wakeTime.split(":").map(Number))))}` : ""}</span>
+    <span>القيلولة ${day.napMinutes === null ? "—" : formatDuration(day.napMinutes)} · المهام ${day.completedTasks}/${day.plannedTasks} · العادات ${day.habitPercent === null ? "—" : `${day.completedHabits}/${day.scheduledHabits}`}</span>
+    <small>وقت المهام المسجّل ${day.taskMinutes === null ? "—" : formatDuration(day.taskMinutes)}</small>
+  </article>`).join("");
+  return `<section class="daily-rhythm-analysis" aria-label="تحليل النوم والعادات والمهام">
+    <header class="daily-rhythm-heading"><div><p class="goals-kicker">تحليل فقط · يتعلّم من سجلك</p><h3>إيقاع يومك وقرار البداية</h3></div><span>يتعلّم من آخر ٩٠ يومًا؛ عرض السجل بحسب الفترة المحددة</span></header>
+    <div class="daily-rhythm-decision is-${analysis.decisionTone}"><span>قرار اليوم · ${escapeHtml(new Intl.DateTimeFormat("ar", { weekday: "long", day: "numeric", month: "short" }).format(new Date(`${localDateString()}T12:00:00`)))}</span><strong>${escapeHtml(analysis.decision)}</strong><small>النوم ${analysis.todaySleepMinutes === null ? "غير مكتمل" : formatDuration(analysis.todaySleepMinutes)} · القيلولة ${analysis.todayNapMinutes === null ? (analysis.todayNapSkipped ? "لم تؤخذ" : "غير مسجلة") : formatDuration(analysis.todayNapMinutes)} · المهام ${analysis.completedToday}/${analysis.plannedToday} · العادات ${analysis.completedHabitsToday}/${analysis.scheduledHabitsToday}</small></div>
+    <div class="daily-rhythm-stats">
+      <article><span>متوسط النوم المسجّل</span><strong>${analysis.averageSleepMinutes === null ? "—" : formatDuration(analysis.averageSleepMinutes)}</strong><small>${analysis.sleepDays.length} ليالٍ مكتملة في آخر ٩٠ يومًا · لا يُفترض معيار صحي ثابت</small></article>
+      <article><span>متوسط الاستيقاظ</span><strong>${timeLabel(analysis.averageWake)}</strong><small>بحسب الأيام ذات النوم المسجّل</small></article>
+      <article><span>القيلولة المسجّلة</span><strong>${analysis.averageNapMinutes === null ? "—" : formatDuration(analysis.averageNapMinutes)}</strong><small>${analysis.napDays.length} أيام قيلولة في آخر ٩٠ يومًا</small></article>
+      <article><span>إكمال العادات</span><strong>${analysis.days.length ? `${analysis.days.reduce((sum, day) => sum + day.completedHabits, 0)} إنجازات` : "—"}</strong><small>مقارنة بالعادات المجدولة يوميًا</small></article>
+    </div>
+    <section class="daily-rhythm-distribution" aria-label="توزيع إنجاز المهام حسب الوقت"><h4>متى تسجّل إنجاز المهام؟ · آخر ٩٠ يومًا</h4><div>${distribution}</div></section>
+    <ul class="daily-rhythm-notes">${analysis.recommendations.map((note) => `<li>${escapeHtml(note)}</li>`).join("")}</ul>
+    ${days ? `<section class="daily-rhythm-history"><h4>قراءة الأيام الأخيرة</h4><div>${days}</div></section>` : `<p class="report-empty">لا توجد سجلات كافية في هذه الفترة بعد. ابدأ بتسجيل النوم والقيلولة وإنجازاتك اليومية؛ سيعرض التحليل ما تسجله دون افتراض قيم غير موجودة.</p>`}
+  </section>`;
+}
+
 function buildExportAnalytics(tasks) {
   const selectedRange = dateRange();
   const { start, end } = rangeForCharts();
@@ -998,7 +1247,7 @@ function buildExportAnalytics(tasks) {
   const charts = [];
   const completedTasks = dailyCompletions(tasks, start, end);
   charts.push({ section: "tasks", title: "إنجاز المهام عبر الزمن", type: "line", unit: "مهمة", values: completedTasks });
-  const openTasks = tasks.filter((task) => task.status !== "done");
+  const openTasks = tasks.filter((task) => task.status !== "done" && isTaskCountedInRange(task, selectedRange.start, selectedRange.end));
   charts.push({
     section: "tasks",
     title: "حالة المهام",
@@ -1472,7 +1721,7 @@ function buildExportAnalytics(tasks) {
       label: "المهام",
       details: taskDetails,
       metrics: [
-        { label: "إجمالي المهام", value: tasks.length, detail: "ضمن الفترة والفلاتر" },
+        { label: "إجمالي المهام", value: summary.taskCount, detail: "المهام المحسوبة ضمن الفترة والفلاتر" },
         { label: "المكتملة", value: summary.completedTasks, detail: `${summary.completionRate}% من الإجمالي`, percent: summary.completionRate },
         { label: "المفتوحة", value: openTasks.length, detail: "بحاجة إلى إنجاز" },
         { label: "وقت العمل المسجّل", value: formatDuration(totalTaskMinutes), detail: `${totalTaskMinutes} دقيقة · وقت يدوي وجلسات تركيز` },
