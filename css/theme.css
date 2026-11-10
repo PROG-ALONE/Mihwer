@@ -18032,12 +18032,12 @@ body.today-route .topbar > div:first-child {
   -webkit-overflow-scrolling: touch;
 }
 
-.space-recap-day {
+.space-recap-period-card {
   position: relative;
   display: grid;
-  flex: 0 0 108px;
+  flex: 0 0 156px;
   min-width: 0;
-  min-height: 110px;
+  min-height: 142px;
   gap: 4px;
   padding: 9px;
   border: 1px solid var(--color-border);
@@ -18050,12 +18050,12 @@ body.today-route .topbar > div:first-child {
   scroll-snap-align: start;
 }
 
-.space-recap-day.is-selected {
+.space-recap-period-card.is-selected {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 18%, transparent);
 }
 
-.space-recap-day.is-today::after {
+.space-recap-period-card.is-today::after {
   position: absolute;
   inset-block-start: 7px;
   inset-inline-end: 7px;
@@ -18066,30 +18066,41 @@ body.today-route .topbar > div:first-child {
   content: "";
 }
 
-.space-recap-day strong {
+.space-recap-period-card > header {
+  display: grid;
+  gap: 2px;
+}
+
+.space-recap-period-card > header strong {
   font-size: .68rem;
 }
 
-.space-recap-day time,
-.space-recap-day span {
+.space-recap-period-card > header small,
+.space-recap-period-stats span {
   color: var(--color-muted);
   font-size: .59rem;
   line-height: 1.5;
 }
 
-.space-recap-day > b {
+.space-recap-period-card > b {
   color: var(--color-primary);
   font-size: .95rem;
 }
 
-.space-recap-day > i {
+.space-recap-period-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 6px;
+}
+
+.space-recap-period-card > i {
   height: 4px;
   overflow: hidden;
   border-radius: 99px;
   background: var(--color-border);
 }
 
-.space-recap-day > i::after {
+.space-recap-period-card > i::after {
   display: block;
   width: var(--recap-day-progress);
   height: 100%;

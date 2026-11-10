@@ -452,7 +452,8 @@ function prayerStatus(item, habit, today) {
 
 function buildEvents(tasks, habits, schedule, today) {
   const prayerHabit = linkedPrayerHabit();
-  const prayerEvents = schedule?.times ?? Object.keys(PRAYER_ITEM_NAMES).map((name) => ({ name, time: null }));
+  const prayerEvents = (schedule?.times ?? Object.keys(PRAYER_ITEM_NAMES).map((name) => ({ name, time: null })))
+    .filter((prayer) => Object.hasOwn(PRAYER_ITEM_NAMES, prayer.name));
   const prayerMinutesByName = new Map(prayerEvents.map((prayer) =>
     [prayer.name, Number.isFinite(prayer.time) ? prayerMinutes(prayer.time) : PRAYER_ORDER_IF_LOCATION_UNAVAILABLE[prayer.name]]));
   const ritualTime = (habit) => {
@@ -1009,6 +1010,76 @@ function renderRecapDayDetails(date) {
     </div>`;
 }
 
+function recapSegments(mode, start, end) {
+  const segments = [];
+  if (mode === "year") {
+    const first = new Date(`${start}T12:00:00`);
+    const last = new Date(`${end}T12:00:00`);
+    for (let month = first.getMonth(); month <= last.getMonth(); month += 1) {
+      const monthStart = dateString(localDate(first.getFullYear(), month, 1));
+      const monthEnd = dateString(localDate(first.getFullYear(), month + 1, 0));
+      segments.push({
+        start: monthStart < start ? start : monthStart,
+        end: monthEnd > end ? end : monthEnd,
+        mode: "month",
+        title: new Intl.DateTimeFormat("ar", { month: "long" }).format(localDate(first.getFullYear(), month, 1)),
+      });
+    }
+    return segments;
+  }
+  if (mode === "month") {
+    let cursor = new Date(`${start}T12:00:00`);
+    const last = new Date(`${end}T12:00:00`);
+    let week = 1;
+    while (cursor <= last) {
+      const weekEnd = localDate(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + (6 - cursor.getDay()));
+      const endDate = weekEnd > last ? last : weekEnd;
+      segments.push({
+        start: dateString(cursor),
+        end: dateString(endDate),
+        mode: "week",
+        title: `الأسبوع ${formatArabicNumber(week)}`,
+      });
+      cursor = localDate(endDate.getFullYear(), endDate.getMonth(), endDate.getDate() + 1);
+      week += 1;
+    }
+    return segments;
+  }
+  if (mode === "week") {
+    return eachDate(start, end).map((date) => ({
+      start: date,
+      end: date,
+      mode: "day",
+      title: new Intl.DateTimeFormat("ar", { weekday: "long" }).format(new Date(`${date}T12:00:00`)),
+    }));
+  }
+  return segments;
+}
+
+function renderRecapPeriodCards(segments, selectedDate) {
+  return segments.map((segment) => {
+    const metrics = periodMetrics(segment.start, segment.end);
+    const sessions = records.sessions.filter((session) =>
+      session.status === "completed" && session.type !== "break"
+      && datePart(session.start) >= segment.start && datePart(session.start) <= segment.end);
+    const focusMinutes = sessions.reduce((total, session) => total + Math.max(0, Number(session.durationMin) || 0), 0);
+    const selected = selectedDate >= segment.start && selectedDate <= segment.end;
+    const isDay = segment.mode === "day";
+    const title = isDay
+      ? new Intl.DateTimeFormat("ar", { day: "numeric", month: "short" }).format(new Date(`${segment.start}T12:00:00`))
+      : segment.title;
+    const label = segment.mode === "month" ? `حصاد شهر ${segment.title}`
+      : segment.mode === "week" ? `حصاد ${segment.title}`
+        : `حصاد ${segment.title}`;
+    return `<button type="button" class="space-recap-period-card${selected ? " is-selected" : ""}${segment.start === localDateString() && isDay ? " is-today" : ""}" data-recap-period-start="${segment.start}" data-recap-period-end="${segment.end}" data-recap-period-mode="${segment.mode}" data-recap-period-label="${escapeHtml(label)}" aria-pressed="${selected}" style="--recap-day-progress:${metrics.percent}%;--recap-day-tint:${Math.round(5 + metrics.percent * 0.13)}%">
+      <header><strong>${escapeHtml(title)}</strong>${isDay ? "" : `<small>${escapeHtml(formatDate(segment.start))}${segment.start !== segment.end ? ` – ${escapeHtml(formatDate(segment.end))}` : ""}</small>`}</header>
+      <b>${formatArabicNumber(metrics.percent)}٪</b>
+      <div class="space-recap-period-stats"><span>المهام ${formatArabicNumber(metrics.completedTasks)}/${formatArabicNumber(metrics.completedTasks + metrics.plannedTasks)}</span><span>العادات ${formatArabicNumber(metrics.completedHabits)}/${formatArabicNumber(metrics.scheduledHabits)}</span><span>فرعية ${formatArabicNumber(metrics.completedSubtasks)}</span><span>تركيز ${formatDuration(focusMinutes)}</span></div>
+      <i aria-hidden="true"></i>
+    </button>`;
+  }).join("");
+}
+
 function renderPeriodRecap(start, end, label) {
   if (recapMode === "day" && start === end) {
     return renderDayRecap(start, label);
@@ -1147,21 +1218,17 @@ function renderPeriodRecap(start, end, label) {
     return `<article class="space-recap-detail"><strong>صلاة ${escapeHtml(prayerName)}</strong><span>الفرض ${formatArabicNumber(fardDays)} من ${formatArabicNumber(prayerDates.length)} يومًا · ${formatArabicNumber(sunnahCount)} سنن مسجلة</span>${timeDetails.length ? `<small>الأوقات: ${timeDetails.map(escapeHtml).join(" · ")}</small>` : ""}</article>`;
   }).filter(Boolean).join("") : "";
   const recapEnd = end < localDateString() ? end : localDateString();
-  const visibleDates = eachDate(start, recapEnd);
-  if (!visibleDates.length && start > localDateString()) visibleDates.push(start);
-  if (!visibleDates.includes(recapSelectedDate)) recapSelectedDate = visibleDates.at(-1) ?? end;
-  const dailyCards = visibleDates.map((date) => {
-    const metrics = periodMetrics(date, date);
-    const percent = metrics.percent;
-    const day = new Date(`${date}T12:00:00`);
-    return `<button type="button" class="space-recap-day${date === recapSelectedDate ? " is-selected" : ""}${date === localDateString() ? " is-today" : ""}" data-recap-day="${date}" aria-pressed="${date === recapSelectedDate}" style="--recap-day-progress:${percent}%;--recap-day-tint:${Math.round(5 + percent * 0.13)}%">
-      <strong>${escapeHtml(new Intl.DateTimeFormat("ar", { weekday: "short" }).format(day))}</strong>
-      <time datetime="${date}">${escapeHtml(new Intl.DateTimeFormat("ar", { day: "numeric", month: "short" }).format(day))}</time>
-      <b>${formatArabicNumber(percent)}٪</b>
-      <span>${formatArabicNumber(metrics.completedTasks)}/${formatArabicNumber(metrics.completedTasks + metrics.plannedTasks)} مهام</span>
-      <i aria-hidden="true"></i>
-    </button>`;
-  }).join("");
+  const segmentEnd = recapEnd < start ? start : recapEnd;
+  const recapPeriods = recapSegments(recapMode, start, segmentEnd);
+  if (!recapPeriods.some((period) => recapSelectedDate >= period.start && recapSelectedDate <= period.end)) {
+    recapSelectedDate = recapPeriods.length ? recapPeriods.at(-1).end : start;
+  }
+  const periodCards = renderRecapPeriodCards(recapPeriods, recapSelectedDate);
+  const recapPeriodTitle = {
+    year: "إيقاع شهور السنة",
+    month: "إيقاع أسابيع الشهر",
+    week: "إيقاع أيام الأسبوع",
+  }[recapMode] ?? "إيقاع الأيام";
   const personalWin = completedTasks || completedHabitDays
     ? `أنجزت ${formatArabicNumber(completedTasks)} مهمة وحافظت على ${formatArabicNumber(completedHabitDays)} يومًا من العادات. كل خطوة ساهمت في وصولك.`
     : "قد لا يكون اليوم كاملاً، لكن مراجعتك له خطوة مهمة نحو يوم أفضل.";
@@ -1180,7 +1247,7 @@ function renderPeriodRecap(start, end, label) {
         <article><span>أهداف ضمن رحلتك</span><strong>${formatArabicNumber(objectives.length)}</strong><small>${formatArabicNumber(objectives.filter((objective) => objective.status === "done").length)} مكتملة</small></article>
       </div>
     </section>
-    ${dailyCards ? `<section class="space-recap-section space-recap-rhythm"><header><h3>إيقاع الأيام</h3><span>${formatArabicNumber(visibleDates.length)} يومًا · اختر يومًا لعرض إنجازاته</span></header><div class="space-recap-day-track">${dailyCards}</div><div class="space-recap-selected-day">${renderRecapDayDetails(recapSelectedDate)}</div></section>` : ""}
+    ${periodCards ? `<section class="space-recap-section space-recap-rhythm"><header><h3>${recapPeriodTitle}</h3><span>${formatArabicNumber(recapPeriods.length)} ${recapMode === "year" ? "أشهر" : recapMode === "month" ? "أسابيع" : "أيام"} · اختر الفترة للتفصيل</span></header><div class="space-recap-day-track">${periodCards}</div>${recapMode === "week" ? `<div class="space-recap-selected-day">${renderRecapDayDetails(recapSelectedDate)}</div>` : ""}</section>` : ""}
     <section class="space-recap-time">
       <article><span>مدد الإنجاز المسجّلة</span><strong>${formatDuration(completionMinutes)}</strong></article>
       <article><span>جلسات التركيز</span><strong>${formatDuration(focusMinutes)}</strong><small>${formatArabicNumber(focusSessions.length)} جلسة</small></article>
@@ -2088,11 +2155,20 @@ function bindEvents(app) {
       openPeriodRecap(bounds.start, bounds.end, `حصاد ${MAP_MODE_LABELS[mode]}`, mode, anchorDate);
       return;
     }
-    const recapDayButton = event.target.closest("[data-recap-day]");
-    if (recapDayButton) {
-      recapSelectedDate = recapDayButton.dataset.recapDay;
-      const dialog = app.querySelector("#space-period-recap-dialog");
-      if (dialog) dialog.innerHTML = renderPeriodRecap(recapStart, recapEnd, recapLabel);
+    const recapPeriodButton = event.target.closest("[data-recap-period-start]");
+    if (recapPeriodButton) {
+      const { recapPeriodStart: start, recapPeriodEnd: end, recapPeriodMode: mode } = recapPeriodButton.dataset;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(start ?? "") || !/^\d{4}-\d{2}-\d{2}$/.test(end ?? "")
+        || start > end || !MAP_MODES.includes(mode)) return;
+      if (mode === "day") {
+        recapSelectedDate = start;
+        recapAnchorDate = start;
+        const dialog = app.querySelector("#space-period-recap-dialog");
+        if (dialog) dialog.innerHTML = renderPeriodRecap(recapStart, recapEnd, recapLabel);
+        return;
+      }
+      const anchorDate = recapSelectedDate >= start && recapSelectedDate <= end ? recapSelectedDate : end;
+      openPeriodRecap(start, end, recapPeriodButton.dataset.recapPeriodLabel || "حصاد الفترة", mode, anchorDate);
       return;
     }
     const storyStop = event.target.closest("[data-story-index]");
