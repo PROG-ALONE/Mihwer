@@ -3,13 +3,14 @@ import { formatDate, localDateString } from "../utils/dates.js";
 import { ensureDefaultLifeAreas } from "../utils/life-areas.js";
 import { showToast } from "../utils/notifications.js";
 import { requestCompletionDetails } from "../utils/completion-dialog.js";
+import { bindDailyRecordDialog, dailyRecordButtonMarkup, dailyRecordDialogMarkup } from "../utils/daily-records.js";
 
 const DAY_NAMES = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 const DAYS = 84;
 
 let unsubscribe;
 let eventController;
-let records = { habits: [], objectives: [], lifeAreas: [] };
+let records = { habits: [], tasks: [], objectives: [], keyResults: [], lifeAreas: [] };
 const expandedHabitDetails = new Set();
 
 function escapeHtml(value = "") {
@@ -407,17 +408,18 @@ function render() {
   const app = document.querySelector("#app");
   if (!app) return;
   const date = selectedDateFilter();
-  const habits = records.habits.filter((habit) => !habit.archived && (!date || isScheduled(habit, date)))
+  const habits = records.habits.filter((habit) => !habit.archived && (!date || isScheduled(habit, date) || dayProgress(habit, date).complete))
     .sort((a, b) => (Number(a.priority ?? 3) - Number(b.priority ?? 3)) || (a.order ?? 0) - (b.order ?? 0));
   app.innerHTML = `
     <section class="habits-page" aria-label="متابعة العادات">
       <header class="habits-heading">
         <div><p class="goals-kicker">${date ? `يوم ${escapeHtml(formatDate(date))}` : "مساحة الإنجاز"}</p><h2>${date ? "عادات اليوم" : "عاداتك"}</h2><p class="goals-subtitle">${habits.length} عادة · سجّل إنجازك بخطوة واحدة <span class="swipe-delete-hint">· اسحب البطاقة للحذف</span></p></div>
-        <button class="habits-heading-add" type="button" data-action="new-habit" aria-label="إضافة عادة"><span aria-hidden="true">＋</span></button>
+        <div class="habits-heading-actions">${dailyRecordButtonMarkup()}<button class="habits-heading-add" type="button" data-action="new-habit" aria-label="إضافة عادة"><span aria-hidden="true">＋</span></button></div>
       </header>
       ${date ? `<a class="day-filter-back-link" href="#/today?date=${encodeURIComponent(date)}">↗ العودة إلى خارطة اليوم</a>` : ""}
       ${habits.length ? `<div class="habits-list">${habits.map((habit) => renderHabit(habit, date || localDateString())).join("")}</div>` : `<div class="goals-empty">${date ? "لا توجد عادات مجدولة لهذا اليوم." : "ابدأ بعادة صغيرة تريد بناءها. ويمكنك ربطها بهدف سنوي."}</div>`}
       <p class="habits-status" role="status" aria-live="polite"></p>
+      ${dailyRecordDialogMarkup("habits", date || localDateString())}
       <dialog class="goal-dialog" id="habit-dialog">
         <form id="habit-form">
           <div class="dialog-heading"><h2 id="habit-dialog-title">إضافة عادة</h2><button class="icon-button" type="button" data-action="close">×</button></div>
@@ -446,6 +448,7 @@ function render() {
       </dialog>
     </section>`;
   bindEvents(app);
+  bindDailyRecordDialog(app, () => records, eventController?.signal, "habits");
 }
 
 function setStatus(message, isError = false) {
@@ -472,12 +475,11 @@ function bindEvents(app) {
   let swipeState = null;
   let suppressClickUntil = 0;
   app.addEventListener("pointerdown", (event) => {
-    if (event.pointerType === "mouse" || event.target.closest("a, input, label, summary, button, textarea, select")) return;
+    if (event.pointerType === "mouse" || event.target.closest("a, input, label, summary, .habit-details, button, textarea, select")) return;
     const card = event.target.closest(".habit-card[data-habit-id]");
     if (!card) return;
     swipeState = { card, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false };
     card.classList.add("is-swipe-ready");
-    card.setPointerCapture(event.pointerId);
   }, { signal });
 
   app.addEventListener("pointermove", (event) => {
@@ -491,6 +493,9 @@ function bindEvents(app) {
       return;
     }
     if (Math.abs(deltaX) < 8) return;
+    if (!swipeState.card.hasPointerCapture(event.pointerId)) {
+      swipeState.card.setPointerCapture(event.pointerId);
+    }
     swipeState.moved = true;
     const distance = Math.max(-150, Math.min(150, deltaX));
     swipeState.card.style.transform = `translateX(${distance}px)`;
@@ -721,12 +726,14 @@ function bindEvents(app) {
 }
 
 async function refreshRecords() {
-  const [habits, objectives, lifeAreas] = await Promise.all([
+  const [habits, tasks, objectives, keyResults, lifeAreas] = await Promise.all([
     getRecords("habits"),
+    getRecords("tasks"),
     getRecords("objectives"),
+    getRecords("keyResults"),
     ensureDefaultLifeAreas(),
   ]);
-  records = { habits, objectives, lifeAreas };
+  records = { habits, tasks, objectives, keyResults, lifeAreas };
 }
 
 export async function mountHabitsView(isCurrent = () => true) {
@@ -744,7 +751,7 @@ export async function mountHabitsView(isCurrent = () => true) {
     window.history.replaceState(window.history.state, "", cleanUrl);
   }
   unsubscribe = subscribe(async (_state, change) => {
-    if (!change.storeName || ["habits", "objectives", "lifeAreas"].includes(change.storeName)) {
+    if (!change.storeName || ["habits", "tasks", "objectives", "keyResults", "lifeAreas"].includes(change.storeName)) {
       try {
         await refreshRecords();
         if (isCurrent() && window.location.hash.startsWith("#/habits")) render();

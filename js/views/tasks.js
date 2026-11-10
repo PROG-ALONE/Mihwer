@@ -6,14 +6,14 @@ import { showToast } from "../utils/notifications.js";
 import { formatDuration, totalRecordedTaskMinutes } from "../utils/task-metrics.js";
 import { ensureDefaultLifeAreas } from "../utils/life-areas.js";
 import { requestCompletionDetails } from "../utils/completion-dialog.js";
-import { shareTextReport } from "../export/share.js";
 import { printStructuredReport } from "../export/pdf.js";
+import { bindDailyRecordDialog, dailyRecordButtonMarkup, dailyRecordDialogMarkup } from "../utils/daily-records.js";
 
 const PRIORITY_LABELS = ["مهم وعاجل", "مهم وغير عاجل", "عاجل وغير مهم", "غير عاجل وغير مهم"];
 const PRIORITY_GUIDANCE = ["ابدأ بها الآن", "حدّد لها وقتاً", "أنجزها بسرعة", "أجّلها أو استبعدها"];
 
 let unsubscribe;
-let records = { tasks: [], projects: [], objectives: [], keyResults: [], lifeAreas: [] };
+let records = { tasks: [], habits: [], projects: [], objectives: [], keyResults: [], lifeAreas: [] };
 let statusFilter = "active";
 let priorityModeEnabled = localStorage.getItem("mihwar-task-priority-mode") === "true";
 let taskQuery = "";
@@ -85,14 +85,18 @@ function selectedDateFilter() {
 }
 
 function isTaskOnDate(task, date) {
-  if (task.status === "done" && task.completedAt) {
-    return localDateString(new Date(task.completedAt)) === date;
-  }
-  const taskDates = [task.scheduled, task.due].map((value) => {
-    if (!value) return false;
-    return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : localDateString(new Date(value));
-  }).filter(Boolean);
-  return taskDates.includes(date) || (date === localDateString() && taskDates.some((taskDate) => taskDate < date));
+  if (task.status === "done") return Boolean(task.completedAt) && localDateString(new Date(task.completedAt)) === date;
+  const start = task.scheduled || task.due;
+  if (!start) return false;
+  const firstDate = /^\d{4}-\d{2}-\d{2}$/.test(start) ? start : localDateString(new Date(start));
+  const due = task.due
+    ? /^\d{4}-\d{2}-\d{2}$/.test(task.due) ? task.due : localDateString(new Date(task.due))
+    : "";
+  if (!due) return date >= firstDate && date <= localDateString();
+  const endDate = due;
+  const first = firstDate < endDate ? firstDate : endDate;
+  const last = firstDate > endDate ? firstDate : endDate;
+  return date >= first && date <= last;
 }
 
 function currentTasks() {
@@ -117,8 +121,8 @@ function subtaskItemContent(item, index) {
     <div class="subtask-row">
       <label><input type="checkbox" data-action="toggle-subtask" data-index="${index}" ${item.done ? "checked" : ""}> <span>${escapeHtml(item.text)}</span></label>
       <div class="subtask-item-actions">
-        <button class="icon-button" type="button" data-action="edit-subtask" data-index="${index}" aria-label="تعديل المهمة الفرعية">✎</button>
-        <button class="icon-button" type="button" data-action="delete-subtask" data-index="${index}" aria-label="حذف المهمة الفرعية">×</button>
+        <button class="subtask-action-button is-edit" type="button" data-action="edit-subtask" data-index="${index}" aria-label="تعديل المهمة الفرعية">✎ تعديل</button>
+        <button class="subtask-action-button is-delete" type="button" data-action="delete-subtask" data-index="${index}" aria-label="حذف المهمة الفرعية">حذف</button>
       </div>
     </div>`;
 }
@@ -127,11 +131,12 @@ function subtasksBlock(task) {
   const items = normalizedChecklist(task);
   const doneCount = items.filter((item) => item.done).length;
   const percent = items.length ? Math.round((doneCount / items.length) * 100) : 0;
+  const heading = items.length ? `مهام فرعية · ${doneCount} من ${items.length} مكتملة` : "أضف أول مهمة فرعية";
   const isOpen = expandedTaskSubtasks.has(task.id) ||
     (items.length > 0 && !collapsedTaskSubtasks.has(task.id));
   return `
-    <details class="subtasks"${isOpen ? " open" : ""}>
-      <summary>مهام فرعية${items.length ? ` <span class="subtask-count">${doneCount}/${items.length}</span>` : ""}</summary>
+    <details class="subtasks"${isOpen ? " open" : ""} aria-label="${heading}">
+      <summary>${heading}</summary>
       ${items.length ? `<div class="subtask-progress" role="progressbar" aria-label="إنجاز المهام الفرعية" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100"><span style="width:${percent}%"></span></div>` : ""}
       <form class="subtask-add" data-subtask-form>
         <input type="text" name="text" placeholder="أضف مهمة فرعية…" aria-label="مهمة فرعية جديدة" maxlength="200">
@@ -159,12 +164,14 @@ function taskCard(task) {
   const done = task.status === "done";
   const taskDate = task.due || task.scheduled;
   const overdue = !done && taskDate && taskDate < localDateString();
-  const statusLabel = done ? "مكتملة" : overdue ? "متأخرة" : "";
   const checklist = normalizedChecklist(task);
   const detailsOpen = expandedTaskDetails.has(task.id) ||
     (checklist.length > 0 && !collapsedTaskDetails.has(task.id));
   const trackedMinutes = totalRecordedTaskMinutes(task);
   const lifeArea = records.lifeAreas.find((area) => area.id === taskLifeAreaId(task));
+  const checklistDone = checklist.filter((item) => item.done).length;
+  const priority = priorityIndex(task);
+  const completionLabel = done ? "مكتملة" : overdue ? "متأخرة" : "قيد الإنجاز";
   return `
     <article class="task-card${done ? " is-done" : ""}" data-priority="${priorityIndex(task)}" data-task-id="${escapeHtml(task.id)}">
       <span class="task-color-dot" aria-hidden="true"></span>
@@ -175,19 +182,28 @@ function taskCard(task) {
         </label>
         <button class="task-card-summary" type="button" data-action="toggle-task-details" aria-expanded="${detailsOpen}" aria-label="إظهار تفاصيل المهمة: ${escapeHtml(task.title)}">
           <span class="task-title">${escapeHtml(task.title)}</span>
-          ${taskDate || lifeArea ? `<span class="task-card-meta">${taskDate ? escapeHtml(formatDate(taskDate)) : ""}${task.dueTime ? ` · ${escapeHtml(task.dueTime)}` : ""}${lifeArea ? ` · ${escapeHtml(lifeArea.name)}` : ""}</span>` : ""}
+          ${lifeArea ? `<span class="task-card-meta">${escapeHtml(lifeArea.name)}</span>` : ""}
         </button>
         <div class="task-card-actions">
-          <button class="icon-button" type="button" data-action="share-task" aria-label="مشاركة تقرير ${escapeHtml(task.title)}">↗</button>
-          <button class="icon-button" type="button" data-action="print-task" aria-label="حفظ تقرير ${escapeHtml(task.title)} بصيغة PDF">▤</button>
           <button class="icon-button task-card-edit" type="button" data-action="edit" aria-label="تعديل ${escapeHtml(task.title)}">✎</button>
         </div>
       </div>
       <div class="task-card-details${detailsOpen ? " is-open" : ""}"${detailsOpen ? "" : " hidden"}>
-        <div class="task-focus-strip">
-          <a class="task-focus-link" href="#/focus?task=${encodeURIComponent(task.id)}">◉ ابدأ التركيز${task.estimateMin ? ` · ${Number(task.estimateMin)} د` : ""}</a>
-          ${statusLabel ? `<span class="task-video-status${done ? " is-done" : ""}">${statusLabel}</span>` : ""}
-          ${trackedMinutes ? `<span class="task-time-total">الوقت المسجّل: ${formatDuration(trackedMinutes)}</span>` : ""}
+        <div class="task-details-topline">
+          <strong>تفاصيل المهمة</strong>
+          <span class="task-details-status${done ? " is-done" : overdue ? " is-overdue" : ""}">${completionLabel}</span>
+        </div>
+        <div class="task-details-facts">
+          <span><small>الأولوية</small><strong>${PRIORITY_LABELS[priority]}</strong></span>
+          ${taskDate ? `<span><small>الموعد</small><strong>${escapeHtml(formatDate(taskDate))}${task.dueTime ? ` · ${escapeHtml(task.dueTime)}` : ""}</strong></span>` : ""}
+          ${lifeArea ? `<span><small>المجال</small><strong>${escapeHtml(lifeArea.name)}</strong></span>` : ""}
+          ${task.estimateMin ? `<span><small>الوقت المتوقع</small><strong>${formatDuration(task.estimateMin)}</strong></span>` : ""}
+          ${trackedMinutes ? `<span><small>الوقت المسجّل</small><strong>${formatDuration(trackedMinutes)}</strong></span>` : ""}
+        </div>
+        ${task.notes ? `<p class="task-details-notes">${escapeHtml(task.notes)}</p>` : ""}
+        <div class="task-details-actions">
+          <a class="task-focus-link" href="#/focus?task=${encodeURIComponent(task.id)}">◉ ابدأ التركيز</a>
+          ${checklist.length ? `<span class="task-details-progress" aria-label="إنجاز ${checklistDone} من ${checklist.length} مهام فرعية"><i style="--subtask-progress:${Math.round(checklistDone / checklist.length * 100)}%"></i>${checklistDone}/${checklist.length} خطوات</span>` : ""}
         </div>
         ${subtasksBlock(task)}
       </div>
@@ -204,32 +220,6 @@ function renderList(tasks) {
     return `<div class="tasks-empty">${emptyMessage}</div>`;
   }
   return `<div class="task-list">${tasks.map(taskCard).join("")}</div>`;
-}
-
-function taskReport(task) {
-  const checklist = normalizedChecklist(task);
-  const done = task.status === "done";
-  const dueDate = task.due || task.scheduled;
-  const lifeArea = records.lifeAreas.find((area) => area.id === taskLifeAreaId(task));
-  const details = [
-    { label: "الحالة", value: done ? "مكتملة" : "قيد الإنجاز" },
-    { label: "الأولوية", value: PRIORITY_LABELS[priorityIndex(task)] },
-    ...(dueDate ? [{ label: "الموعد", value: `${formatDate(dueDate)}${task.dueTime ? ` · ${task.dueTime}` : ""}` }] : []),
-    ...(lifeArea ? [{ label: "المجال", value: lifeArea.name }] : []),
-    ...(task.notes ? [{ label: "ملاحظات", value: task.notes }] : []),
-    ...(checklist.length ? [{ label: "التقدم الفرعي", value: `${checklist.filter((item) => item.done).length} من ${checklist.length}` }] : []),
-  ];
-  const summary = checklist.length
-    ? [{ label: "المهام الفرعية", value: `${checklist.filter((item) => item.done).length}/${checklist.length}`, detail: task.title }]
-    : [{ label: "حالة المهمة", value: done ? "مكتملة" : "قيد الإنجاز", detail: task.title }];
-  const sections = [{
-    title: "بيانات المهمة",
-    items: [{ title: task.title, detail: task.notes || "", details }],
-  }, ...(checklist.length ? [{
-    title: "المهام الفرعية",
-    items: checklist.map((item) => ({ title: item.text, detail: item.done ? "مكتملة" : "غير مكتملة" })),
-  }] : [])];
-  return { title: `مهمة: ${task.title}`, period: dueDate ? formatDate(dueDate) : "دون موعد محدد", summary, sections };
 }
 
 function visibleTasksReport(tasks, date) {
@@ -283,6 +273,10 @@ function toggleTaskDetails(card) {
   if (open) {
     expandedTaskDetails.add(taskId);
     collapsedTaskDetails.delete(taskId);
+    requestAnimationFrame(() => card.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "nearest",
+    }));
   } else {
     expandedTaskDetails.delete(taskId);
     collapsedTaskDetails.add(taskId);
@@ -350,11 +344,13 @@ function render() {
       <header class="tasks-heading">
         <div><p class="goals-kicker">${date ? `يوم ${escapeHtml(formatDate(date))}` : "مساحة الإنجاز"}</p><h2>${date ? "مهام اليوم" : "المهام"}</h2><p class="tasks-heading-note"><span class="task-count" data-count="${visibleTotal}">٠</span> مهمة في القائمة <span class="swipe-delete-hint">· اسحب البطاقة للحذف</span></p></div>
         <div class="tasks-heading-actions">
+          ${dailyRecordButtonMarkup()}
           <button class="button button-secondary" type="button" data-action="share-task-list">حفظ القائمة PDF</button>
           <button class="tasks-heading-add" type="button" data-action="new-task" aria-label="إضافة مهمة"><span aria-hidden="true">＋</span></button>
         </div>
       </header>
       ${date ? `<a class="day-filter-back-link" href="#/today?date=${encodeURIComponent(date)}">↗ العودة إلى خارطة اليوم</a>` : ""}
+      ${dailyRecordDialogMarkup("tasks", date || localDateString())}
       <nav class="task-status-tabs" aria-label="حالة المهام">
         <button type="button" class="${statusFilter === "active" ? "is-active" : ""}" data-status="active" aria-pressed="${statusFilter === "active"}">قيد الإنجاز <strong class="task-count" data-count="${date ? scopedActiveCount : activeCount}">٠</strong></button>
         <button type="button" class="${statusFilter === "done" ? "is-active" : ""}" data-status="done" aria-pressed="${statusFilter === "done"}">المنجزة <strong class="task-count" data-count="${doneCount}">٠</strong></button>
@@ -389,15 +385,17 @@ function render() {
           <div class="editor-fields">
             <label>تاريخ الجدولة<input name="scheduled" type="date"></label>
             <label>تاريخ الاستحقاق<input name="due" type="date"></label>
-            <label>وقت التنفيذ<input name="dueTime" type="time"></label>
             <label>الأولوية<select name="priority">${PRIORITY_LABELS.map((label, index) => `<option value="${index}">${label}</option>`).join("")}</select></label>
-            <label>مدة التركيز المستهدفة بالدقائق<input name="estimateMin" type="number" min="1" max="180" step="1"></label>
-            <label>وقت أُنجز اليوم بالدقائق<input name="timeLogTodayMin" type="number" min="0" max="1440" step="1" value="0"><small>يُضاف إلى سجل اليوم ولا يستبدل أوقات التركيز السابقة.</small></label>
             <label>المجال<select name="lifeAreaId"><option value="">من الهدف أو دون مجال</option>${records.lifeAreas.filter((area) => !area.archived).map((area) => `<option value="${escapeHtml(area.id)}">${escapeHtml(area.name)}</option>`).join("")}</select></label>
           </div>
           <details class="task-editor-extra">
             <summary>تفاصيل إضافية</summary>
             <label>ملاحظات<textarea name="notes" rows="3"></textarea></label>
+            <div class="editor-fields">
+              <label>وقت التنفيذ<input name="dueTime" type="time"></label>
+              <label>مدة التركيز المستهدفة بالدقائق<input name="estimateMin" type="number" min="1" max="180" step="1"></label>
+              <label>وقت أُنجز اليوم بالدقائق<input name="timeLogTodayMin" type="number" min="0" max="1440" step="1" value="0"><small>يُضاف إلى سجل اليوم ولا يستبدل أوقات التركيز السابقة.</small></label>
+            </div>
             <div class="editor-fields">
               <label>المشروع<select name="projectId"><option value="">الوارد</option>${records.projects.filter((project) => !project.archived).map((project) => `<option value="${escapeHtml(project.id)}">${escapeHtml(project.name)}</option>`).join("")}</select></label>
               <label>الهدف<select name="objectiveId"><option value="">بلا هدف</option>${records.objectives.map((objective) => `<option value="${escapeHtml(objective.id)}">${escapeHtml(objective.title)}</option>`).join("")}</select></label>
@@ -416,6 +414,7 @@ function render() {
     </section>`;
 
   bindEvents(app);
+  bindDailyRecordDialog(app, () => records, eventController?.signal, "tasks");
   initializeTaskCounters(app);
 }
 
@@ -545,12 +544,11 @@ function bindEvents(app) {
   app.querySelector("#task-dialog")?.addEventListener("close", () => render(), { signal });
 
   app.addEventListener("pointerdown", (event) => {
-    if (event.pointerType === "mouse" || event.target.closest("a, input, label, details, summary, button:not(.task-card-summary)")) return;
+    if (event.pointerType === "mouse" || event.target.closest("a, input, label, details, summary, .task-card-details, button:not(.task-card-summary)")) return;
     const card = event.target.closest(".task-card[data-task-id]");
     if (!card) return;
     swipeState = { card, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false };
     card.classList.add("is-swipe-ready");
-    card.setPointerCapture(event.pointerId);
   }, { signal });
 
   app.addEventListener("pointermove", (event) => {
@@ -564,6 +562,9 @@ function bindEvents(app) {
       return;
     }
     if (Math.abs(deltaX) < 8) return;
+    if (!swipeState.card.hasPointerCapture(event.pointerId)) {
+      swipeState.card.setPointerCapture(event.pointerId);
+    }
     swipeState.moved = true;
     const distance = Math.max(-150, Math.min(150, deltaX));
     swipeState.card.style.transform = `translateX(${distance}px)`;
@@ -712,14 +713,6 @@ function bindEvents(app) {
       printStructuredReport(report.title, report.period, report.summary, report.sections);
       return;
     }
-    if (button.dataset.action === "share-task" || button.dataset.action === "print-task") {
-      const task = records.tasks.find((item) => item.id === card?.dataset.taskId);
-      if (!task) return;
-      const report = taskReport(task);
-      if (button.dataset.action === "share-task") await shareTextReport(report);
-      else printStructuredReport(report.title, report.period, report.summary, report.sections);
-      return;
-    }
     if (button.dataset.action === "new-task") {
       const form = app.querySelector("#quick-add-form");
       form.reset();
@@ -812,8 +805,11 @@ function bindEvents(app) {
         ?? button.closest("#task-editor-subtasks")?.dataset.taskId;
       const task = records.tasks.find((item) => item.id === taskId);
       if (!task) return;
+      const item = normalizedChecklist(task)[Number(button.dataset.index)];
+      if (!item || !window.confirm(`هل تريد حذف المهمة الفرعية «${item.text}»؟`)) return;
       try {
         await saveChecklist(task, normalizedChecklist(task).filter((_, index) => index !== Number(button.dataset.index)));
+        setStatus("حُذفت المهمة الفرعية.");
       } catch (error) {
         console.error("تعذّر حذف المهمة الفرعية:", error);
         setStatus(error.message, true);
@@ -825,6 +821,14 @@ function bindEvents(app) {
       const task = records.tasks.find((item) => item.id === taskId);
       const dialog = app.querySelector("#task-dialog");
       if (!task || !dialog) return;
+      expandedTaskDetails.delete(task.id);
+      collapsedTaskDetails.add(task.id);
+      const card = button.closest(".task-card");
+      const cardDetails = card?.querySelector(":scope > .task-card-details");
+      if (cardDetails) cardDetails.hidden = true;
+      card?.querySelector('[data-action="toggle-task-details"]')?.setAttribute("aria-expanded", "false");
+      expandedTaskSubtasks.delete(task.id);
+      collapsedTaskSubtasks.add(task.id);
       const form = dialog.querySelector("#task-editor-form");
       form.elements.id.value = task.id;
       form.elements.title.value = task.title;
@@ -983,6 +987,7 @@ export async function mountTasksView(isCurrent = () => true) {
   if (unsubscribe) unsubscribe();
   const loadedRecords = {
     tasks: await getRecords("tasks"),
+    habits: await getRecords("habits"),
     projects: await getRecords("projects"),
     objectives: await getRecords("objectives"),
     keyResults: await getRecords("keyResults"),
@@ -993,10 +998,11 @@ export async function mountTasksView(isCurrent = () => true) {
   document.querySelector("#page-title").textContent = "المهام";
   render();
   unsubscribe = subscribe((state, change) => {
-    if (!change.storeName || ["tasks", "projects", "objectives", "keyResults", "lifeAreas"].includes(change.storeName)) {
+    if (!change.storeName || ["tasks", "habits", "projects", "objectives", "keyResults", "lifeAreas"].includes(change.storeName)) {
       records = {
         ...records,
         tasks: state.tasks ?? records.tasks,
+        habits: state.habits ?? records.habits,
         projects: state.projects ?? records.projects,
         objectives: state.objectives ?? records.objectives,
         keyResults: state.keyResults ?? records.keyResults,

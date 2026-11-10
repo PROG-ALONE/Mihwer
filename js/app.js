@@ -6,7 +6,7 @@ import { mountHabitsView, unmountHabitsView } from "./views/habits.js";
 import { mountFocusView, unmountFocusView } from "./views/focus.js";
 import { mountJournalView, unmountJournalView } from "./views/journal.js";
 import { mountReportsView, unmountReportsView } from "./views/reports.js";
-import { mountTasksView, unmountTasksView } from "./views/tasks.js?v=112";
+import { mountTasksView, unmountTasksView } from "./views/tasks.js?v=117";
 import { bindSettingsActions, checkBackupReminder } from "./views/settings.js";
 import { showToast } from "./utils/notifications.js";
 import { mountPeriodDashboard } from "./views/dashboard.js?v=112";
@@ -40,14 +40,14 @@ const legacyThemes = {
 let renderSequence = 0;
 let mountedRoute;
 const animatedCountSelector = "[data-count]";
-const LATEST_UPDATE_ID = "shared-period-task-reports-path-v133";
+const LATEST_UPDATE_ID = "task-details-scroll-v140";
 
 function showLatestUpdates() {
   const previousUpdateId = localStorage.getItem("mihwar-seen-update");
   if (previousUpdateId === LATEST_UPDATE_ID) return;
   localStorage.setItem("mihwar-seen-update", LATEST_UPDATE_ID);
   if (!previousUpdateId) return;
-  showToast("آخر التحديثات:\n• شارك تقرير أي مهمة أو قائمة مهام\n• شارك مسارات الأسبوع والشهر والسنة كقصص GIF متحركة ومفصلة\n• أحجام خط موحّدة ومريحة مع أداء أسرع", { duration: 8000 });
+  showToast("آخر التحديثات:\n• إصلاح التمرير داخل تفاصيل المهام على الهاتف\n• سجل بصري لأيام الشهر، تتغير ألوانه حسب الإنجاز\n• اختر الشهر والسنة واضغط يوماً لفتح تبويب المهام أو العادات عليه\n• نافذة تعديل أقصر مع إخفاء تفاصيل البنود حتى فتحها", { duration: 8000 });
 }
 
 function arabicDigits(value) {

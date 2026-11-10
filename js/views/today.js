@@ -58,7 +58,7 @@ let mapParentMode = MAP_MODES.includes(localStorage.getItem("mihwar-map-parent-m
   : null;
 let mapDate = /^\d{4}-\d{2}-\d{2}$/.test(localStorage.getItem("mihwar-map-date") ?? "")
   ? localStorage.getItem("mihwar-map-date")
-  : localDateString();
+  : dateOffset(localDateString(), -1);
 const expandedMapTaskDetails = new Set();
 const periodDayMetricsCache = new Map();
 let activeStoryIndex = 0;
@@ -664,7 +664,7 @@ function renderHabitNode(habit, today) {
     <div class="space-node-copy">
       <strong>${escapeHtml(habit.title)}</strong>
       ${progressText ? `<span class="space-node-meta">${escapeHtml(progressText)}</span>` : ""}
-      ${ritualWisdom ? `<details class="space-ritual-wisdom"><summary>الفضل والذكر</summary><span>«${escapeHtml(ritualWisdom.text)}» <b>${escapeHtml(ritualWisdom.source)}</b></span></details>` : ""}
+      ${ritualWisdom ? `<div class="space-ritual-wisdom"><strong>ومضة اليوم</strong><span>«${escapeHtml(ritualWisdom.text)}» <b>${escapeHtml(ritualWisdom.source)}</b></span></div>` : ""}
     </div>
   </article>`;
 }
@@ -687,7 +687,7 @@ function renderPrayerNode(event) {
     <div class="space-node-copy">
       <strong>${escapeHtml(prayer.name)}</strong>
       ${fardCount || sunnahCount ? `<div class="space-prayer-counts">${fardCount}${sunnahCount}</div>` : ""}
-      ${wisdom ? `<details class="space-prayer-wisdom"><summary>حكمة</summary><span>«${escapeHtml(wisdom.text)}» <b>${escapeHtml(wisdom.source)}</b></span></details>` : ""}
+      ${wisdom ? `<div class="space-prayer-wisdom"><strong>حكمة</strong><span>«${escapeHtml(wisdom.text)}» <b>${escapeHtml(wisdom.source)}</b></span></div>` : ""}
     </div>
   </article>`;
 }
@@ -1845,6 +1845,24 @@ async function toggleTask(task, completionDetails = null) {
   await update("tasks", { ...task, status: "open", completedAt: null, updatedAt: now });
 }
 
+function animateMapCompletion(selector) {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const card = document.querySelector(selector);
+    if (!card) return;
+    const stop = card.closest(".space-map-stop");
+    card.classList.remove("is-celebrating");
+    stop?.classList.remove("is-path-illuminating");
+    void card.offsetWidth;
+    card.classList.add("is-celebrating");
+    stop?.classList.add("is-path-lit", "is-path-illuminating");
+    window.setTimeout(() => stop?.classList.remove("is-path-illuminating"), 1100);
+  }));
+}
+
+function mapNodeSelector(className, attribute, value) {
+  return `${className}[${attribute}="${CSS.escape(value)}"]`;
+}
+
 function bindEvents(app) {
   eventController?.abort();
   eventController = new AbortController();
@@ -2040,6 +2058,8 @@ function bindEvents(app) {
       }
       if (await saveSleepLogWithFeedback(mapDate, { wakeTime: time }, `سُجّل استيقاظك عند ${timeLabel(time)} وبدأ يومك الشخصي من ذلك الوقت.`)) {
         button.textContent = "تحديث وقت الاستيقاظ";
+        sleepDialog?.close();
+        animateMapCompletion(".space-sleep-card");
       }
       return;
     }
@@ -2052,6 +2072,8 @@ function bindEvents(app) {
       const previousDate = dateOffset(mapDate, -1);
       if (await saveSleepLogWithFeedback(previousDate, { bedTime: time }, `سُجّل نوم الليلة السابقة عند ${timeLabel(time)}.`)) {
         button.textContent = "تحديث وقت النوم";
+        sleepDialog?.close();
+        animateMapCompletion(".space-sleep-card");
       }
       return;
     }
@@ -2064,11 +2086,16 @@ function bindEvents(app) {
       }
       if (await saveSleepLogWithFeedback(mapDate, { napStart: start, napDurationMin: duration }, `سُجّلت قيلولتك: ${formatSleepDuration(duration)}.`)) {
         button.textContent = "تحديث القيلولة";
+        sleepDialog?.close();
+        animateMapCompletion(".space-sleep-card");
       }
       return;
     }
     if (button.dataset.action === "skip-nap") {
-      await saveSleepLogWithFeedback(mapDate, { napStart: null, napDurationMin: 0 }, "سُجّل أنك لم تأخذ قيلولة اليوم.");
+      if (await saveSleepLogWithFeedback(mapDate, { napStart: null, napDurationMin: 0 }, "سُجّل أنك لم تأخذ قيلولة اليوم.")) {
+        sleepDialog?.close();
+        animateMapCompletion(".space-sleep-card");
+      }
       return;
     }
     if (button.dataset.action === "map-mode") {
@@ -2125,11 +2152,15 @@ function bindEvents(app) {
       const task = records.tasks.find((item) => item.id === button.dataset.taskId);
       if (!task) return;
       try {
+        const completing = task.status !== "done";
         const completionDetails = task.status === "done"
           ? null
           : await requestCompletionDetails({ title: task.title });
         if (task.status !== "done" && !completionDetails) return;
         await toggleTask(task, completionDetails);
+        if (completing) {
+          animateMapCompletion(mapNodeSelector(".space-node-task", "data-task-id", task.id));
+        }
       } catch (error) {
         console.error("تعذّر تحديث المهمة من خارطة اليوم:", error);
         showToast(error.message || "تعذّر تحديث المهمة. حاول مجدداً.", { isError: true });
@@ -2151,6 +2182,9 @@ function bindEvents(app) {
         let next = setDayComplete(habit, today, nextComplete);
         if (details) next = setCompletionDetails(next, today, details);
         await update("habits", next);
+        if (nextComplete) {
+          animateMapCompletion(mapNodeSelector(".space-node-habit", "data-habit-id", habit.id));
+        }
       } else if (button.dataset.action === "habit-count") {
         const progress = dayProgress(habit, today);
         const wasComplete = progress.complete;
@@ -2165,18 +2199,27 @@ function bindEvents(app) {
           updated = setCompletionDetails(updated, today, details);
         }
         await update("habits", updated);
+        if (!wasComplete && value >= progress.total) {
+          animateMapCompletion(mapNodeSelector(".space-node-habit", "data-habit-id", habit.id));
+        }
       } else if (button.dataset.action === "toggle-prayer") {
-        const wasComplete = dayProgress(habit, today).complete;
         const logged = new Set(habit.itemLog?.[today] ?? []);
-        if (logged.has(button.dataset.itemId)) logged.delete(button.dataset.itemId);
+        const wasLogged = logged.has(button.dataset.itemId);
+        if (wasLogged) logged.delete(button.dataset.itemId);
         else logged.add(button.dataset.itemId);
         let next = setItemsLogged(habit, today, [...logged]);
-        if (!wasComplete && dayProgress(next, today).complete) {
+        const becameComplete = !wasLogged;
+        if (!wasLogged && dayProgress(next, today).complete) {
           const details = await requestCompletionDetails({ title: habit.title, date: today });
           if (!details) return;
           next = setCompletionDetails(next, today, details);
         }
         await update("habits", next);
+        if (becameComplete) {
+          const nightItem = button.matches(".space-night-prayer");
+          const cardSelector = nightItem ? ".space-night-prayer" : ".space-node-habit";
+          animateMapCompletion(`${mapNodeSelector(cardSelector, "data-habit-id", habit.id)}[data-item-id="${CSS.escape(button.dataset.itemId)}"]`);
+        }
       }
     } catch (error) {
       console.error("تعذّر تحديث العادة من خارطة اليوم:", error);
@@ -2227,8 +2270,15 @@ function bindEvents(app) {
     }
     try {
       const next = setItemsLogged(habit, date, [...logged]);
+      const prayerItems = items.filter((item) => item.category === "فرض");
+      const wasComplete = prayerItems.length > 0 && prayerItems.every((item) => (habit.itemLog?.[date] ?? []).includes(item.id));
+      const isComplete = prayerItems.length > 0 && prayerItems.every((item) => logged.has(item.id));
       await update("habits", next);
       showToast(`حُفظ تسجيل صلاة ${form.dataset.prayer}.`);
+      form.closest("dialog")?.close();
+      if (!wasComplete && isComplete) {
+        animateMapCompletion(mapNodeSelector(".space-node-prayer", "data-prayer", form.dataset.prayer));
+      }
     } catch (error) {
       console.error("تعذّر حفظ تفاصيل الصلاة:", error);
       showToast(error.message || "تعذّر حفظ تفاصيل الصلاة. حاول مجدداً.", { isError: true });
