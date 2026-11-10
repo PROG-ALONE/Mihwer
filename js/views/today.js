@@ -1071,11 +1071,21 @@ function renderRecapPeriodCards(segments, selectedDate) {
     const label = segment.mode === "month" ? `حصاد شهر ${segment.title}`
       : segment.mode === "week" ? `حصاد ${segment.title}`
         : `حصاد ${segment.title}`;
-    return `<button type="button" class="space-recap-period-card${selected ? " is-selected" : ""}${segment.start === localDateString() && isDay ? " is-today" : ""}" data-recap-period-start="${segment.start}" data-recap-period-end="${segment.end}" data-recap-period-mode="${segment.mode}" data-recap-period-label="${escapeHtml(label)}" aria-pressed="${selected}" style="--recap-day-progress:${metrics.percent}%;--recap-day-tint:${Math.round(5 + metrics.percent * 0.13)}%">
-      <header><strong>${escapeHtml(title)}</strong>${isDay ? "" : `<small>${escapeHtml(formatDate(segment.start))}${segment.start !== segment.end ? ` – ${escapeHtml(formatDate(segment.end))}` : ""}</small>`}</header>
-      <b>${formatArabicNumber(metrics.percent)}٪</b>
-      <div class="space-recap-period-stats"><span>المهام ${formatArabicNumber(metrics.completedTasks)}/${formatArabicNumber(metrics.completedTasks + metrics.plannedTasks)}</span><span>العادات ${formatArabicNumber(metrics.completedHabits)}/${formatArabicNumber(metrics.scheduledHabits)}</span><span>فرعية ${formatArabicNumber(metrics.completedSubtasks)}</span><span>تركيز ${formatDuration(focusMinutes)}</span></div>
-      <i aria-hidden="true"></i>
+    const taskTotal = metrics.completedTasks + metrics.plannedTasks;
+    const taskPercent = taskTotal ? Math.round(metrics.completedTasks / taskTotal * 100) : 0;
+    const habitPercent = metrics.scheduledHabits ? Math.round(metrics.completedHabits / metrics.scheduledHabits * 100) : 0;
+    const icon = segment.mode === "month" ? "✦" : segment.mode === "week" ? "▦" : "☼";
+    const periodDates = isDay ? title : `${formatDate(segment.start)}${segment.start !== segment.end ? ` – ${formatDate(segment.end)}` : ""}`;
+    return `<button type="button" class="space-recap-period-card${selected ? " is-selected" : ""}${segment.start === localDateString() && isDay ? " is-today" : ""}" data-recap-period-start="${segment.start}" data-recap-period-end="${segment.end}" data-recap-period-mode="${segment.mode}" data-recap-period-label="${escapeHtml(label)}" aria-pressed="${selected}" aria-label="${escapeHtml(title)}: إنجاز ${formatArabicNumber(metrics.percent)} بالمئة، ${formatArabicNumber(metrics.completedTasks)} من ${formatArabicNumber(taskTotal)} مهام، ${formatArabicNumber(metrics.completedHabits)} من ${formatArabicNumber(metrics.scheduledHabits)} عادات" style="--recap-day-progress:${metrics.percent}%;--recap-day-tint:${Math.round(5 + metrics.percent * 0.13)}%">
+      <header><span class="space-recap-period-icon" aria-hidden="true">${icon}</span><span class="space-recap-period-title"><strong>${escapeHtml(title)}</strong><small>${escapeHtml(periodDates)}</small></span><span class="space-recap-period-open" aria-hidden="true">↗</span></header>
+      <div class="space-recap-period-body">
+        <span class="space-recap-period-ring" role="img" aria-label="إنجاز ${formatArabicNumber(metrics.percent)} بالمئة"><strong>${formatArabicNumber(metrics.percent)}<small>٪</small></strong><i>إنجاز</i></span>
+        <div class="space-recap-period-meters">
+          <div class="space-recap-period-meter"><span>المهام</span><strong>${formatArabicNumber(metrics.completedTasks)}<small> / ${formatArabicNumber(taskTotal)}</small></strong><i style="--meter-progress:${taskPercent}%"></i></div>
+          <div class="space-recap-period-meter is-habit"><span>العادات</span><strong>${formatArabicNumber(metrics.completedHabits)}<small> / ${formatArabicNumber(metrics.scheduledHabits)}</small></strong><i style="--meter-progress:${habitPercent}%"></i></div>
+        </div>
+      </div>
+      <footer class="space-recap-period-stats"><span><b aria-hidden="true">↳</b>${formatArabicNumber(metrics.completedSubtasks)} فرعية</span><span><b aria-hidden="true">◷</b>${formatDuration(focusMinutes)} تركيز</span></footer>
     </button>`;
   }).join("");
 }
